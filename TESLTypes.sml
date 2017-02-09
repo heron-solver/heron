@@ -1,5 +1,5 @@
 exception Assert_failure;
-datatype clock = Clk of int;
+datatype clock = Clk of string;
 type instant_index = int;
 
 fun assert b =
@@ -120,3 +120,5 @@ fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
   in List.rev (aux cfl [])
   end
 
+fun writeln s = print (s ^ "\n")
+fun string_of_int n = Int.toString n

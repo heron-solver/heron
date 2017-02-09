@@ -9,6 +9,11 @@
    4. Conjunction
 *)
 
+(* To easily read the code, you can remove the following string but warnings will appear:
+ | _ => raise UnexpectedMatch
+*)
+exception UnexpectedMatch
+
 (* Whenever there's a ticking predicate, there shouln't be a refutation. Same way for non-ticking predicate. *)
 fun check_non_contradictory_ticks (G: system) =
   let
@@ -16,11 +21,11 @@ fun check_non_contradictory_ticks (G: system) =
     val notticks   = (List.filter (fn cstr => case cstr of NotTicks _ => true | _ => false) G)
   in
     List.all
-      (fn Ticks (clk, i) => not (List.exists (fn NotTicks (clk', i') => clk = clk' andalso i = i') notticks))
+      (fn Ticks (clk, i) => not (List.exists (fn NotTicks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch) notticks) | _ => raise UnexpectedMatch)
       ticks
   andalso
     List.all
-      (fn NotTicks (clk, i) => not (List.exists (fn Ticks (clk', i') => clk = clk' andalso i = i') ticks))
+      (fn NotTicks (clk, i) => not (List.exists (fn Ticks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch) ticks) | _ => raise UnexpectedMatch)
       notticks
   end;
 
@@ -32,7 +37,7 @@ fun check_injectivity_on_timestamps (G: system) =
       | Timestamp (_, _, Unit) => true
       | _           => false) G
   in List.all
-      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i = i') orelse tag = tag') timestamps)
+      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i = i') orelse tag = tag' | _ => raise UnexpectedMatch) timestamps | _ => raise UnexpectedMatch)
       timestamps
   end;
 
@@ -43,7 +48,7 @@ fun check_injectivity_on_timestamps_varadd (G: system) =
     val timestamps_add = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (Schematic _, Int _)) => true | _ => false) G)
   in List.all
       (fn Timestamp (clk, i, Schematic _) => List.all (fn Timestamp (clk', i', Add (Schematic (clk'', i''), Int dt)) =>
-        not (clk = clk' andalso i = i' andalso clk = clk'' andalso i = i'') orelse dt = 0) timestamps_add)
+        not (clk = clk' andalso i = i' andalso clk = clk'' andalso i = i'') orelse dt = 0 | _ => raise UnexpectedMatch) timestamps_add | _ => raise UnexpectedMatch)
       timestamps_var
   end;
 
@@ -55,7 +60,7 @@ fun check_ascending_chain_on_timestamps (G: system) =
       | Timestamp (_, _, Unit) => true
       | _           => false) G)
   in List.all
-      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i < i') orelse ::<= (tag, tag')) timestamps)
+      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i < i') orelse ::<= (tag, tag') | _ => raise UnexpectedMatch) timestamps | _ => raise UnexpectedMatch)
       timestamps
   end;
 
@@ -67,7 +72,7 @@ fun check_type_consistency (G: system) =
       | Timestamp (_, _, Unit) => true
       | _           => false) G)
   in List.all
-      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk') orelse ::~ (tag, tag')) timestamps)
+      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk') orelse ::~ (tag, tag')) timestamps | _ => raise UnexpectedMatch)
       timestamps
   end;
 
@@ -81,7 +86,7 @@ fun schematic_elim (G: system) (evar: tag) : system =
     val eliminated = List.concat (List.map (fn
       Affine (x1, Int a, evar, Int b) => List.map (fn
         Affine (_, Int a', x3, Int b') =>
-          Affine (x1, Int (a * a'), x3, Int (a * b' + b))) (@- (left_occ, [Affine (x1, Int a, evar, Int b)]))) right_occ)
+          Affine (x1, Int (a * a'), x3, Int (a * b' + b)) | _ => raise UnexpectedMatch) (@- (left_occ, [Affine (x1, Int a, evar, Int b)])) | _ => raise UnexpectedMatch) right_occ)
   in
     eliminated @ no_occ
   end;
@@ -94,8 +99,8 @@ fun schematic_elim_step (G: system) =
       List.filter (fn
         Affine (x1, a, x2, b) => List.exists (fn
           Affine (x1', a', x2', b') =>
-            x1 = x2') (@-(affines, [Affine(x1, a, x2, b)]))) affines
-    val eliminable_vars = List.map (fn Affine (x, _, _, _) => x) eliminable_constr
+            x1 = x2' | _ => raise UnexpectedMatch) (@-(affines, [Affine(x1, a, x2, b)])) | _ => raise UnexpectedMatch) affines
+    val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch) eliminable_constr
   in
     if is_empty (eliminable_vars)
     then G
@@ -160,6 +165,10 @@ fun constants_propagation_step (G: system) =
 fun constants_propagation (G: system) =
   lfp constants_propagation_step G
 
+(* Remove trivial schematic timestamp of the kind [H \<Down>\<^sub>n X\<^sup>H\<^sub>n]*)
+fun no_trivial_schem_timestamp (G: system) =
+  List.filter (fn Timestamp (c, n, Schematic (c', n')) => not (c = c' andalso n = n') | _ => true) G
+
 (*
 val h0 = [
   Timestamp (Clk 1, 0, Schematic (Clk 1, 0)),
@@ -205,15 +214,17 @@ fun check_no_shared_var_affeqns (G: system) =
   end;
 
 (* check_no_shared_var_affeqns h0; *)
+(*
 val g0 = [
-  Affine (Schematic(Clk 1, 0), Int 1, Schematic(Clk 2, 0), Int 2),
-  Affine (Schematic(Clk 2, 0), Int 3, Schematic(Clk 3, 0), Int 4),
-  Affine (Schematic(Clk 3, 0), Int 5, Schematic(Clk 1, 0), Int 6)];
+  Affine (Schematic(Clk "1", 0), Int 1, Schematic(Clk "2", 0), Int 2),
+  Affine (Schematic(Clk "2", 0), Int 3, Schematic(Clk "3", 0), Int 4),
+  Affine (Schematic(Clk "3", 0), Int 5, Schematic(Clk "1", 0), Int 6)];
 val g1 = schematic_elim_step g0;
 val g2 = schematic_elim_step g1;
 val g3 = schematic_elim_step g2;
 val g4 = schematic_elim_step g3;
 val g5 = schematic_elim_step g4;
+*)
 (* check_fixpoint_equations g0; *)
 
 (* BUG: Need a predicate to know if the system is reduced to be decided *)
@@ -251,29 +262,69 @@ fun decide (G: system) : bool =
 fun SAT (G: system) : bool =
   let
     val G_prop_and_elim_until_fp =
-      lfp (fn G => constant_affine_eqns_elim (schematic_elim (constants_propagation (uniq G)))) G
+      lfp (fn G => no_trivial_schem_timestamp (constant_affine_eqns_elim (schematic_elim (constants_propagation (uniq G))))) G
   in decide G_prop_and_elim_until_fp
   end;
 
 fun context_SAT ((G, _, _, _) : TESL_ARS_conf) =
   SAT G;
 
-val gg0 = [
-  Ticks (Clk 1, 0), Timestamp (Clk 1, 0, Int 5555),
-  Timestamp (Clk 1, 0, Schematic (Clk 1, 0)), Timestamp (Clk 1, 0, Schematic (Clk 2, 0)), Affine (Schematic (Clk 1, 0), Int 1, Schematic (Clk 2, 0), Int 0),
-  Timestamp (Clk 2, 0, Schematic (Clk 2, 0)),
+fun contains x l = List.exists (fn x' => x = x') l
 
-  Timestamp (Clk 2, 1, Add (Schematic (Clk 2, 0), Int (1111))), Ticks (Clk 3, 1),
-  Timestamp (Clk 1, 1, Schematic (Clk 1, 1)), Timestamp (Clk 1, 1, Schematic (Clk 2, 1)),
-  NotTicks (Clk 1, 1)
-];
-SAT gg0;
-
-(*val gg1 = constants_propagation gg0;
-val gg2 = schematic_elim_step gg1;
-
-val gg3 = constants_propagation gg2;
-val gg4 = schematic_elim_step gg3;
-
-gg2 = gg4;
-*)
+(* Print HAA-system *)
+fun print_system (G : system) =
+  let
+    val G = (fn G => lfp (fn G => no_trivial_schem_timestamp (constant_affine_eqns_elim (schematic_elim (constants_propagation (uniq G))))) G) G
+    val clocks =
+      uniq (List.concat (List.map (fn Ticks (c, _) => [c] | NotTicks (c, _) => [c] | Timestamp (c, _, _) => [c] | Affine _ => []) G))
+    val nb_instants =
+      List.foldl
+        (fn (x, x0) => if x >= x0 then x else x0)
+        0
+        (List.concat (List.map (fn Ticks (_, n) => [n] | NotTicks (_, n) => [n] | Timestamp (_, n, _) => [n] | Affine _ => []) G))
+    val affine_constrs =
+      List.filter (fn Affine _ => true | _ => false) G
+    val nontriv_timestamps_constrs =
+      List.filter (fn Timestamp (_, _, Schematic _) => true | Timestamp (_, _, Add _) => true | _ => false) G
+    fun constrs_of_clk_instindex c n =
+      List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
+    fun string_of_tag (t : tag) = case t of
+        Int n => string_of_int n
+      | Unit  => "()"
+      | Schematic (Clk c_str, n) => "X" ^ (string_of_int n) ^ "," ^ c_str
+      | Add (t1, t2) => (string_of_tag t1) ^ " + " ^ (string_of_tag t2)
+    fun string_of_timestamp_constr c = case c of
+      Timestamp (Clk cname, n, tag) => "X" ^ string_of_int n ^ "," ^ cname ^ " = " ^ string_of_tag tag
+    fun string_of_affine_constr c = case c of
+      Affine (t1, ta, t2, tb) => (string_of_tag t1) ^ " = " ^ (string_of_tag ta) ^ " * " ^  (string_of_tag t2) ^ " + " ^ (string_of_tag tb) | _ => raise UnexpectedMatch
+    fun string_of_constrs_at_clk_instindex clk n g =
+      let
+        val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Int _ => true | Unit => true | _ => false) | _ => false) g
+        val clk_str = case clk of Clk s => s in
+      if contains (Ticks (clk, n)) g andalso List.length timestamps > 0
+      then "\226\135\145 " (* \<Up> *) ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag))
+      else
+        if contains (Ticks (clk, n)) g
+        then "\226\135\145" (* \<Up> *)
+        else
+          if contains (NotTicks (clk, n)) g
+          then "\240\159\155\135"  (* \<oslash> *)
+          else
+            if List.length timestamps > 0
+            then "  " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag))
+            else ""
+    end
+    fun print_clocks () =
+      writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
+    fun print_instant n =
+      writeln ("[" ^ string_of_int n ^ "]" ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_constrs_at_clk_instindex c n (constrs_of_clk_instindex c n)) "" clocks)
+    fun print_run k =
+      if k > nb_instants
+      then ()
+      else (print_instant k ; print_run (k + 1))
+    fun print_affine_contr () =
+      (case (affine_constrs, nontriv_timestamps_constrs) of ([], []) => () | _ =>writeln "Affine constraints and non-trivial timestamps:" ;
+      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_affine_constr c))) () affine_constrs ;
+      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_timestamp_constr c))) () nontriv_timestamps_constrs)
+  in (writeln "## Simulation result:") ; print_clocks (); print_run 1 ; print_affine_contr () ; (writeln "## End")
+end;

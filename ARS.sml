@@ -2,7 +2,10 @@
 (* 1. New instant introduction *)
 fun ARS_rule_instant_intro
   (G, n, f, []) True =
-    (G, n + 1, @- (@- (f, SelfModifyingSubs f), ConsumingSubs f), (ConsumingSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
+    (G,
+     n + 1,
+     @- (@- (f, SelfModifyingSubs f), ConsumingSubs f),
+     (ConsumingSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
   | ARS_rule_instant_intro _ _ = raise Assert_failure;
 
 (* 2. Sporadic elimination when deciding to trigger tick sporadicaly *)
@@ -47,11 +50,17 @@ fun ARS_rule_timedelayed_elim_2
     (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun @ [WhenTickingOn (c2, Add (Schematic (c2, n), dt), c3)], @- (finst, [fsubst]))
   | ARS_rule_timedelayed_elim_2 _ _ = raise Assert_failure;
 
-(* 8. When ticking elimination *)
-fun ARS_rule_whentickingon
+(* 8. When ticking elimination with merge *)
+fun ARS_rule_whentickingon_1
   (G, n, frun, finst) (fsubst as WhenTickingOn (c1, tag, c2)) =
-    (G @ [Timestamp (c1, n, tag), Ticks (c2, n)], n, @- (frun, [fsubst]), finst)
-  | ARS_rule_whentickingon _ _ = raise Assert_failure;
+    (G @ [Timestamp (c1, n, tag), Ticks (c2, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_whentickingon_1 _ _ = raise Assert_failure;
+
+(* 8 Bis. When ticking elimination postponed *)
+fun ARS_rule_whentickingon_2
+  (G, n, frun, finst) (fsubst as WhenTickingOn _) =
+    (G, n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_whentickingon_2 _ _ = raise Assert_failure;
 
 (* 9. Filtered update when false premise *)
 fun ARS_rule_filtered_false
@@ -198,6 +207,41 @@ fun ARS_rule_await_fire
       @- (finst, [fsubst])) end
   | ARS_rule_await_fire _ _ = raise Assert_failure;
 
+(* 28. When-clock implication when premise master clock is false *)
+fun ARS_rule_whenclock_implies_1
+  (G, n, frun, finst) (fsubst as WhenClock (cmaster, _, _)) =
+    (G @ [NotTicks (cmaster, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_whenclock_implies_1 _ _ = raise Assert_failure;
+
+(* 29. When-clock implication when premise sampling clock is false*)
+fun ARS_rule_whenclock_implies_2
+  (G, n, frun, finst) (fsubst as WhenClock (_, csampl, _)) =
+    (G @ [NotTicks (csampl, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_whenclock_implies_2 _ _ = raise Assert_failure;
+
+(* 30. When-clock implication when premise and conclusion clocks are true *)
+fun ARS_rule_whenclock_implies_3
+  (G, n, frun, finst) (fsubst as WhenClock (cmaster, csampl, cslave)) =
+    (G @ [Ticks (cmaster, n), Ticks (csampl, n), Ticks (cslave, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_whenclock_implies_3 _ _ = raise Assert_failure;
+
+(* 31. When-clock implication when premise master clock is false *)
+fun ARS_rule_whennotclock_implies_1
+  (G, n, frun, finst) (fsubst as WhenNotClock (cmaster, _, _)) =
+    (G @ [NotTicks (cmaster, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_whennotclock_implies_1 _ _ = raise Assert_failure;
+
+(* 32. When-clock implication when premise clocks are true *)
+fun ARS_rule_whennotclock_implies_2
+  (G, n, frun, finst) (fsubst as WhenNotClock (cmaster, csampl, _)) =
+    (G @ [Ticks (cmaster, n), Ticks (csampl, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_whennotclock_implies_2 _ _ = raise Assert_failure;
+
+(* 33. When-clock implication when premise and conclusion clocks are true *)
+fun ARS_rule_whennotclock_implies_3
+  (G, n, frun, finst) (fsubst as WhenNotClock (cmaster, csampl, cslave)) =
+    (G @ [Ticks (cmaster, n), NotTicks (csampl, n), Ticks (cslave, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_whennotclock_implies_3 _ _ = raise Assert_failure;
 
 (* Returns all combination of systems where at least one clock in [Hstill] is not ticking for the case of await update rule *)
 (*
@@ -223,20 +267,22 @@ fun await_still_combine (Hstill : clock list) (Himplied : clock) (i : instant_in
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
    the least fixed-point.
 *)
-fun lawyer
-  ((_, _, frun, finst) : TESL_ARS_conf)
+fun lawyer_i
+  ((_, _, _, finst) : TESL_ARS_conf)
   : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
-  if         (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) frun) = 0)      (* No pending sporadics *)
-     andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0) (* No pending whenticking *)
-     andalso (List.length finst = 0)                                                                               (* No pending red formulae *)
-  then []
-  else
+  if finst = [] (* No pending red formulae *)
+  then [(True, ARS_rule_instant_intro)]
+  else []
+
+fun lawyer_e
+  ((_, _, _, finst) : TESL_ARS_conf)
+  : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
     if finst = []
-    then [(True, ARS_rule_instant_intro)]
+    then []
     else (* Case where we need to do some paperwork *)
       let
         val spors = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) finst)
-        val whentickings = (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun)
+        val whentickings = (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) finst)
         val red_tagrelations = (List.filter (fn fatom => case fatom of TagRelation _ => true | _ => false) finst)
         val red_implies = (List.filter (fn fatom => case fatom of Implies _ => true | _ => false) finst)
         val red_timedelayeds = (List.filter (fn fatom => case fatom of TimeDelayedBy _ => true | _ => false) finst)
@@ -260,6 +306,9 @@ fun lawyer
         val red_await_rem_noinst   = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => not (is_empty Hrem) andalso is_empty Hinst | _ => false) red_await)
         val red_await_rem_inst     = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => not (is_empty Hrem) andalso not (is_empty Hinst) | _ => false) red_await)
 
+        val red_whenclock = (List.filter (fn fatom => case fatom of WhenClock _ => true | _ => false) finst)
+        val red_whennotclock = (List.filter (fn fatom => case fatom of WhenNotClock _ => true | _ => false) finst)
+
       in   (List.map (fn fatom => (fatom, ARS_rule_sporadic_1)) spors)
          @ (List.map (fn fatom => (fatom, ARS_rule_sporadic_2)) spors)
          @ (List.map (fn fatom => (fatom, ARS_rule_implies_1)) red_implies)
@@ -267,7 +316,8 @@ fun lawyer
          @ (List.map (fn fatom => (fatom, ARS_rule_tagrel_elim)) red_tagrelations)
          @ (List.map (fn fatom => (fatom, ARS_rule_timedelayed_elim_1)) red_timedelayeds)
          @ (List.map (fn fatom => (fatom, ARS_rule_timedelayed_elim_2)) red_timedelayeds)
-         @ (List.map (fn fatom => (fatom, ARS_rule_whentickingon)) whentickings)
+         @ (List.map (fn fatom => (fatom, ARS_rule_whentickingon_1)) whentickings)
+         @ (List.map (fn fatom => (fatom, ARS_rule_whentickingon_2)) whentickings)
 
          @ (List.map (fn fatom => (fatom, ARS_rule_filtered_false)) red_filtereds)
          @ (List.map (fn fatom => (fatom, ARS_rule_filtered_update_1)) red_filtereds_nonneg_s_k)
@@ -295,53 +345,135 @@ fun lawyer
          @ (List.map (fn fatom => (fatom, ARS_rule_await_next_instant)) red_await_rem_noinst)
          @ (List.map (fn fatom => (fatom, ARS_rule_await_fire)) red_await_norem_noinst)
 
+         @ (List.map (fn fatom => (fatom, ARS_rule_whenclock_implies_1)) red_whenclock)
+         @ (List.map (fn fatom => (fatom, ARS_rule_whenclock_implies_2)) red_whenclock)
+         @ (List.map (fn fatom => (fatom, ARS_rule_whenclock_implies_3)) red_whenclock)
+
+         @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_1)) red_whennotclock)
+         @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_2)) red_whennotclock)
+         @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_3)) red_whennotclock)
       end;
 
-(* The adventurer now explores all paths, cuts those which are halfway inconsistent, and remains at the same spot if no successor exists *)
-fun shy_adventurer_step (c : TESL_ARS_conf) : TESL_ARS_conf list =
-  let val choices = lawyer c in
+fun shy_adventurer_step_i (c : TESL_ARS_conf) : TESL_ARS_conf list =
+  let val choices = lawyer_i c in
   case choices of
       [] => [c]
     | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
   end
 
-fun adventurer_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  cfl_uniq (List.concat (List.map (shy_adventurer_step) cfs))
+fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
+  let val choices = lawyer_e c in
+  case choices of
+      [] => [c]
+    | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
+  end
 
-(* Filters all configurations which are in TESL-normal form and whose Presburger-context is SAT. This indicates the adventurer which
-   branches that do not require to be further explored as normal form is reached and consistency is checked. *)
-fun normal_forms (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  List.filter (fn c => is_empty (lawyer c)) cfs;
+fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  if (List.all (fn (_, _, _, psi) => psi = []) cfs)
+  then cfs
+  else psi_reduce (cfl_uniq (List.concat (List.map (shy_adventurer_step_e) cfs)))
 
-(* Computes the abstract least fixpoint [abs_lfp] of a functional [ff] starting at [x] until [p] is satified on
-   abstract object [abs_lfp]*)
-fun lfp_pred_abs (ff: ''a -> ''a) (x: ''a) (abs : ''a -> ''a) (p: ''a -> bool) : ''a =
-  let val x' = ff x in
-  (if (abs x) = (abs x') andalso (p (abs x)) then (abs x) else lfp_pred_abs (ff) x' (abs) p) end;
+fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  let val introduced_cfs = cfl_uniq (List.concat (List.map (shy_adventurer_step_i) cfs)) in
+  psi_reduce introduced_cfs
+  end
 
-(* Computes the least normal forms that can be derived from configuration [c0]. Stops when at least one is found. *)
+exception Maxstep_reached   of TESL_ARS_conf list;
+exception Stopclock_reached of TESL_ARS_conf list;
+exception Model_found       of TESL_ARS_conf list;
+
+(* Solves the specification until reaching a satisfying finite model *)
+(* If [maxstep] is -1, then the simulation will be unbounded *)
 fun exec
-  (c : TESL_ARS_conf)
+  (cfs : TESL_ARS_conf list)
+  (minstep     : int,
+   maxstep     : int,
+   heuristic   : (TESL_ARS_conf list -> TESL_ARS_conf list) option)
   : TESL_ARS_conf list =
-  lfp_pred_abs (adventurer_step) [c] (normal_forms) (fn abs_cfs => not (is_empty abs_cfs)) ;
-
-(* Warning: A simulation step is different from a reduction step. A simulation step is the transitive-closure of reductions syntactically
-   matching empty TESL instant formulae. *)
-
-(* Same as above but stops at most with after [max] execution steps *)
-fun exec_maxstep (c: TESL_ARS_conf) (max: int) : TESL_ARS_conf list =
   let
-    fun lfp_pred_abs_maxstep (ff: ''a -> ''a) (x: ''a) (abs : ''a -> ''a) (p: ''a -> bool) (cnt: int) : ''a =
-      let val x' = ff x in
-      (if cnt >= max orelse ((abs x) = (abs x') andalso (p (abs x))) then (abs x) else lfp_pred_abs_maxstep (ff) x' (abs) p (cnt + 1)) end
-  in lfp_pred_abs_maxstep (adventurer_step) [c] (normal_forms) (fn abs_cfs => not (is_empty abs_cfs)) 0
-end;
+    val () = writeln "Solving simulation..."
+    val () = writeln ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
+    val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
+ (* val () = writeln ("Stop clock: " ^ (case stop_clocks of [] => "null" | _ => List.foldr (fn (Clk name, outs) => name ^ ", " ^ outs) "" stop_clocks)) *)
+    val () = writeln ("Heuristic: " ^ (case heuristic of NONE => "no (full counterfactual exploration)" | SOME _ => "yes"))
+    (* MAIN SIMULATION LOOP *)
+    fun aux cfs k start_time =
+      let
+        (* STOPS WHEN FINITE MODEL FOUND *)
+        val () =
+          let val cfs_sat = List.filter (fn (_, _, frun, _) =>
+            (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) frun) = 0)               (* No pending sporadics *)
+            andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0) (* No pending whenticking *)
+            andalso (minstep < k)                                                                                            (* Minstep has already been reached *)
+            ) cfs in
+          if List.length cfs_sat > 0
+          then (writeln ("Stopping simulation when finite model found") ;
+                writeln "### End of simulation ###";
+                writeln ("### Solver has returned " ^ string_of_int (List.length cfs_sat) ^ " models");
+                raise Model_found cfs_sat)
+          else () end
+        (* STOPS WHEN MAXSTEP REACHED *)
+        val () =
+          if (k = maxstep + 1)
+          then (writeln ("Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
+                writeln "### End of simulation ###";
+                writeln ("## Solver has returned " ^ string_of_int (List.length cfs) ^ " pre-models (partially satisfying and potentially future-spurious models)\n");
+                raise Maxstep_reached cfs)
+          else ()
+        (* STOPS WHEN SOME STOP CLOCKS TICKS *)
+        (*
+        val () =
+          if false (** TODO : not implemented yet *)
+          then (writeln ("Stopping simulation when a stop clock has fired as requested\n### End of simulation ###\n") ; raise Stopclock_reached cfs)
+          else ()
+        *)
+        in let
+          (* INSTANT SOLVING *)
+          val () = writeln ("##### Solve [" ^ string_of_int k ^ "] #####")
+          val cfs' = exec_step cfs
+          val end_time = Time.now()
+          val cfs_selected_by_heuristic = (case heuristic of NONE => (fn x => x) | SOME h => h) cfs'
+          val () = writeln ("--> Consistent pre-models: " ^ string_of_int (List.length cfs_selected_by_heuristic))
+          val () = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec") in
+        aux (cfs_selected_by_heuristic) (k + 1) end_time end
+        handle Maxstep_reached   cfs => (List.foldl (fn ((G, _, _, _), _) => print_system G) () cfs ; cfs)
+              | Model_found       cfs => (List.foldl (fn ((G, _, _, _), _) => print_system G) () cfs ; cfs)
+              | Stopclock_reached cfs => cfs
+      end
+  in aux cfs 1 (Time.now()) end
 
-(* Same as above but stops at least with [min] execution steps *)
-fun exec_minstep (c: TESL_ARS_conf) (min: int) : TESL_ARS_conf list =
+(* Main solver function *)
+fun solve
+  (spec : TESL_formula)
+  (param : int * int * (TESL_ARS_conf list -> TESL_ARS_conf list) option)
+  : TESL_ARS_conf list =
+  exec [([], 0, spec, [])] param
+
+(* The heuristic is supposed to restrict the universe by choosing configurations that are relevant for simulation *)
+fun heuristic_minsporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    fun lfp_pred_abs_maxstep (ff: ''a -> ''a) (x: ''a) (abs : ''a -> ''a) (p: ''a -> bool) (cnt: int) : ''a =
-      let val x' = ff x in
-      (if cnt >= min andalso ((abs x) = (abs x') andalso (p (abs x))) then (abs x) else lfp_pred_abs_maxstep (ff) x' (abs) p (cnt + 1)) end
-  in lfp_pred_abs_maxstep (adventurer_step) [c] (normal_forms) (fn abs_cfs => not (is_empty abs_cfs)) 0
-end;
+    fun min_pending_spor (cfs : TESL_ARS_conf list) : int =
+    let
+      val cfs_with_spor = List.filter (fn (_, _, frun, _) => List.exists (fn Sporadic _ => true | _ => false) frun) cfs
+      val selected_cfs_min_start = case (List.nth (cfs_with_spor, 0)) of (_, _, frunsel, _) =>
+        List.length (List.filter (fn Sporadic _ => true | _ => false) frunsel) in
+    List.foldl (fn ((_, _, frun, _), n) =>
+      let val nb_spor = List.length (List.filter (fn Sporadic _ => true | _ => false) frun) in
+      if nb_spor >= n then n else nb_spor end) selected_cfs_min_start cfs_with_spor end
+    val min_spor = min_pending_spor cfs
+  in List.filter
+      (fn (_, _, frun, _) => (List.length (List.filter (fn Sporadic _ => true | _ => false) frun)) <= min_spor + 1) (* TWEAK PARAMETER *)
+      cfs end
+
+(*
+val spec6 : TESL_formula = [
+  Sporadic (Clk "m1", Int 1),
+  Sporadic (Clk "m1", Int 3),
+  Sporadic (Clk "m2", Int 2),
+  Sporadic (Clk "m2", Int 3),
+  TagRelation (Clk "m1", Int 1, Clk "m2", Int 0),
+  Await ([Clk "m1", Clk "m2"], [Clk "m1", Clk "m2"], [Clk "m1", Clk "m2"], Clk "slave")];
+(*  val spec6_lim = solve spec6 default; *)
+  val spec6_lim = solve spec6 (~1, 1, NONE);
+  val sp6_h = heuristic_minsporadic spec6_lim;
+*)
