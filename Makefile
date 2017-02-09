@@ -1,7 +1,7 @@
-run_poly:
-	./contrib/polybuild tesl-symx.mlb
+run:
+	mlton tesl-symx.mlb
 	./tesl-symx
 
-run_mlton:
-	mlton tesl-symx.mlb
+run_polyml:
+	./contrib/sml-buildscripts/polybuild tesl-symx.mlb
 	./tesl-symx

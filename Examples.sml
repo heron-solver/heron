@@ -100,10 +100,10 @@ val spec7 : TESL_formula = [
   Implies (Clk "m1", Clk "slave"),
   Implies (Clk "m1", Clk "slave")
 ];
- val spec7_lim = solve spec7 (~1, ~1, SOME heuristic_minsporadic); 
-(*
+(* val spec7_lim = solve spec7 (~1, ~1, SOME heuristic_minsporadic); *)
+
  val spec7_lim = solve spec7 default; 
-*)
+
 
 (* Example of filtered-by with "hole" in master clock *)
 val spec8 : TESL_formula = [
