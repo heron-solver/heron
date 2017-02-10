@@ -1,11 +1,11 @@
-(* Rules used for reduction *)
+(** Rules used for reduction *)
 (* 1. New instant introduction *)
 fun ARS_rule_instant_intro
   (G, n, f, []) True =
     (G,
      n + 1,
-     @- (@- (f, SelfModifyingSubs f), ConsumingSubs f),
-     (ConsumingSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
+     @- (@- (@- (f, SelfModifyingSubs f), ConsumingSubs f), SporadicNowSubs f),
+     (ConsumingSubs f) @ (SporadicNowSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
   | ARS_rule_instant_intro _ _ = raise Assert_failure;
 
 (* 2. Sporadic elimination when deciding to trigger tick sporadicaly *)
@@ -243,25 +243,6 @@ fun ARS_rule_whennotclock_implies_3
     (G @ [Ticks (cmaster, n), NotTicks (csampl, n), Ticks (cslave, n)], n, frun, @- (finst, [fsubst]))
   | ARS_rule_whennotclock_implies_3 _ _ = raise Assert_failure;
 
-(* Returns all combination of systems where at least one clock in [Hstill] is not ticking for the case of await update rule *)
-(*
-fun await_still_combine (Hstill : clock list) (Himplied : clock) (i : instant_index) : system list =
-  (assert (not (is_empty Hstill));
-  let
-    fun choice_combine Hstill = case Hstill of
-        []           => raise Assert_failure
-      | [h]          => [[Ticks (h, i)], [NotTicks (h, i)]]
-      | h :: Hstill' => let
-        val choice_combined = choice_combine Hstill'
-        in List.map (fn G => (Ticks (h, i)) :: G) choice_combined
-         @ List.map (fn G => (NotTicks (h, i)) :: G) choice_combined
-        end
-  in List.map
-    (fn G => NotTicks (Himplied, i) :: G)
-    (@-- ((choice_combine Hstill), [List.map (fn clk => Ticks (clk, i)) Hstill]))
-  end);
-*)
-
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
@@ -281,7 +262,12 @@ fun lawyer_e
     then []
     else (* Case where we need to do some paperwork *)
       let
+        (* We need to decompose here the sporadics in order to avoid space explosion *)
         val spors = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) finst)
+(*
+        val spors_asap = earliest_sporadics spors
+        val spors_later = @- (spors, spors_asap)
+*)      
         val whentickings = (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) finst)
         val red_tagrelations = (List.filter (fn fatom => case fatom of TagRelation _ => true | _ => false) finst)
         val red_implies = (List.filter (fn fatom => case fatom of Implies _ => true | _ => false) finst)
@@ -382,6 +368,66 @@ exception Maxstep_reached   of TESL_ARS_conf list;
 exception Stopclock_reached of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
 
+(* Print HAA-system *)
+fun print_system (G : system) =
+  let
+    val G = lfp (reduce) G
+    val clocks =
+      uniq (List.concat (List.map (fn Ticks (c, _) => [c] | NotTicks (c, _) => [c] | Timestamp (c, _, _) => [c] | Affine _ => []) G))
+    val nb_instants =
+      List.foldl
+        (fn (x, x0) => if x >= x0 then x else x0)
+        0
+        (List.concat (List.map (fn Ticks (_, n) => [n] | NotTicks (_, n) => [n] | Timestamp (_, n, _) => [n] | Affine _ => []) G))
+    val affine_constrs =
+      List.filter (fn Affine _ => true | _ => false) G
+    val nontriv_timestamps_constrs =
+      List.filter (fn Timestamp (_, _, Schematic _) => true | Timestamp (_, _, Add _) => true | _ => false) G
+    fun constrs_of_clk_instindex c n =
+      List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
+    fun string_of_tag (t : tag) = case t of
+        Int n => string_of_int n
+      | Unit  => "()"
+      | Schematic (Clk c_str, n) => "X\226\135\167" ^ (string_of_int n) ^ "\226\135\169" ^ c_str
+      | Add (t1, t2) => (string_of_tag t1) ^ " + " ^ (string_of_tag t2)
+    fun string_of_timestamp_constr c = case c of
+      Timestamp (Clk cname, n, tag) => "X\226\135\167" ^ string_of_int n ^ "\226\135\169" ^ cname ^ " = " ^ string_of_tag tag
+    | _ => raise UnexpectedMatch
+    fun string_of_affine_constr c = case c of
+      Affine (t1, ta, t2, tb) => (string_of_tag t1) ^ " = " ^ (string_of_tag ta) ^ " * " ^  (string_of_tag t2) ^ " + " ^ (string_of_tag tb) | _ => raise UnexpectedMatch
+    fun string_of_constrs_at_clk_instindex clk n g =
+      let
+        val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Int _ => true | Unit => true | _ => false) | _ => false) g
+      in
+      if contains (Ticks (clk, n)) g andalso List.length timestamps > 0
+      then "\226\135\145 " (* \<Up> *) ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
+      else
+        if contains (Ticks (clk, n)) g
+        then "\226\135\145" (* \<Up> *)
+        else
+          if contains (NotTicks (clk, n)) g
+          then "\226\138\152"  (* \<oslash> *)
+          else
+            if List.length timestamps > 0
+            then "  " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
+            else ""
+    end
+    fun print_clocks () =
+      writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
+    fun print_instant n =
+      writeln ("[" ^ string_of_int n ^ "]" ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_constrs_at_clk_instindex c n (constrs_of_clk_instindex c n)) "" clocks)
+    fun print_run k =
+      if k > nb_instants
+      then ()
+      else (print_instant k ; print_run (k + 1))
+    fun print_affine_contr () =
+      (case (affine_constrs, nontriv_timestamps_constrs) of ([], []) => () | _ =>writeln "Affine constraints and non-trivial timestamps:" ;
+      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_affine_constr c))) () affine_constrs ;
+      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_timestamp_constr c))) () nontriv_timestamps_constrs)
+  in (writeln "## Simulation result:") ; print_clocks (); print_run 1 ; print_affine_contr () ; (writeln "## End")
+end;
+
+
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
 fun exec
@@ -394,7 +440,6 @@ fun exec
     val () = writeln "Solving simulation..."
     val () = writeln ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
     val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
- (* val () = writeln ("Stop clock: " ^ (case stop_clocks of [] => "null" | _ => List.foldr (fn (Clk name, outs) => name ^ ", " ^ outs) "" stop_clocks)) *)
     val () = writeln ("Heuristic: " ^ (case heuristic of NONE => "no (full counterfactual exploration)" | SOME _ => "yes"))
     (* MAIN SIMULATION LOOP *)
     fun aux cfs k start_time =
@@ -402,9 +447,12 @@ fun exec
         (* STOPS WHEN FINITE MODEL FOUND *)
         val () =
           let val cfs_sat = List.filter (fn (_, _, frun, _) =>
-            (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) frun) = 0)               (* No pending sporadics *)
-            andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0) (* No pending whenticking *)
-            andalso (minstep < k)                                                                                            (* Minstep has already been reached *)
+            (* Stop condition 1. No pending sporadics *)
+            (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) frun) = 0)
+            (* Stop condition 2. No pending whenticking *)
+            andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0)
+            (* Stop condition 3. Minstep has already been reached *)
+            andalso (minstep < k)
             ) cfs in
           if List.length cfs_sat > 0
           then (writeln ("Stopping simulation when finite model found") ;
@@ -420,13 +468,6 @@ fun exec
                 writeln ("## Solver has returned " ^ string_of_int (List.length cfs) ^ " pre-models (partially satisfying and potentially future-spurious models)\n");
                 raise Maxstep_reached cfs)
           else ()
-        (* STOPS WHEN SOME STOP CLOCKS TICKS *)
-        (*
-        val () =
-          if false (** TODO : not implemented yet *)
-          then (writeln ("Stopping simulation when a stop clock has fired as requested\n### End of simulation ###\n") ; raise Stopclock_reached cfs)
-          else ()
-        *)
         in let
           (* INSTANT SOLVING *)
           val () = writeln ("##### Solve [" ^ string_of_int k ^ "] #####")
@@ -449,7 +490,8 @@ fun solve
   : TESL_ARS_conf list =
   exec [([], 0, spec, [])] param
 
-(* The heuristic is supposed to restrict the universe by choosing configurations that are relevant for simulation *)
+(* Heuristic 1. The heuristic is supposed to restrict the universe by choosing configurations that are relevant for simulation *)
+(* UNSAFE *)
 fun heuristic_minsporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
     fun min_pending_spor (cfs : TESL_ARS_conf list) : int =
@@ -465,15 +507,12 @@ fun heuristic_minsporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
       (fn (_, _, frun, _) => (List.length (List.filter (fn Sporadic _ => true | _ => false) frun)) <= min_spor + 1) (* TWEAK PARAMETER *)
       cfs end
 
-(*
-val spec6 : TESL_formula = [
-  Sporadic (Clk "m1", Int 1),
-  Sporadic (Clk "m1", Int 3),
-  Sporadic (Clk "m2", Int 2),
-  Sporadic (Clk "m2", Int 3),
-  TagRelation (Clk "m1", Int 1, Clk "m2", Int 0),
-  Await ([Clk "m1", Clk "m2"], [Clk "m1", Clk "m2"], [Clk "m1", Clk "m2"], Clk "slave")];
-(*  val spec6_lim = solve spec6 default; *)
-  val spec6_lim = solve spec6 (~1, 1, NONE);
-  val sp6_h = heuristic_minsporadic spec6_lim;
-*)
+(* Heuristic 2. Given a clock, if a sporadic was chosen to be merged, then it must be the smallest in the specification.
+   Otherwise it will eventually lead to inconsistencies *)
+fun heuristic_monotonic_sporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  List.filter
+    (fn (G, _, phi, _) =>
+      let val G = reduce G in
+      List.all (fn Sporadic (clk, Int n1) => (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
+                  | _ => true) phi end)
+    cfs;

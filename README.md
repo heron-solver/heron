@@ -5,6 +5,8 @@ Heron
 
 This prototype solves specifications given in TESL by exploring full counterfactual facts. In particular, it returns classes of runs modulo non-interfering external components. Such classes are modeled in Horn-style Affine Arithmetic, for which we embed a decision procedure.
 
+The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first century Greek mathematician and engineer.
+
 Example
 -------------------
 ```

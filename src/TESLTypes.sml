@@ -1,6 +1,23 @@
+(* WARNING *)
+(* COMMENT THE FOLLOWING LINE IF YOU WISH TO USE Isabelle/jEdit IDE *)
+fun writeln s = print (s ^ "\n")
+fun string_of_int n = Int.toString n
+(* **************************************************************** *)
+
+(* To easily read the code, you can remove the following string but warnings will appear:
+ | _ => raise UnexpectedMatch
+*)
+exception UnexpectedMatch
 exception Assert_failure;
 datatype clock = Clk of string;
 type instant_index = int;
+
+(* Returns the sublist of [l1] without occurences of elements of [l2] *)
+fun op @- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => e1 <> e2) l2) l1;
+fun is_empty l = case l of [] => true | _ => false
+fun contains x l = List.exists (fn x' => x = x') l
+
+val compose = fn (f, g) => fn x => f(g x)
 
 fun assert b =
   if b then b else raise Assert_failure
@@ -46,10 +63,33 @@ fun ConstantlySubs f = List.filter (fn f' => case f' of
   | WhenNotClock _ => true
   | _             => false) f
 fun ConsumingSubs f = List.filter (fn f' => case f' of
-    Sporadic _       => true
-  | WhenTickingOn _  => true
+(*  Sporadic _       => true *) (* Removed as handled seperately in SporadicSubs *)
+    WhenTickingOn _  => true
   | TimesImpliesOn _ => true
   | _                => false) f
+
+(* Returns sporadic formulae that are relevant to get instantaneously reduced *)
+(* This tweak is necessary to avoid the state space explosion problem *)
+fun SporadicNowSubs (f : TESL_atomic list) : TESL_atomic list =
+  let
+    val sporadics = List.filter (fn Sporadic _ => true | _ => false) f
+    fun earliest_sporadics (spors : TESL_atomic list) : TESL_atomic list =
+      let
+      fun aux spors kept = case spors of
+        [] => kept
+      (* Keep the smallest, otherwise add if not exists *)
+      | Sporadic (clk, Int i) :: spors' => (case List.find (fn Sporadic (clk', _) => clk = clk' | _ => raise UnexpectedMatch) kept of
+          NONE => aux spors' (Sporadic (clk, Int i) :: kept)
+        | SOME (Sporadic (clk', Int i')) =>
+          if i < i'
+          then aux spors' (Sporadic (clk, Int i) :: (@- (kept, [Sporadic (clk', Int i')])))
+          else aux spors' kept
+        | _ => raise UnexpectedMatch
+        )
+      | _ => raise UnexpectedMatch
+    in aux spors [] end
+  in earliest_sporadics sporadics end
+
 fun ReproductiveSubs f = List.filter (fn f' => case f' of
     DelayedBy _     => true
   | TimeDelayedBy _ => true
@@ -78,6 +118,7 @@ fun op ::<= (tag, tag') = case (tag, tag') of
 fun op @== (l1, l2) =
            List.all (fn e1 => List.exists (fn e2 => e1 = e2) l2) l1
   andalso List.all (fn e2 => List.exists (fn e1 => e1 = e2) l1) l2
+fun op @-- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => not (@== (e1, e2))) l2) l1;
 
 
 (* Decides if two configurations are structurally equivalent *)
@@ -86,11 +127,6 @@ fun cfs_eq ((G1, s1, phi1, psi1) : TESL_ARS_conf) ((G2, s2, phi2, psi2) : TESL_A
   andalso s1 = s2
   andalso @== (phi1, phi2)
   andalso @== (psi1, psi2)
-
-(* Returns the sublist of [l1] without occurences of elements of [l2] *)
-fun op @- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => e1 <> e2) l2) l1;
-fun op @-- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => not (@== (e1, e2))) l2) l1;
-fun is_empty l = case l of [] => true | _ => false
 
 (* Computes the least fixpoint of a functional [ff] starting at [x] *)
 fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
@@ -120,6 +156,3 @@ fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
   in List.rev (aux cfl [])
   end
 
-(* UNCOMMENT THE FOLLOWING LINE IF YOU WISH TO USE Isabelle/jEdit IDE *)
-fun writeln s = print (s ^ "\n")
-fun string_of_int n = Int.toString n
