@@ -72,7 +72,8 @@ fun check_type_consistency (G: system) =
       | Timestamp (_, _, Unit) => true
       | _           => false) G)
   in List.all
-      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk') orelse ::~ (tag, tag')) timestamps | _ => raise UnexpectedMatch)
+      (fn Timestamp (clk, _, tag) =>
+          List.all (fn Timestamp (clk', _, tag') => not (clk = clk') orelse ::~ (tag, tag') | _ => raise UnexpectedMatch) timestamps | _ => raise UnexpectedMatch)
       timestamps
   end;
 
@@ -98,7 +99,7 @@ fun schematic_elim_step (G: system) =
     val eliminable_constr =
       List.filter (fn
         Affine (x1, a, x2, b) => List.exists (fn
-          Affine (x1', a', x2', b') =>
+          Affine (_, _, x2', _) =>
             x1 = x2' | _ => raise UnexpectedMatch) (@-(affines, [Affine(x1, a, x2, b)])) | _ => raise UnexpectedMatch) affines
     val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch) eliminable_constr
   in
@@ -137,16 +138,19 @@ fun constants_propagation_candidates (G: system) =
         Timestamp (clk', k', Int i) => (
           if clk = clk' andalso k = k'
           then [(Schematic (clk, k), Int i)]
-          else [])) timestamp_cst_right)) timestamp_var_right))
+          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) timestamp_var_right))
     val affine_var_left = List.filter (fn cstr => case cstr of Affine (Schematic _, Int _, Int _, Int _) => true | _ => false) G
     val affine_cst_left = List.filter (fn cstr => case cstr of Affine (Int _, Int _, Schematic _, Int _) => true | _ => false) G
     val affine_left_unifiers =
-      List.map (fn Affine (Schematic (clk, k), Int a, Int i, Int b) => (Schematic (clk, k), Int (a * i + b))) affine_var_left
+      List.map
+        (fn Affine (Schematic (clk, k), Int a, Int i, Int b) => (Schematic (clk, k), Int (a * i + b))  | _ => raise UnexpectedMatch)
+        affine_var_left
     val affine_right_unifiers =
       List.concat (List.map (fn Affine (Int i, Int a, X as Schematic _, Int b) =>
         if (i - b) mod a = 0
         then [(X, Int ((i - b) div a))]
         else []
+         | _ => raise UnexpectedMatch
         ) affine_cst_left)
     val affine_fixpoint_var = List.filter (fn cstr => case cstr of Affine (X1 as Schematic _, Int _, X2 as Schematic _, Int _) => X1 = X2 | _ => false) G
     val affine_fixpoint_unifiers =
@@ -154,6 +158,7 @@ fun constants_propagation_candidates (G: system) =
         if b mod (1 - a) = 0
         then [(X, Int (b div (1 - a)))]
         else []
+         | _ => raise UnexpectedMatch
         ) affine_fixpoint_var)
   in
     timestamp_unifiers @ affine_left_unifiers @ affine_right_unifiers @ affine_fixpoint_unifiers
@@ -291,27 +296,28 @@ fun print_system (G : system) =
     fun string_of_tag (t : tag) = case t of
         Int n => string_of_int n
       | Unit  => "()"
-      | Schematic (Clk c_str, n) => "X" ^ (string_of_int n) ^ "," ^ c_str
+      | Schematic (Clk c_str, n) => "X\226\135\167" ^ (string_of_int n) ^ "\226\135\169" ^ c_str
       | Add (t1, t2) => (string_of_tag t1) ^ " + " ^ (string_of_tag t2)
     fun string_of_timestamp_constr c = case c of
-      Timestamp (Clk cname, n, tag) => "X" ^ string_of_int n ^ "," ^ cname ^ " = " ^ string_of_tag tag
+      Timestamp (Clk cname, n, tag) => "X\226\135\167" ^ string_of_int n ^ "\226\135\169" ^ cname ^ " = " ^ string_of_tag tag
+    | _ => raise UnexpectedMatch
     fun string_of_affine_constr c = case c of
       Affine (t1, ta, t2, tb) => (string_of_tag t1) ^ " = " ^ (string_of_tag ta) ^ " * " ^  (string_of_tag t2) ^ " + " ^ (string_of_tag tb) | _ => raise UnexpectedMatch
     fun string_of_constrs_at_clk_instindex clk n g =
       let
         val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Int _ => true | Unit => true | _ => false) | _ => false) g
-        val clk_str = case clk of Clk s => s in
+      in
       if contains (Ticks (clk, n)) g andalso List.length timestamps > 0
-      then "\226\135\145 " (* \<Up> *) ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag))
+      then "\226\135\145 " (* \<Up> *) ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
       else
         if contains (Ticks (clk, n)) g
         then "\226\135\145" (* \<Up> *)
         else
           if contains (NotTicks (clk, n)) g
-          then "\240\159\155\135"  (* \<oslash> *)
+          then "\226\138\152"  (* \<oslash> *)
           else
             if List.length timestamps > 0
-            then "  " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag))
+            then "  " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
             else ""
     end
     fun print_clocks () =

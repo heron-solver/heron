@@ -17,7 +17,7 @@ val spec0 : TESL_formula = [
 Sporadic (Clk "master", Int 1),
 Sporadic (Clk "master", Int 2),
 Implies (Clk "master", Clk "slave")];
-(* val spec0_lim = solve spec0] (~1, ~1, SOME heuristic_minsporadic); *)
+val spec0_lim = solve spec0 (~1, ~1, SOME heuristic_minsporadic); 
 
 (* --- Example 2 ---
    Z-clock master sporadic 1
@@ -101,8 +101,7 @@ val spec7 : TESL_formula = [
   Implies (Clk "m1", Clk "slave")
 ];
 (* val spec7_lim = solve spec7 (~1, ~1, SOME heuristic_minsporadic); *)
-
- val spec7_lim = solve spec7 default; 
+(* val spec7_lim = solve spec7 default; *)
 
 
 (* Example of filtered-by with "hole" in master clock *)
@@ -149,8 +148,7 @@ val spec11 : TESL_formula = [
   TagRelation (Clk "master", Int 1, Clk "sampl", Int 0),
   WhenNotClock (Clk "master", Clk "sampl", Clk "sampl")
 ];
-(* val spec11_lim = solve spec11 (~1, ~1, NONE); *)
+(* val spec11_lim = solve spec11 (7, ~1, SOME heuristic_minsporadic); *)
 
- 
-fun main () =
-  ()
+
+fun main () = ()

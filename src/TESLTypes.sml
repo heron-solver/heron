@@ -120,5 +120,6 @@ fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
   in List.rev (aux cfl [])
   end
 
+(* UNCOMMENT THE FOLLOWING LINE IF YOU WISH TO USE Isabelle/jEdit IDE *)
 fun writeln s = print (s ^ "\n")
 fun string_of_int n = Int.toString n

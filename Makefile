@@ -1,7 +1,8 @@
 run:
-	mlton tesl-symx.mlb
-	./tesl-symx
+	mlton -output heron src/heron.mlb
+	./heron
 
 run_polyml:
-	./contrib/sml-buildscripts/polybuild tesl-symx.mlb
-	./tesl-symx
+	./contrib/sml-buildscripts/polybuild src/heron.mlb
+	mv src/heron .
+	./heron
