@@ -262,7 +262,12 @@ fun lawyer_e
     then []
     else (* Case where we need to do some paperwork *)
       let
-        (* We need to decompose here the sporadics in order to avoid space explosion *)
+	 (* Major tweak. Due to the orthogonality property of instantaneous solve reduction rules, the order of application of
+	    elimination rules does not matter. Hence, we can arbitrarily choose the first atomic psi-formula to reduce, instead of
+	    generating useless elim-reduction sequence permuatations *)
+        val finst = [List.nth (finst, 0)]
+
+        (* Deprecated tweak. We need to decompose here the sporadics in order to avoid space explosion *)
         val spors = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) finst)
 (*
         val spors_asap = earliest_sporadics spors
