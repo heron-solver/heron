@@ -360,8 +360,11 @@ fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   else psi_reduce (cfl_uniq (List.concat (List.map (shy_adventurer_step_e) cfs)))
 
 fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  let val introduced_cfs = cfl_uniq (List.concat (List.map (shy_adventurer_step_i) cfs)) in
-  psi_reduce introduced_cfs
+  let
+    val introduced_cfs = cfl_uniq (List.concat (List.map (shy_adventurer_step_i) cfs))
+    val reduce_psi_formulae = psi_reduce introduced_cfs
+    val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
+  in reduced_haa_contexts
   end
 
 exception Maxstep_reached   of TESL_ARS_conf list;
