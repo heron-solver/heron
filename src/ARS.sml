@@ -365,90 +365,19 @@ fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
     val introduced_cfs = cfl_uniq (List.concat (List.map (shy_adventurer_step_i) cfs))
     val reduce_psi_formulae = psi_reduce introduced_cfs
     val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
-  in reduce_psi_formulae (* REMOVED FOR DEBUG: reduced_haa_contexts *)
+  in reduced_haa_contexts
   end
+
+(* Some colors *)
+val BOLD_COLOR   = "\u001B[1m"
+val RED_COLOR    = "\u001B[31m"
+val GREEN_COLOR  = "\u001B[32m"
+val YELLOW_COLOR = "\u001B[33m"
+val BLUE_COLOR   = "\u001B[34m"
+val RESET_COLOR  = "\u001B[0m"
 
 exception Maxstep_reached   of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
-
-fun string_of_tag (t : tag) =
-  case t of
-      Int n => string_of_int n
-    | Unit  => "()"
-    | Schematic (Clk c_str, n) => "X\226\135\167" ^ (string_of_int n) ^ "\226\135\169" ^ c_str
-    | Add (t1, t2) => (string_of_tag t1) ^ " + " ^ (string_of_tag t2)
-fun string_of_timestamp_constr c =
-  case c of
-      Timestamp (Clk cname, n, tag) => "X\226\135\167" ^ string_of_int n ^ "\226\135\169" ^ cname ^ " = " ^ string_of_tag tag
-    | _ => raise UnexpectedMatch
-fun string_of_affine_constr c =
-  case c of
-      Affine (t1, ta, t2, tb) => (string_of_tag t1) ^ " = " ^ (string_of_tag ta) ^ " * " ^  (string_of_tag t2) ^ " + " ^ (string_of_tag tb)
-    | _ => raise UnexpectedMatch
-
-(* Print HAA-system *)
-fun print_system (G : system) =
-  let
-    val G = lfp (reduce) G
-    val clocks =
-      uniq (List.concat (List.map (fn Ticks (c, _) => [c] | NotTicks (c, _) => [c] | Timestamp (c, _, _) => [c] | Affine _ => []) G))
-    val nb_instants =
-      List.foldl
-        (fn (x, x0) => if x >= x0 then x else x0)
-        0
-        (List.concat (List.map (fn Ticks (_, n) => [n] | NotTicks (_, n) => [n] | Timestamp (_, n, _) => [n] | Affine _ => []) G))
-    fun constrs_of_clk_instindex c n =
-      List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
-    fun string_of_constrs_at_clk_instindex clk n g =
-      let
-        val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Int _ => true | Unit => true | _ => false) | _ => false) g
-      in
-      if contains (Ticks (clk, n)) g andalso List.length timestamps > 0
-      then "\226\135\145 " (* \<Up> *) ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
-      else
-        if contains (Ticks (clk, n)) g
-        then "\226\135\145" (* \<Up> *)
-        else
-          if contains (NotTicks (clk, n)) g
-          then "\226\138\152"  (* \<oslash> *)
-          else
-            if List.length timestamps > 0
-            then "  " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
-            else ""
-    end
-    fun print_clocks () =
-      writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
-    fun print_instant n =
-      writeln ("[" ^ string_of_int n ^ "]" ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_constrs_at_clk_instindex c n (constrs_of_clk_instindex c n)) "" clocks)
-    fun print_run k =
-      if k > nb_instants
-      then ()
-      else (print_instant k ; print_run (k + 1))
-  in print_clocks (); print_run 1
-end
-
-fun print_affine_constrs (G : system) : unit =
-  let
-      val affine_constrs =
-	   List.filter (fn Affine _ => true | _ => false) G
-      val nontriv_timestamps_constrs =
-	   List.filter (fn Timestamp (_, _, Schematic _) => true | Timestamp (_, _, Add _) => true | _ => false) G
-  in (case (affine_constrs, nontriv_timestamps_constrs) of ([], []) => () | _ => writeln "Affine constraints and non-trivial timestamps:" ;
-      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_affine_constr c))) () affine_constrs ;
-      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_timestamp_constr c))) () nontriv_timestamps_constrs)
-  end
-  
-fun print_floating_ticks (f: TESL_formula) : unit =
-  let
-    val sporadics = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f)
-    val whentickings = (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f)
-    val clocks = uniq ((List.map (fn Sporadic (c, _) => c | _ => raise UnexpectedMatch) sporadics) @ (List.map (fn WhenTickingOn (_, _, c) => c | _ => raise UnexpectedMatch) whentickings))
-    fun string_of_sporadics c =
-      List.foldl (fn (Sporadic (Clk clk, tag), s) => if clk = c then (string_of_tag tag) ^ ", " ^ s else "" | _ => raise UnexpectedMatch) "" sporadics
-    fun string_of_whentickingon c =
-      List.foldl (fn (WhenTickingOn (Clk clk_meas_name, tag, Clk clk), s) => if clk = c then "(when " ^ (string_of_tag tag) ^ " on " ^ clk_meas_name ^ "), " ^ s else "" | _ => raise UnexpectedMatch) "" whentickings
-  in case (sporadics, whentickings) of ([], []) => () | _ => writeln "Floating ticks pending for merge:" ;
-     List.foldl (fn (Clk cname, _) => writeln ("\t" ^ cname ^ ": " ^ (string_of_sporadics cname) ^ (string_of_whentickingon cname))) () clocks end
 
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
@@ -479,20 +408,21 @@ fun exec
           if List.length cfs_sat > 0
           then (writeln ("Stopping simulation when finite model found") ;
                 writeln "### End of simulation ###";
-                writeln ("### Solver has returned " ^ string_of_int (List.length cfs_sat) ^ " models");
+                writeln ("### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models");
                 raise Model_found cfs_sat)
           else () end
         (* STOPS WHEN MAXSTEP REACHED *)
         val () =
           if (k = maxstep + 1)
           then (writeln ("Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
-                writeln "\u001B[34m\u001B[1m### End of simulation ###\u001B[0m";
-                writeln ("## Solver has returned " ^ string_of_int (List.length cfs) ^ " pre-models (partially satisfying and potentially future-spurious models)\n");
+                writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
+		  writeln (BOLD_COLOR ^ RED_COLOR ^ "### WARNING" ^ RESET_COLOR) ;
+                writeln (BOLD_COLOR ^ RED_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " pre-models (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
                 raise Maxstep_reached cfs)
           else ()
         in let
           (* INSTANT SOLVING *)
-          val () = writeln ("\u001B[34m\u001B[1m##### Solve [" ^ string_of_int k ^ "] #####\u001B[0m")
+          val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int k ^ "] #####" ^ RESET_COLOR)
           val cfs' = exec_step cfs
           val end_time = Time.now()
           val cfs_selected_by_heuristic = (case heuristic of NONE => (fn x => x) | SOME h => h) cfs'
@@ -501,16 +431,16 @@ fun exec
         aux (cfs_selected_by_heuristic) (k + 1) end_time end
         handle
 	 Maxstep_reached   cfs => (List.foldl (fn ((G, _, phi, _), _) =>
-          (writeln "\u001B[32m\u001B[1m## Simulation result:" ;
+          (writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "## Simulation result:") ;
            print_system G ;
-           print "\u001B[0m" ;
+           print RESET_COLOR ;
 	    print_affine_constrs G ;
            print_floating_ticks phi ;
            writeln "## End")) () cfs ; cfs)
         | Model_found       cfs => (List.foldl (fn ((G, _, phi, _), _) =>
-          (writeln "\u001B[32m\u001B[1m## Simulation result:" ;
+          (writeln (BOLD_COLOR ^ GREEN_COLOR ^ "## Simulation result:") ;
            print_system G ;
-           print "\u001B[0m" ;
+           print RESET_COLOR ;
            print_affine_constrs G ;
            print_floating_ticks phi ;
            (writeln "## End"))) () cfs ; cfs)
