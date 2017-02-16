@@ -61,19 +61,19 @@ Our tool is able to explore counterfactual facts and stops wheneven a finite sat
 Getting started
 -------------------
 You can use this tool with different compilers as it is written in Standard ML. It is recommended to use [MLton compiler](http://mlton.org/) as it provides interesting code optimization features. Several examples of TESL specifications can be found in `src/Examples.sml` in which you may have to uncomment lines, then type
-```
+```bash
 make run
 ```
 
 If you decide to use [Poly/ML](http://www.polyml.org/) instead, you need `polybuild`:
-```
+```bash
 mkdir contrib
 hg clone --cwd contrib https://bitbucket.org/cannam/sml-buildscripts
 ```
 
 References
 -------------------
-* [TESL: a Language for Reconciling Heterogeneous Execution Traces](http://wwwdi.supelec.fr/fb/publis/2014MemoCODE.pdf), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
+* [TESL: a Language for Reconciling Heterogeneous Execution Traces](ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
 
 Disclaimer
 -------------------
