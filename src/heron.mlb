@@ -1,5 +1,6 @@
 $(SML_LIB)/basis/basis.mlb
 TESLTypes.sml
 SAT.sml
+Printer.sml
 ARS.sml
 Examples.sml

@@ -264,7 +264,7 @@ fun lawyer_e
       let
 	 (* Major tweak. Due to the orthogonality property of instantaneous solve reduction rules, the order of application of
 	    elimination rules does not matter. Hence, we can arbitrarily choose the first atomic psi-formula to reduce, instead of
-	    generating useless elim-reduction sequence permuatations *)
+	    generating useless elim-reduction sequence permutations *)
         val finst = [List.nth (finst, 0)]
 
         val spors = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) finst)
@@ -348,24 +348,50 @@ fun shy_adventurer_step_i (c : TESL_ARS_conf) : TESL_ARS_conf list =
     | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
   end
 
+(*
 fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
   let val choices = lawyer_e c in
   case choices of
       [] => [c]
     | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
   end
-
+*)
+fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
+  let val choices = lawyer_e c in
+      case choices of
+	   [] => [c]
+	 | _  => List.foldl
+		      (fn ((focus, redrule), l) =>
+			   let val cf = redrule c focus
+				val cf_reduced = (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) cf in
+				if context_SAT cf_reduced
+				then cf_reduced :: l
+				else l
+			   end
+		      ) [] choices
+  end
+      
 fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  if (List.all (fn (_, _, _, psi) => psi = []) cfs)
-  then cfs
-  else psi_reduce (cfl_uniq (List.concat (List.map (shy_adventurer_step_e) cfs)))
+  let
+      val pending_psi_to_reduce = List.length (List.filter (fn (_, _, _, psi) => psi <> []) cfs)
+      val _ = print ("\rRemaining universes pending for constraint reduction: " ^ (string_of_int pending_psi_to_reduce))
+  in
+      if pending_psi_to_reduce = 0
+      then
+	   (writeln "       " ;
+	    cfs)
+      else
+	   psi_reduce (List.concat (List.map (shy_adventurer_step_e) cfs))
+  end
 
 fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    val introduced_cfs = cfl_uniq (List.concat (List.map (shy_adventurer_step_i) cfs))
-    val reduce_psi_formulae = psi_reduce introduced_cfs
-    val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
-  in reduced_haa_contexts
+      val _ = writeln "Initializing new instant..."
+      val introduced_cfs = cfl_uniq (List.concat (List.map (shy_adventurer_step_i) cfs))
+      val _ = writeln "Applying constraints..."
+      val reduce_psi_formulae = psi_reduce introduced_cfs
+      (* val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae *)
+  in reduce_psi_formulae
   end
 
 (* Some colors *)
