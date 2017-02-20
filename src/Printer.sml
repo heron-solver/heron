@@ -105,7 +105,7 @@ fun print_system (G : system) =
             else ""
     end
     fun print_clocks () =
-      writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t" ^ s) "" clocks)
+      writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
     fun print_instant n =
       writeln ("[" ^ string_of_int n ^ "]"
 		 ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_constrs_at_clk_instindex c n (constrs_of_clk_instindex c n)) "" clocks)

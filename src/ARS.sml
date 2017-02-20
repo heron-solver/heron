@@ -363,14 +363,14 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
 	 | _  => List.foldl
 		      (fn ((focus, redrule), l) =>
 			   let val cf = redrule c focus
-				val cf_reduced = (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) cf in
+				val cf_reduced = (fn (G, n, phi, psi) => ((* (lfp reduce) *) G, n, phi, psi)) cf in
 				if context_SAT cf_reduced
 				then cf_reduced :: l
 				else l
 			   end
 		      ) [] choices
   end
-      
+
 fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
       val pending_psi_to_reduce = List.length (List.filter (fn (_, _, _, psi) => psi <> []) cfs)
@@ -387,11 +387,11 @@ fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
 fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
       val _ = writeln "Initializing new instant..."
-      val introduced_cfs = cfl_uniq (List.concat (List.map (shy_adventurer_step_i) cfs))
+      val introduced_cfs = (* cfl_uniq *) (List.concat (List.map (shy_adventurer_step_i) cfs))
       val _ = writeln "Applying constraints..."
       val reduce_psi_formulae = psi_reduce introduced_cfs
-      (* val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae *)
-  in reduce_psi_formulae
+      val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
+  in reduced_haa_contexts
   end
 
 (* Some colors *)
@@ -404,6 +404,7 @@ val RESET_COLOR  = "\u001B[0m"
 
 exception Maxstep_reached   of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
+exception Abort;
 
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
@@ -411,7 +412,9 @@ fun exec
   (cfs : TESL_ARS_conf list)
   (minstep     : int,
    maxstep     : int,
-   heuristic   : (TESL_ARS_conf list -> TESL_ARS_conf list) option)
+   codirection   : system,
+   heuristic   : (TESL_ARS_conf list -> TESL_ARS_conf list) option   
+  )
   : TESL_ARS_conf list =
   let
     val () = writeln "Solving simulation..."
@@ -446,12 +449,23 @@ fun exec
                 writeln (BOLD_COLOR ^ RED_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " pre-models (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
                 raise Maxstep_reached cfs)
           else ()
+	 (* ABORT SIMULATION *)
+	 val () = case cfs of
+			[] => raise Abort
+		     | _  => ()
         in let
           (* INSTANT SOLVING *)
           val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int k ^ "] #####" ^ RESET_COLOR)
+	   (* COMPUTING THE NEXT SIMULATION STEP *)
           val cfs' = exec_step cfs
-          val end_time = Time.now()
-          val cfs_selected_by_heuristic = (case heuristic of NONE => (fn x => x) | SOME h => h) cfs'
+	   (* KEEPING RUN WITH CODIRECTIONS *)
+	   val cfs_selected_by_codirection = case codirection of
+						    [] => cfs'
+						   | _  => (writeln "Filtering with codirection strategy..." ;
+							     List.filter (fn (G, _, _, _) => SAT (G @ codirection)) cfs')
+	   (* KEEPING HEURISTICS *)
+          val cfs_selected_by_heuristic = (case heuristic of NONE => (fn x => x) | SOME h => h) cfs_selected_by_codirection
+	   val end_time = Time.now()
           val () = writeln ("--> Consistent pre-models: " ^ string_of_int (List.length cfs_selected_by_heuristic))
           val () = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec") in
         aux (cfs_selected_by_heuristic) (k + 1) end_time end
@@ -470,39 +484,16 @@ fun exec
            print_affine_constrs G ;
            print_floating_ticks phi ;
            (writeln "## End"))) () cfs ; cfs)
+	 | Abort => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
+		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR) ;
+		     [])
       end
   in aux cfs 1 (Time.now()) end
 
 (* Main solver function *)
 fun solve
   (spec : TESL_formula)
-  (param : int * int * (TESL_ARS_conf list -> TESL_ARS_conf list) option)
+  (param : int * int * system * (TESL_ARS_conf list -> TESL_ARS_conf list) option)
   : TESL_ARS_conf list =
   exec [([], 0, spec, [])] param
 
-(* Heuristic 1. The heuristic is supposed to restrict the universe by choosing configurations that are relevant for simulation *)
-(* UNSAFE *)
-fun heuristic_minsporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  let
-    fun min_pending_spor (cfs : TESL_ARS_conf list) : int =
-    let
-      val cfs_with_spor = List.filter (fn (_, _, frun, _) => List.exists (fn Sporadic _ => true | _ => false) frun) cfs
-      val selected_cfs_min_start = case (List.nth (cfs_with_spor, 0)) of (_, _, frunsel, _) =>
-        List.length (List.filter (fn Sporadic _ => true | _ => false) frunsel) in
-    List.foldl (fn ((_, _, frun, _), n) =>
-      let val nb_spor = List.length (List.filter (fn Sporadic _ => true | _ => false) frun) in
-      if nb_spor >= n then n else nb_spor end) selected_cfs_min_start cfs_with_spor end
-    val min_spor = min_pending_spor cfs
-  in List.filter
-      (fn (_, _, frun, _) => (List.length (List.filter (fn Sporadic _ => true | _ => false) frun)) <= min_spor + 1) (* TWEAK PARAMETER *)
-      cfs end
-
-(* Heuristic 2. Given a clock, if a sporadic was chosen to be merged, then it must be the smallest in the specification.
-   Otherwise it will eventually lead to inconsistencies *)
-fun heuristic_monotonic_sporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  List.filter
-    (fn (G, _, phi, _) =>
-      let val G = reduce G in
-      List.all (fn Sporadic (clk, Int n1) => (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
-                  | _ => true) phi end)
-    cfs;

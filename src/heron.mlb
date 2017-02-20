@@ -3,4 +3,5 @@ TESLTypes.sml
 SAT.sml
 Printer.sml
 ARS.sml
+Heuristic.sml
 Examples.sml
