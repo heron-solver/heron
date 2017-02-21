@@ -38,19 +38,24 @@ type system = constr list
 
 datatype TESL_atomic =
   True
-  | Sporadic       of clock * tag
-  | TagRelation    of clock * tag * clock * tag
-  | Implies        of clock * clock
-  | TimeDelayedBy  of clock * tag * clock * clock
-  | WhenTickingOn  of clock * tag * clock           (* Intermediate Form *)
-  | DelayedBy      of clock * int * clock * clock
-  | TimesImpliesOn of clock * int * clock           (* Intermediate Form *)
-  | FilteredBy     of clock * int * int * int * int * clock
-  | SustainedFrom  of clock * clock * clock * clock
-  | UntilRestart   of clock * clock * clock * clock (* Intermediate Form *)
-  | Await          of clock list * clock list * clock list * clock
-  | WhenClock      of clock * clock * clock
-  | WhenNotClock   of clock * clock * clock
+  | Sporadic                  of clock * tag
+  | TagRelation               of clock * tag * clock * tag
+  | Implies                   of clock * clock
+  | TimeDelayedBy             of clock * tag * clock * clock
+  | WhenTickingOn             of clock * tag * clock           (* Intermediate Form *)
+  | DelayedBy                 of clock * int * clock * clock
+  | TimesImpliesOn            of clock * int * clock           (* Intermediate Form *)
+  | FilteredBy                of clock * int * int * int * int * clock
+  | SustainedFrom             of clock * clock * clock * clock
+  | UntilRestart              of clock * clock * clock * clock (* Intermediate Form *)
+  | SustainedFromImmediately  of clock * clock * clock * clock
+  | UntilRestartImmediately   of clock * clock * clock * clock (* Intermediate Form *)
+  | Await                     of clock list * clock list * clock list * clock
+  | WhenClock                 of clock * clock * clock
+  | WhenNotClock              of clock * clock * clock
+  | EveryImplies              of clock * int * int * clock (* Syntactic sugar *)
+  | NextTo                    of clock * clock * clock     (* Syntactic sugar *)
+  | Periodic                  of clock * tag * tag         (* Syntactic sugar *)
 
 type TESL_formula = TESL_atomic list
 
@@ -70,7 +75,7 @@ fun ConsumingSubs f = List.filter (fn f' => case f' of
 
 (* Returns sporadic formulae that are relevant to get instantaneously reduced *)
 (* This tweak is necessary to avoid the state space explosion problem *)
-fun SporadicNowSubs (f : TESL_atomic list) : TESL_atomic list =
+fun SporadicNowSubs (f : TESL_formula) : TESL_formula =
   let
     val sporadics = List.filter (fn Sporadic _ => true | _ => false) f
     fun earliest_sporadics (spors : TESL_atomic list) : TESL_atomic list =
@@ -97,10 +102,23 @@ fun ReproductiveSubs f = List.filter (fn f' => case f' of
 fun SelfModifyingSubs f = List.filter (fn f' => case f' of
     FilteredBy _     => true
   | SustainedFrom _  => true
+  | SustainedFromImmediately _  => true
 (*| TimesImpliesOn _ => true *)
   | UntilRestart _   => true
+  | UntilRestartImmediately _   => true
   | Await _          => true
   | _                => false) f
+
+exception UnsupportedTESLOperator;
+(* Rephrase TESL formulae with syntactic sugar *)
+fun unsugar (f : TESL_formula) =
+  List.concat (List.map (fn
+	      EveryImplies (master, n, x, slave)  => [FilteredBy (master, x, 1, n - 1, 1, slave)]
+	    | NextTo (master, master_next, slave) => [SustainedFromImmediately (master, master_next, master, slave)]
+	    | Periodic (clk, period, offset)      => [Sporadic (clk, offset),
+							    TimeDelayedBy (clk, period, clk, clk)]
+	    | fatom => [fatom]
+  ) f)
 
 (* Asserts if two tags have the same type *)
 fun op ::~ (tag, tag') = case (tag, tag') of
@@ -155,4 +173,3 @@ fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
       | aux [] acc             = acc
   in List.rev (aux cfl [])
   end
-

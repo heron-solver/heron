@@ -1,4 +1,6 @@
+(* Some colors *)
 val BOLD_COLOR   = "\u001B[1m"
+val RED_COLOR    = "\u001B[31m"
 val GREEN_COLOR  = "\u001B[32m"
 val YELLOW_COLOR = "\u001B[33m"
 val BLUE_COLOR   = "\u001B[34m"
@@ -50,6 +52,12 @@ fun subscript_of_int (n : int) =
     | 9 => "\226\130\137"
     | _ => ((subscript_of_int (n div 10)) ^ (subscript_of_int (n mod 10)))
 
+(* Just for testing *)
+fun string_of_int_exp (n : int) =
+  if n > 1000 andalso n mod 1000 = 0
+  then (string_of_int (n div 1000)) ^ "E3"
+  else string_of_int n
+		 
 fun string_of_tag_ugly (t : tag) =
   case t of
       Int n => string_of_int n
@@ -58,7 +66,7 @@ fun string_of_tag_ugly (t : tag) =
     | Add (t1, t2) => (string_of_tag_ugly t1) ^ " + " ^ (string_of_tag_ugly t2)
 fun string_of_tag_fancy (t : tag) =
   case t of
-      Int n => string_of_int n
+      Int n => string_of_int n (* DEBUG *)
     | Unit  => "()"
     | Schematic (Clk c_str, n) => "X" ^ subscript_of_int n ^ superscript_of_string c_str
     | Add (t1, t2) => (string_of_tag_fancy t1) ^ " + " ^ (string_of_tag_fancy t2)

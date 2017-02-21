@@ -127,7 +127,7 @@ fun ARS_rule_sustained_elim_1
     (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
   | ARS_rule_sustained_elim_1 _ _ = raise Assert_failure;
 
-(* 19. Sustained-from elimination when false start premise *)
+(* 19. Sustained-from elimination when true start premise *)
 fun ARS_rule_sustained_elim_2
   (G, n, frun, finst) (fsubst as SustainedFrom (c1, cstart, cend, c2)) =
     (G @ [Ticks (cstart, n)], n, frun @ [UntilRestart (c1, c2, cend, cstart)], @- (finst, [fsubst]))
@@ -243,6 +243,43 @@ fun ARS_rule_whennotclock_implies_3
     (G @ [Ticks (cmaster, n), NotTicks (csampl, n), Ticks (cslave, n)], n, frun, @- (finst, [fsubst]))
   | ARS_rule_whennotclock_implies_3 _ _ = raise Assert_failure;
 
+(* 34. Sustained-from-immediately elimination when false start premise *)
+fun ARS_rule_sustained_immediately_elim_1
+  (G, n, frun, finst) (fsubst as SustainedFromImmediately (_, cstart, _, _)) =
+    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_sustained_immediately_elim_1 _ _ = raise Assert_failure;
+
+(* 35. Sustained-from-immediately elimination when true start premise *)
+fun ARS_rule_sustained_immediately_elim_2
+  (G, n, frun, finst) (fsubst as SustainedFromImmediately (c1, cstart, cend, c2)) =
+    (G @ [Ticks (cstart, n)], n, frun, (@- (finst, [fsubst])) @ [UntilRestartImmediately (c1, c2, cend, cstart)])
+  | ARS_rule_sustained_immediately_elim_2 _ _ = raise Assert_failure;
+
+(* 36. Until-restart-immediately elimination when false premise *)
+fun ARS_rule_untilrestart_immediately_elim_1
+  (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, _, cend, _)) =
+    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_immediately_elim_1 _ _ = raise Assert_failure;
+
+(* 37. Until-restart-immediately elimination when true premise *)
+fun ARS_rule_untilrestart_immediately_elim_2
+  (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, c2, cend, _)) =
+    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_immediately_elim_2 _ _ = raise Assert_failure;
+
+(* 38. Until-restart-immediately elimination restarting when false premise *)
+fun ARS_rule_untilrestart_immediately_restarts_elim_1
+  (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, c2, cend, cstart)) =
+    (G @ [Ticks (cend, n), NotTicks (c1, n)], n, frun @ [SustainedFromImmediately (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_immediately_restarts_elim_1 _ _ = raise Assert_failure;
+
+(* 39. Until-restart-immediately elimination restarting when true premise *)
+fun ARS_rule_untilrestart_immediately_restarts_elim_2
+  (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, c2, cend, cstart)) =
+    (G @ [Ticks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [SustainedFromImmediately (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_immediately_restarts_elim_2 _ _ = raise Assert_failure;
+
+
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
@@ -287,6 +324,9 @@ fun lawyer_e
         val red_sustainedfrom = (List.filter (fn fatom => case fatom of SustainedFrom _ => true | _ => false) finst)
         val red_untilrestart = (List.filter (fn fatom => case fatom of UntilRestart _ => true | _ => false) finst)
 
+        val red_sustainedfrom_immediately = (List.filter (fn fatom => case fatom of SustainedFromImmediately _ => true | _ => false) finst)
+        val red_untilrestart_immediately = (List.filter (fn fatom => case fatom of UntilRestartImmediately _ => true | _ => false) finst)
+
         val red_await = (List.filter (fn fatom => case fatom of Await _ => true | _ => false) finst)
         val red_await_norem_noinst = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => is_empty Hrem andalso is_empty Hinst | _ => false) red_await)
         val red_await_rem_noinst   = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => not (is_empty Hrem) andalso is_empty Hinst | _ => false) red_await)
@@ -326,6 +366,13 @@ fun lawyer_e
          @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_elim_2)) red_untilrestart)
          @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_restarts_elim_1)) red_untilrestart)
          @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_restarts_elim_2)) red_untilrestart)
+
+         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_elim_1)) red_sustainedfrom_immediately)
+         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_elim_2)) red_sustainedfrom_immediately)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_elim_1)) red_untilrestart_immediately)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_elim_2)) red_untilrestart_immediately)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_restarts_elim_1)) red_untilrestart_immediately)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_restarts_elim_2)) red_untilrestart_immediately)
 
          @ (List.map (fn fatom => (fatom, ARS_rule_await_instant_sigcaught)) red_await_rem_inst)
          @ (List.map (fn fatom => (fatom, ARS_rule_await_instant_sigabsent)) red_await_rem_inst)
@@ -394,17 +441,16 @@ fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   in reduced_haa_contexts
   end
 
-(* Some colors *)
-val BOLD_COLOR   = "\u001B[1m"
-val RED_COLOR    = "\u001B[31m"
-val GREEN_COLOR  = "\u001B[32m"
-val YELLOW_COLOR = "\u001B[33m"
-val BLUE_COLOR   = "\u001B[34m"
-val RESET_COLOR  = "\u001B[0m"
-
 exception Maxstep_reached   of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
 exception Abort;
+
+fun has_no_floating_ticks (f : TESL_formula) =
+  (* Stop condition 1. No pending sporadics *)
+  (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
+  (* Stop condition 2. No pending whenticking *)
+  andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
+  
 
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
@@ -424,22 +470,6 @@ fun exec
     (* MAIN SIMULATION LOOP *)
     fun aux cfs k start_time =
       let
-        (* STOPS WHEN FINITE MODEL FOUND *)
-        val () =
-          let val cfs_sat = List.filter (fn (_, _, frun, _) =>
-            (* Stop condition 1. No pending sporadics *)
-            (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) frun) = 0)
-            (* Stop condition 2. No pending whenticking *)
-            andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0)
-            (* Stop condition 3. Minstep has already been reached *)
-            andalso (minstep < k)
-            ) cfs in
-          if List.length cfs_sat > 0
-          then (writeln ("Stopping simulation when finite model found") ;
-                writeln "### End of simulation ###";
-                writeln ("### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models");
-                raise Model_found cfs_sat)
-          else () end
         (* STOPS WHEN MAXSTEP REACHED *)
         val () =
           if (k = maxstep + 1)
@@ -449,6 +479,22 @@ fun exec
                 writeln (BOLD_COLOR ^ RED_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " pre-models (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
                 raise Maxstep_reached cfs)
           else ()
+        (* STOPS WHEN FINITE MODEL FOUND *)
+        val () =
+          let val cfs_sat = List.filter (fn (_, _, frun, _) =>
+            (* Stop condition 1. No pending sporadics *)
+            (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) frun) = 0)
+            (* Stop condition 2. No pending whenticking *)
+            andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0)
+            (* Stop condition 3. Minstep has already been overheaded *)
+            andalso (minstep < k)
+            ) cfs in
+          if List.length cfs_sat > 0
+          then (writeln ("Stopping simulation when finite model found") ;
+                writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
+                writeln ("### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models");
+                raise Model_found cfs_sat)
+          else () end
 	 (* ABORT SIMULATION *)
 	 val () = case cfs of
 			[] => raise Abort
@@ -470,20 +516,24 @@ fun exec
           val () = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec") in
         aux (cfs_selected_by_heuristic) (k + 1) end_time end
         handle
-	 Maxstep_reached   cfs => (List.foldl (fn ((G, _, phi, _), _) =>
-          (writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "## Simulation result:") ;
+	 Maxstep_reached   cfs =>
+	 (List.foldl (fn ((G, _, phi, _), _) =>
+	   let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
+          (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
            print_system G ;
            print RESET_COLOR ;
 	    print_affine_constrs G ;
            print_floating_ticks phi ;
-           writeln "## End")) () cfs ; cfs)
-        | Model_found       cfs => (List.foldl (fn ((G, _, phi, _), _) =>
-          (writeln (BOLD_COLOR ^ GREEN_COLOR ^ "## Simulation result:") ;
+           writeln "## End") end) () cfs ; cfs)
+        | Model_found       cfs =>
+	   (List.foldl (fn ((G, _, phi, _), _) =>
+	   let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
+          (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
            print_system G ;
            print RESET_COLOR ;
            print_affine_constrs G ;
            print_floating_ticks phi ;
-           (writeln "## End"))) () cfs ; cfs)
+           (writeln "## End")) end) () cfs ; cfs)
 	 | Abort => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR) ;
 		     [])
@@ -495,5 +545,5 @@ fun solve
   (spec : TESL_formula)
   (param : int * int * system * (TESL_ARS_conf list -> TESL_ARS_conf list) option)
   : TESL_ARS_conf list =
-  exec [([], 0, spec, [])] param
+  exec [([], 0, unsugar (spec), [])] param
 
