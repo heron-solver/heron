@@ -1,11 +1,23 @@
 Heron
 ===================
 
-> A Symbolic Simulation Engine for Timed Causality Models expressed in the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/)
+> Symbolic Simulation Engine for Timed Causality Models expressed in the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/)
 
 This prototype solves specifications given in TESL by exploring full counterfactual facts. In particular, it returns classes of runs modulo non-interfering external components. Such classes are modeled in Horn-style Affine Arithmetic, for which we embed a decision procedure.
 
 The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first century Greek mathematician and engineer.
+
+Getting started
+-------------------
+We recommend to compile with [MLton](http://mlton.org/) as it provides interesting code optimization features in Standard ML. To build sources, just type
+```bash
+make
+```
+
+Several examples are provided in `examples` directory. To execute one of them, you can simply type
+```bash
+./heron < examples/LightSwitch.tesl
+```
 
 Example
 -------------------
@@ -56,18 +68,6 @@ Our tool is able to explore counterfactual facts and stops wheneven a finite sat
 [4]		⇑ 5		⇑		⇑ 5
 [5]		⇑ 7		⇑		  7
 ## End
-```
-
-Getting started
--------------------
-You can use this tool with different compilers as it is written in Standard ML. It is recommended to use [MLton compiler](http://mlton.org/) as it provides interesting code optimization features. Several examples of TESL specifications can be found in `src/Examples.sml` in which you may have to uncomment lines, then type
-```bash
-make
-```
-
-Several examples are provided in `examples` directory. To execute one of them, you can simply type
-```bash
-./heron < examples/LightSwitch.tesl
 ```
 
 References
