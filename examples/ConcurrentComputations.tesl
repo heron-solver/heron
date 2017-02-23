@@ -9,7 +9,9 @@ compB sporadic 20
 tag relation compB = 1 * CPU2t + 0
 compB time delayed by 15 on CPU2t implies Bavail
 
-Aav sustained immediately from Bavail to compAB implies compAB
-Bav sustained immediately from Aavail to compAB implies compAB
+Aavail sustained immediately from Bavail to compAB implies compAB
+Bavail sustained immediately from Aavail to compAB implies compAB
  
 compAB time delayed by 10 on CPU1t implies ABavail
+
+@dumpres

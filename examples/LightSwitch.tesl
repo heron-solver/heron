@@ -11,3 +11,5 @@ button implies switon
 switon time delayed by 10 on min implies switoff
 switon time delayed by 120 on s implies lgton
 switoff time delayed by 60000 on ms implies lgtoff
+
+@dumpres

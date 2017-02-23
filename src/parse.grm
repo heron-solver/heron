@@ -20,7 +20,7 @@
       | WHEN | WHENNOT
       | EVERY | STARTINGAT
       | PERIODIC | OFFSET
-      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES
 %nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option
 
 %name Calc
@@ -56,3 +56,4 @@
       | DIR_MAXSTEP NUM                          (DirMaxstep (NUM))
       | DIR_MINSTEP NUM                          (DirMinstep (NUM))
       | DIR_HEURISTIC ID                         (DirHeuristic (ID))
+      | DIR_DUMPRES                              (DirDumpres)

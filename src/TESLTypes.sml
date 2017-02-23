@@ -59,6 +59,7 @@ datatype TESL_atomic =
   | DirMaxstep                of int
   | DirMinstep                of int
   | DirHeuristic              of string
+  | DirDumpres
 
 type TESL_formula = TESL_atomic list
 
@@ -120,9 +121,10 @@ fun unsugar (f : TESL_formula) =
 	    | NextTo (master, master_next, slave) => [SustainedFromImmediately (master, master_next, master, slave)]
 	    | Periodic (clk, period, offset)      => [Sporadic (clk, offset),
 							    TimeDelayedBy (clk, period, clk, clk)]
-	    | DirMinstep _ => []
-	    | DirMaxstep _ => []
+	    | DirMinstep _   => []
+	    | DirMaxstep _   => []
 	    | DirHeuristic _ => []
+	    | DirDumpres     => []
 	    | fatom => [fatom]
   ) f)
 
@@ -202,5 +204,5 @@ fun string_of_expr e = case e of
   | EveryImplies (master, n_every, n_start, slave)          => (string_of_clk master) ^ " every " ^ (string_of_int n_every) ^ " starting at " ^ (string_of_int n_start) ^  " implies " ^ (string_of_clk slave)
   | NextTo (c, next_c, slave)                               => (string_of_clk c) ^ " next to " ^ (string_of_clk next_c) ^ " implies " ^ (string_of_clk slave)
   | Periodic (c, per, offset)                               => (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
-  | _                                                       => "<tesl-unsupported>"
+  | _                                                       => "<tesl>"
 

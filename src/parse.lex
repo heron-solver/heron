@@ -47,6 +47,7 @@ ws = [\ \t];
 "@maxstep"                   => ((Tokens.DIR_MAXSTEP(!pos,!pos)));
 "@minstep"                   => ((Tokens.DIR_MINSTEP(!pos,!pos)));
 "@heuristic"                 => ((Tokens.DIR_HEURISTIC(!pos,!pos)));
+"@dumpres"                   => ((Tokens.DIR_DUMPRES(!pos,!pos)));
 "//"[^ \n]*                  => (lex());
 "."                          => (error ("ignoring bad character " ^ yytext,!pos,!pos);
              lex());

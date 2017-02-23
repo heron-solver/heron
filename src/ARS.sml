@@ -458,7 +458,8 @@ fun exec
   (cfs : TESL_ARS_conf list)
   (minstep     : int,
    maxstep     : int,
-   codirection   : system,
+   dumpres     : bool,
+   codirection : system,
    heuristic   : (TESL_ARS_conf list -> TESL_ARS_conf list) option   
   )
   : TESL_ARS_conf list =
@@ -517,23 +518,30 @@ fun exec
         aux (cfs_selected_by_heuristic) (k + 1) end_time end
         handle
 	 Maxstep_reached   cfs =>
-	 (List.foldl (fn ((G, _, phi, _), _) =>
+	 (if dumpres
+	  then List.foldl (fn ((G, _, phi, _), _) =>
 	   let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
           (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
            print_system G ;
            print RESET_COLOR ;
 	    print_affine_constrs G ;
            print_floating_ticks phi ;
-           writeln "## End") end) () cfs ; cfs)
+           writeln "## End") end
+			    ) () cfs
+	  else writeln "# No output format requested" ;
+	  cfs)
         | Model_found       cfs =>
-	   (List.foldl (fn ((G, _, phi, _), _) =>
+	   (if dumpres
+	    then List.foldl (fn ((G, _, phi, _), _) =>
 	   let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
           (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
            print_system G ;
            print RESET_COLOR ;
            print_affine_constrs G ;
            print_floating_ticks phi ;
-           (writeln "## End")) end) () cfs ; cfs)
+           (writeln "## End")) end) () cfs
+	    else writeln "# No output format requested" ;
+	    cfs)
 	 | Abort => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR) ;
 		     [])
@@ -543,7 +551,7 @@ fun exec
 (* Main solver function *)
 fun solve
   (spec : TESL_formula)
-  (param : int * int * system * (TESL_ARS_conf list -> TESL_ARS_conf list) option)
+  (param : int * int * bool * system * (TESL_ARS_conf list -> TESL_ARS_conf list) option)
   : TESL_ARS_conf list =
   exec [([], 0, unsugar (spec), [])] param
 
