@@ -1,8 +1,10 @@
-run:
+all:
+	cd src && mllex parse.lex
+	cd src && mlyacc parse.grm
 	mlton -output heron src/heron.mlb
-	./heron
 
-run_polyml:
-	./contrib/sml-buildscripts/polybuild src/heron.mlb
-	mv src/heron .
-	./heron
+# with_polyml:
+#  	cd src && mllex parse.lex
+#  	cd src && mlyacc parse.grm
+#  	./contrib/sml-buildscripts/polybuild src/heron.mlb
+#  	mv src/heron .

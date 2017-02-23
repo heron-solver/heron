@@ -1,0 +1,13 @@
+// A light switch and a fluorescent bulb
+// http://wwwdi.supelec.fr/software/TESL/GalleryLightSwitch
+
+tag relation ms = 1000 * s + 0
+tag relation s = 60 * min + 0
+button sporadic 60000
+tag relation button = 1 * ms + 0
+
+button implies switon
+
+switon time delayed by 10 on min implies switoff
+switon time delayed by 120 on s implies lgton
+switoff time delayed by 60000 on ms implies lgtoff

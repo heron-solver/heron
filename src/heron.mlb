@@ -1,7 +1,14 @@
-$(SML_LIB)/basis/basis.mlb
-TESLTypes.sml
-SAT.sml
-Printer.sml
-ARS.sml
-Heuristic.sml
-Examples.sml
+local
+ $(SML_LIB)/basis/basis.mlb
+ $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
+ TESLTypes.sml
+ parse.grm.sig
+ parse.grm.sml
+ parse.lex.sml
+ SAT.sml
+ Printer.sml
+ ARS.sml
+ Heuristic.sml
+in
+ Toplevel.sml
+end

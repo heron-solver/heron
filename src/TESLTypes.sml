@@ -56,6 +56,9 @@ datatype TESL_atomic =
   | EveryImplies              of clock * int * int * clock (* Syntactic sugar *)
   | NextTo                    of clock * clock * clock     (* Syntactic sugar *)
   | Periodic                  of clock * tag * tag         (* Syntactic sugar *)
+  | DirMaxstep                of int
+  | DirMinstep                of int
+  | DirHeuristic              of string
 
 type TESL_formula = TESL_atomic list
 
@@ -117,6 +120,9 @@ fun unsugar (f : TESL_formula) =
 	    | NextTo (master, master_next, slave) => [SustainedFromImmediately (master, master_next, master, slave)]
 	    | Periodic (clk, period, offset)      => [Sporadic (clk, offset),
 							    TimeDelayedBy (clk, period, clk, clk)]
+	    | DirMinstep _ => []
+	    | DirMaxstep _ => []
+	    | DirHeuristic _ => []
 	    | fatom => [fatom]
   ) f)
 
@@ -173,3 +179,28 @@ fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
       | aux [] acc             = acc
   in List.rev (aux cfl [])
   end
+
+fun string_of_tag t = case t of
+    Int n => string_of_int n
+  | _     => "<tag>"
+	      
+fun string_of_clk c = case c of
+    Clk cname => cname
+
+fun string_of_expr e = case e of
+    Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
+  | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
+  | TagRelation (c1, a, c2, b)                              => "tag relation " ^ (string_of_clk c1) ^ "=" ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
+  | TimeDelayedBy (master, t, measuring, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
+  | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)
+  | FilteredBy (master, s, k, rs, rk, slave)                => (string_of_clk master) ^ " filtered by " ^ (string_of_int s) ^ ", " ^ (string_of_int k) ^ " (" ^ (string_of_int rs) ^ ", " ^ (string_of_int rk) ^ ")* implies " ^ (string_of_clk slave)
+  | SustainedFrom (master, beginclk, endclk, slave)            => (string_of_clk master) ^ " sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
+  | SustainedFromImmediately (master, beginclk, endclk, slave) => (string_of_clk master) ^ " immediately sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
+  | Await (masters, _, _, slave)                            => "await " ^ (List.foldr (fn (clk, s) => (string_of_clk clk) ^ " " ^ s) "" masters) ^ "implies " ^ (string_of_clk slave)
+  | WhenClock (m1, m2, slave)                               => (string_of_clk m1) ^ " when " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
+  | WhenNotClock (m1, m2, slave)                            => (string_of_clk m1) ^ " when not " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
+  | EveryImplies (master, n_every, n_start, slave)          => (string_of_clk master) ^ " every " ^ (string_of_int n_every) ^ " starting at " ^ (string_of_int n_start) ^  " implies " ^ (string_of_clk slave)
+  | NextTo (c, next_c, slave)                               => (string_of_clk c) ^ " next to " ^ (string_of_clk next_c) ^ " implies " ^ (string_of_clk slave)
+  | Periodic (c, per, offset)                               => (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
+  | _                                                       => "<tesl-unsupported>"
+

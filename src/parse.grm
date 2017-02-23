@@ -1,0 +1,58 @@
+(* Sample interactive calculator for ML-Yacc *)
+
+%%
+
+%eop EOF SEMI
+
+(* %pos declares the type of positions for terminals.
+   Each symbol has an associated left and right position. *)
+
+%pos int
+
+%left SPORADIC
+%left IMPLIES
+
+%term ID of string | NUM of int | SPORADIC | IMPLIES
+      | SEMI | EOF | EQ | PLUS | TIMES | TAGREL | TIMEDELAYEDBY | ON | DELAYEDBY
+      | FILTEREDBY | LPAR | RPAR | COMMA
+      | SUSTAINEDFROM | SUSTAINEDFROMIMMEDIATELY | TO
+      | AWAIT
+      | WHEN | WHENNOT
+      | EVERY | STARTINGAT
+      | PERIODIC | OFFSET
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC
+%nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option
+
+%name Calc
+
+%prefer SPORADIC IMPLIES
+%keyword SEMI
+
+%noshift EOF
+%value ID ("bogus")
+%verbose
+%%
+
+(* the parser returns the value associated with the expression *)
+
+  START : EXP (SOME EXP)
+        | (NONE)
+  CLK : ID                                       (Clk (ID))
+  CLKS : ID                                      ([Clk (ID)])
+      |  ID CLKS                                 (Clk (ID) :: CLKS)
+  EXP : CLK SPORADIC NUM                         (Sporadic (CLK, Int (NUM)))
+      | CLK IMPLIES CLK                          (Implies (CLK1, CLK2))
+      | TAGREL CLK EQ NUM TIMES CLK PLUS NUM     (TagRelation (CLK1, Int (NUM1), CLK2, Int (NUM2)))
+      | CLK TIMEDELAYEDBY NUM ON CLK IMPLIES CLK (TimeDelayedBy (CLK1, Int (NUM), CLK2, CLK3))
+      | CLK DELAYEDBY NUM ON CLK IMPLIES CLK     (DelayedBy (CLK1, NUM, CLK2, CLK3))
+      | CLK FILTEREDBY NUM COMMA NUM LPAR NUM COMMA NUM RPAR TIMES IMPLIES CLK (FilteredBy (CLK1, NUM1, NUM2, NUM3, NUM4, CLK2))
+      | CLK SUSTAINEDFROM CLK TO CLK IMPLIES CLK (SustainedFrom (CLK1, CLK2, CLK3, CLK4))
+      | CLK SUSTAINEDFROMIMMEDIATELY CLK TO CLK IMPLIES CLK (SustainedFromImmediately (CLK1, CLK2, CLK3, CLK4))
+      | AWAIT CLKS IMPLIES CLK                   (Await (CLKS, CLKS, CLKS, CLK))
+      | CLK WHEN CLK IMPLIES CLK                 (WhenClock (CLK1, CLK2, CLK3))
+      | CLK WHENNOT CLK IMPLIES CLK              (WhenNotClock (CLK1, CLK2, CLK3))
+      | CLK EVERY NUM STARTINGAT NUM IMPLIES CLK (EveryImplies (CLK1, NUM1, NUM2, CLK2))
+      | CLK PERIODIC NUM OFFSET NUM              (Periodic (CLK, Int (NUM1), Int (NUM2)))
+      | DIR_MAXSTEP NUM                          (DirMaxstep (NUM))
+      | DIR_MINSTEP NUM                          (DirMinstep (NUM))
+      | DIR_HEURISTIC ID                         (DirHeuristic (ID))

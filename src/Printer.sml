@@ -1,4 +1,4 @@
-(* Some colors *)
+ (* Some colors *)
 val BOLD_COLOR   = "\u001B[1m"
 val RED_COLOR    = "\u001B[31m"
 val GREEN_COLOR  = "\u001B[32m"

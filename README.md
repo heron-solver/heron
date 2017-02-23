@@ -62,18 +62,18 @@ Getting started
 -------------------
 You can use this tool with different compilers as it is written in Standard ML. It is recommended to use [MLton compiler](http://mlton.org/) as it provides interesting code optimization features. Several examples of TESL specifications can be found in `src/Examples.sml` in which you may have to uncomment lines, then type
 ```bash
-make run
+make
 ```
 
-If you decide to use [Poly/ML](http://www.polyml.org/) instead, you need `polybuild`:
+Several examples are provided in `examples` directory. To execute one of them, you can simply type
 ```bash
-mkdir contrib
-hg clone --cwd contrib https://bitbucket.org/cannam/sml-buildscripts
+./heron < examples/LightSwitch.tesl
 ```
 
 References
 -------------------
-* [TESL: a Language for Reconciling Heterogeneous Execution Traces](ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
+* [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
+* [ModHel'X: A Component-Oriented Approach to Multi-Formalism Modeling](https://link.springer.com/chapter/10.1007/978-3-540-69073-3_26), Workshops and Symposia at MoDELS 2007, Nashville, TN, USA
 
 Disclaimer
 -------------------
