@@ -21,7 +21,7 @@
       | EVERY | STARTINGAT
       | PERIODIC | OFFSET
       | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES
-%nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option
+%nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAGS of tag list
 
 %name Calc
 
@@ -39,8 +39,10 @@
         | (NONE)
   CLK : ID                                       (Clk (ID))
   CLKS : ID                                      ([Clk (ID)])
-      |  ID CLKS                                 (Clk (ID) :: CLKS)
-  EXP : CLK SPORADIC NUM                         (Sporadic (CLK, Int (NUM)))
+       | ID CLKS                                 (Clk (ID) :: CLKS)
+  TAGS : NUM                                     ([Int (NUM)])
+       | NUM COMMA TAGS                          (Int (NUM) :: TAGS)
+  EXP : CLK SPORADIC TAGS                        (Sporadics (CLK, TAGS))
       | CLK IMPLIES CLK                          (Implies (CLK1, CLK2))
       | TAGREL CLK EQ NUM TIMES CLK PLUS NUM     (TagRelation (CLK1, Int (NUM1), CLK2, Int (NUM2)))
       | CLK TIMEDELAYEDBY NUM ON CLK IMPLIES CLK (TimeDelayedBy (CLK1, Int (NUM), CLK2, CLK3))

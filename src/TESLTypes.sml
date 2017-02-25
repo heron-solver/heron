@@ -39,6 +39,7 @@ type system = constr list
 datatype TESL_atomic =
   True
   | Sporadic                  of clock * tag
+  | Sporadics                 of clock * (tag list)            (* Syntactic sugar *)
   | TagRelation               of clock * tag * clock * tag
   | Implies                   of clock * clock
   | TimeDelayedBy             of clock * tag * clock * clock
@@ -117,7 +118,8 @@ exception UnsupportedTESLOperator;
 (* Rephrase TESL formulae with syntactic sugar *)
 fun unsugar (f : TESL_formula) =
   List.concat (List.map (fn
-	      EveryImplies (master, n, x, slave)  => [FilteredBy (master, x, 1, n - 1, 1, slave)]
+	      Sporadics (master, tags)            => (List.map (fn t => Sporadic (master, t)) tags)
+	    | EveryImplies (master, n, x, slave)  => [FilteredBy (master, x, 1, n - 1, 1, slave)]
 	    | NextTo (master, master_next, slave) => [SustainedFromImmediately (master, master_next, master, slave)]
 	    | Periodic (clk, period, offset)      => [Sporadic (clk, offset),
 							    TimeDelayedBy (clk, period, clk, clk)]
@@ -191,6 +193,7 @@ fun string_of_clk c = case c of
 
 fun string_of_expr e = case e of
     Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
+  | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
   | TagRelation (c1, a, c2, b)                              => "tag relation " ^ (string_of_clk c1) ^ "=" ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
   | TimeDelayedBy (master, t, measuring, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
