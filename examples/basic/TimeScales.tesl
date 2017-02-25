@@ -1,0 +1,7 @@
+master1 sporadic 1, 4, 7
+master2 sporadic   2, 5
+ 
+master1 implies slave
+master2 implies slave
+ 
+@dumpres

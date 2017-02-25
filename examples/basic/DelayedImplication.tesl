@@ -1,0 +1,8 @@
+master sporadic 1
+cntin sporadic 2, 3
+tag relation master = cntin
+
+master delayed by 2 on cntin implies slave
+ 
+@maxstep 10
+@dumpres

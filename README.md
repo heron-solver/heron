@@ -16,7 +16,7 @@ make
 
 Several examples are provided in `examples` directory. To execute one of them, you can simply type
 ```bash
-./heron < examples/LightSwitch.tesl
+./heron < examples/gallery/LightSwitch.tesl
 ```
 
 Example
@@ -34,7 +34,7 @@ master2 implies slave
 The TESL tagged event engine will produce the following run:
 ![Example 3, TESL Official Website](http://wwwdi.supelec.fr/software/downloads/TESL/example3.svg)
 
-Our tool is able to explore counterfactual facts and stops wheneven a finite satisfying run is found
+Our tool is able to explore counterfactual facts and stops whenever a finite satisfying run is found
 ```
 ## Simulation result:
 		m1		slave		m2		
@@ -73,7 +73,6 @@ Our tool is able to explore counterfactual facts and stops wheneven a finite sat
 References
 -------------------
 * [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
-* [ModHel'X: A Component-Oriented Approach to Multi-Formalism Modeling](https://link.springer.com/chapter/10.1007/978-3-540-69073-3_26), Workshops and Symposia at MoDELS 2007, Nashville, TN, USA
 
 Disclaimer
 -------------------

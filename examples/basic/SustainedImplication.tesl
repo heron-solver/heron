@@ -1,0 +1,10 @@
+master sporadic 1, 2, 3
+begin sporadic 2
+end sporadic 3
+
+tag relation master = begin
+tag relation master = end
+
+master sustained from begin to end implies slave
+
+@dumpres

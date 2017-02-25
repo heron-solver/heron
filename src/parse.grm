@@ -45,6 +45,7 @@
   EXP : CLK SPORADIC TAGS                        (Sporadics (CLK, TAGS))
       | CLK IMPLIES CLK                          (Implies (CLK1, CLK2))
       | TAGREL CLK EQ NUM TIMES CLK PLUS NUM     (TagRelation (CLK1, Int (NUM1), CLK2, Int (NUM2)))
+      | TAGREL CLK EQ CLK                        (TagRelation (CLK1, Int (1), CLK2, Int (0)))
       | CLK TIMEDELAYEDBY NUM ON CLK IMPLIES CLK (TimeDelayedBy (CLK1, Int (NUM), CLK2, CLK3))
       | CLK DELAYEDBY NUM ON CLK IMPLIES CLK     (DelayedBy (CLK1, NUM, CLK2, CLK3))
       | CLK FILTEREDBY NUM COMMA NUM LPAR NUM COMMA NUM RPAR TIMES IMPLIES CLK (FilteredBy (CLK1, NUM1, NUM2, NUM3, NUM4, CLK2))
