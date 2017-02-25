@@ -24,3 +24,24 @@ fun heuristic_monotonic_sporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list
       List.all (fn Sporadic (clk, Int n1) => (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
                   | _ => true) phi end)
     cfs;
+
+exception Unreferenced_heuristic
+fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf list) =
+  case f of
+    DirHeuristic "minsporadic"        => (heuristic_minsporadic)
+  | DirHeuristic "monotonic_sporadic" => (heuristic_monotonic_sporadic)
+  | DirHeuristic "no_empty_instants"  => raise Unreferenced_heuristic 
+  | DirHeuristic "ticks_on_demand"    => raise Unreferenced_heuristic 
+  | DirHeuristic _                    => raise Unreferenced_heuristic
+  | _                                 => raise UnexpectedMatch
+
+fun heuristic_combine
+  (spec: TESL_formula)
+  : (TESL_ARS_conf list -> TESL_ARS_conf list) =
+  case spec of
+     [] => (fn x => x)
+   | _  => List.foldl
+		 (fn (hname, hcurrent) => compose ((heuristic_ref_table hname), hcurrent))
+		 (fn x => x)
+		 spec
+

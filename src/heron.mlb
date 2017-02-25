@@ -7,8 +7,8 @@ local
  parse.lex.sml
  SAT.sml
  Printer.sml
- ARS.sml
  Heuristic.sml
+ ARS.sml
 in
  Toplevel.sml
 end

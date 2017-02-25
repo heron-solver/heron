@@ -57,8 +57,10 @@ val minstep = case List.find (fn DirMinstep _ => true | _ => false) spec of
     NONE => ~1
   | SOME (DirMinstep n) => n
   | _ => raise UnexpectedMatch
+val heuristics = List.filter (fn DirHeuristic _ => true | _ => false) spec
 val dumpres = List.exists (fn DirDumpres => true | _ => false) spec
-val params = (minstep, maxstep, dumpres, ([]:system), NONE)
+
+val params = (minstep, maxstep, dumpres, ([]:system), heuristics)
 
 val _ = solve spec params
 

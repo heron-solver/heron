@@ -460,14 +460,14 @@ fun exec
    maxstep     : int,
    dumpres     : bool,
    codirection : system,
-   heuristic   : (TESL_ARS_conf list -> TESL_ARS_conf list) option   
+   heuristics  : TESL_formula
   )
   : TESL_ARS_conf list =
   let
     val () = writeln "Solving simulation..."
     val () = writeln ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
     val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
-    val () = writeln ("Heuristic: " ^ (case heuristic of NONE => "no (full counterfactual exploration)" | SOME _ => "yes"))
+    val () = writeln ("Heuristic: " ^ (case heuristics of [] => "none (full counterfactual exploration)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch) "" heuristics))
     (* MAIN SIMULATION LOOP *)
     fun aux cfs k start_time =
       let
@@ -511,7 +511,7 @@ fun exec
 						   | _  => (writeln "Filtering with codirection strategy..." ;
 							     List.filter (fn (G, _, _, _) => SAT (G @ codirection)) cfs')
 	   (* KEEPING HEURISTICS *)
-          val cfs_selected_by_heuristic = (case heuristic of NONE => (fn x => x) | SOME h => h) cfs_selected_by_codirection
+          val cfs_selected_by_heuristic = (heuristic_combine heuristics) cfs_selected_by_codirection
 	   val end_time = Time.now()
           val () = writeln ("--> Consistent pre-models: " ^ string_of_int (List.length cfs_selected_by_heuristic))
           val () = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec") in
@@ -551,7 +551,7 @@ fun exec
 (* Main solver function *)
 fun solve
   (spec : TESL_formula)
-  (param : int * int * bool * system * (TESL_ARS_conf list -> TESL_ARS_conf list) option)
+  (param : int * int * bool * system * TESL_formula)
   : TESL_ARS_conf list =
   exec [([], 0, unsugar (spec), [])] param
 
