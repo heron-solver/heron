@@ -6,7 +6,8 @@ install:
   - make
 script:
   - ./heron < examples/basic/FirstExample.tesl
-  - ./heron < examples/basic/TimeScales.tesl
+  - ./heron < examples/basic/Implications.tesl
+  - ./heron < examples/basic/ImplicationsTimeScales.tesl
   - ./heron < examples/basic/FilteredImplication.tesl
   - ./heron < examples/basic/DelayedImplication.tesl
   - ./heron < examples/basic/SustainedImplication.tesl
