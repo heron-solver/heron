@@ -1,3 +1,5 @@
 master sporadic 1
 tag relation master = meas
 master time delayed by 9 on meas implies slave
+
+@dumpres

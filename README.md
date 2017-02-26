@@ -1,6 +1,8 @@
 Heron
 ===================
 
+[![Build Status](https://travis-ci.org/EmptyStackExn/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
+
 > Symbolic Simulation Engine for Timed Causality Models expressed in the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/)
 
 This prototype solves specifications given in TESL by exploring full counterfactual facts. In particular, it returns classes of runs modulo non-interfering external components. Such classes are modeled in Horn-style Affine Arithmetic, for which we embed a decision procedure.

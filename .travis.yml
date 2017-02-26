@@ -1,0 +1,19 @@
+language: sml
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y --force-yes mlton ml-lex ml-yacc
+install:
+  - make
+script:
+  - ./heron < examples/basic/FirstExample.tesl
+  - ./heron < examples/basic/TimeScales.tesl
+  - ./heron < examples/basic/FilteredImplication.tesl
+  - ./heron < examples/basic/DelayedImplication.tesl
+  - ./heron < examples/basic/SustainedImplication.tesl
+  - ./heron < examples/basic/WhenImplication.tesl
+  - ./heron < examples/basic/AwaitImplication.tesl
+  - ./heron < examples/basic/TimeDelayed.tesl
+  - ./heron < examples/gallery/ConcurrentComputations.tesl
+  
+notifications:
+  email: false
