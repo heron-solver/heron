@@ -15,6 +15,7 @@ script:
   - ./heron < examples/basic/AwaitImplication.tesl
   - ./heron < examples/basic/TimeDelayed.tesl
   - ./heron < examples/gallery/ConcurrentComputations.tesl
+  - ./heron < examples/gallery/LightSwitch.tesl
   
 notifications:
   email: false
