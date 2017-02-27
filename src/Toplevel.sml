@@ -45,10 +45,6 @@ fun parse () =
 val _ = print "Heron 0.1 Release\n"
 val spec = parse()
 
-(* TODO :
-  - Heuristics
-  - Run codirections
-*)
 val maxstep = case List.find (fn DirMaxstep _ => true | _ => false) spec of
     NONE => ~1
   | SOME (DirMaxstep n) => n
@@ -59,8 +55,22 @@ val minstep = case List.find (fn DirMinstep _ => true | _ => false) spec of
   | _ => raise UnexpectedMatch
 val heuristics = List.filter (fn DirHeuristic _ => true | _ => false) spec
 val dumpres = List.exists (fn DirDumpres => true | _ => false) spec
+val prefix_strict : system =
+  let val from_spec = List.filter (fn DirRunprefixStrict _ => true | _ => false) spec
+      val clocks_universe = clocks_of_tesl_formula spec
+  in List.concat (List.map (fn DirRunprefixStrict (n_step, clocks_prefix) =>
+    List.map (fn c => (if List.exists (fn x => x = c) clocks_prefix 
+    	      	     	 then Ticks (c, n_step)
+			 else NotTicks (c, n_step))
+  ) clocks_universe |_=>raise UnexpectedMatch) from_spec)
+end
+val prefix : system =
+  let val from_spec = List.filter (fn DirRunprefix _ => true | _ => false) spec
+  in List.concat (List.map (fn DirRunprefix (n_step, clocks) =>
+    List.map (fn c => Ticks (c, n_step)) clocks| _ => raise UnexpectedMatch) from_spec)
+end
 
-val params = (minstep, maxstep, dumpres, ([]:system), heuristics)
+val params = (minstep, maxstep, dumpres, prefix_strict @ prefix, heuristics)
 
 val _ = solve spec params
 

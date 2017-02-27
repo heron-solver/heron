@@ -61,6 +61,8 @@ datatype TESL_atomic =
   | DirMinstep                of int
   | DirHeuristic              of string
   | DirDumpres
+  | DirRunprefixStrict        of int * clock list 
+  | DirRunprefix              of int * clock list 
 
 type TESL_formula = TESL_atomic list
 
@@ -123,10 +125,12 @@ fun unsugar (f : TESL_formula) =
 	    | NextTo (master, master_next, slave) => [SustainedFromImmediately (master, master_next, master, slave)]
 	    | Periodic (clk, period, offset)      => [Sporadic (clk, offset),
 							    TimeDelayedBy (clk, period, clk, clk)]
-	    | DirMinstep _   => []
-	    | DirMaxstep _   => []
-	    | DirHeuristic _ => []
-	    | DirDumpres     => []
+	    | DirMinstep _          => []
+	    | DirMaxstep _          => []
+	    | DirHeuristic _        => []
+	    | DirDumpres            => []
+	    | DirRunprefixStrict _  => []
+	    | DirRunprefix _        => []
 	    | fatom => [fatom]
   ) f)
 
@@ -209,3 +213,19 @@ fun string_of_expr e = case e of
   | Periodic (c, per, offset)                               => (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
   | _                                                       => "<tesl>"
 
+fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
+  uniq (List.concat (List.map (fn
+    Sporadic (c, _) => [c]
+  | Sporadics (c, _) => [c]
+  | TagRelation (c1, _, c2, _) => [c1, c2]
+  | Implies (c1, c2) => [c1, c2]
+  | TimeDelayedBy (c1, _, c2, c3) => [c1, c2, c3]
+  | DelayedBy (c1, _, c2, c3) => [c1, c2, c3]
+  | FilteredBy (c1, _, _, _, _, c2) => [c1, c2]
+  | SustainedFrom (c1, c2, c3, c4) => [c1, c2, c3, c4]
+  | SustainedFromImmediately (c1, c2, c3, c4) => [c1, c2, c3, c4]
+  | Await (clks, _, _, c) => clks @ [c]
+  | WhenClock (c1, c2, c3) => [c1, c2, c3]
+  | WhenNotClock (c1, c2, c3) => [c1, c2, c3]
+  | _ => []
+  ) f))

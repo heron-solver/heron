@@ -13,14 +13,15 @@
 %left IMPLIES
 
 %term ID of string | NUM of int | SPORADIC | IMPLIES
-      | SEMI | EOF | EQ | PLUS | TIMES | TAGREL | TIMEDELAYEDBY | ON | DELAYEDBY
+      | SEMI | EOF | EQ | PLUS | TIMES | DOT | TAGREL | TIMEDELAYEDBY | ON | DELAYEDBY
       | FILTEREDBY | LPAR | RPAR | COMMA
       | SUSTAINEDFROM | SUSTAINEDFROMIMMEDIATELY | TO
       | AWAIT
       | WHEN | WHENNOT
       | EVERY | STARTINGAT
       | PERIODIC | OFFSET
-      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | DIR_RUNPREFIX_STRICT
+
 %nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAGS of tag list
 
 %name Calc
@@ -60,3 +61,5 @@
       | DIR_MINSTEP NUM                          (DirMinstep (NUM))
       | DIR_HEURISTIC ID                         (DirHeuristic (ID))
       | DIR_DUMPRES                              (DirDumpres)
+      | DIR_RUNPREFIX_STRICT NUM CLKS            (DirRunprefixStrict (NUM, CLKS))
+      | DIR_RUNPREFIX        NUM CLKS            (DirRunprefix (NUM, CLKS))

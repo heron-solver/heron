@@ -13,3 +13,9 @@ switon time delayed by 120 on s implies lgton
 switoff time delayed by 60000 on ms implies lgtoff
 
 @dumpres
+
+// Some prefix constraints to directions to the solver
+   @prefix strict 1 button switon
+   @prefix strict 2 lgton
+// @prefix strict 3 switoff
+// @prefix strict 4 lgtoff

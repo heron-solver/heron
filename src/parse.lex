@@ -44,11 +44,15 @@ ws = [\ \t];
 "("                          => (Tokens.LPAR(!pos,!pos));
 ")"                          => (Tokens.RPAR(!pos,!pos));
 ","                          => (Tokens.COMMA(!pos,!pos));
-"@maxstep"                   => ((Tokens.DIR_MAXSTEP(!pos,!pos)));
-"@minstep"                   => ((Tokens.DIR_MINSTEP(!pos,!pos)));
-"@heuristic"                 => ((Tokens.DIR_HEURISTIC(!pos,!pos)));
-"@dumpres"                   => ((Tokens.DIR_DUMPRES(!pos,!pos)));
+"."                          => (Tokens.DOT(!pos,!pos));
+"@maxstep"                   => (Tokens.DIR_MAXSTEP(!pos,!pos));
+"@minstep"                   => (Tokens.DIR_MINSTEP(!pos,!pos));
+"@heuristic"                 => (Tokens.DIR_HEURISTIC(!pos,!pos));
+"@dumpres"                   => (Tokens.DIR_DUMPRES(!pos,!pos));
+"@prefix strict"             => (Tokens.DIR_RUNPREFIX_STRICT(!pos,!pos));
+"@prefix"                    => (Tokens.DIR_RUNPREFIX(!pos,!pos));
 "//"[^ \n]*                  => (lex());
-"."                          => (error ("ignoring bad character " ^ yytext,!pos,!pos);
+
+_                            => (error ("ignoring bad character " ^ yytext,!pos,!pos);
              lex());
 
