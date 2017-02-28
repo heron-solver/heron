@@ -9,6 +9,15 @@
    4. Conjunction
 *)
 
+(* Returns HAA-constrains for a given specific step *)
+fun haa_constrs_at_step (G: system) (step: int) =
+  List.filter (fn
+      Timestamp (_, step', _) => step = step'
+    | Ticks (_, step')        => step = step'
+    | NotTicks (_, step')     => step = step'
+    | Affine _                => false
+) G
+
 (* Whenever there's a ticking predicate, there shouln't be a refutation. Same way for non-ticking predicate. *)
 fun check_non_contradictory_ticks (G: system) =
   let

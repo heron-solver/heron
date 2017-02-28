@@ -25,12 +25,27 @@ fun heuristic_monotonic_sporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list
                   | _ => true) phi end)
     cfs;
 
+(* Ranges integers [1 : n] *)
+fun range n = let fun aux n' l = if n' = 0 then l else aux (n' - 1) (n' :: l) in aux n [] end;
+
+(* UNSAFE *)
+(* Heuristic 3. Rejects runs containing empty instants. Something always have to happen anytime *)
+fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  let fun has_at_least_one_event (G: system) (step : int) =
+    List.exists (fn Ticks _ => true | _ => false) (haa_constrs_at_step G step)
+  in List.filter
+    (fn (G, n, _, _) =>
+      List.all (fn n => has_at_least_one_event G n) (range n)
+    ) cfs
+  end
+
 exception Unreferenced_heuristic
 fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf list) =
   case f of
-    DirHeuristic "minsporadic"        => (heuristic_minsporadic)
+    DirHeuristic "all"                => compose (compose (heuristic_minsporadic, heuristic_monotonic_sporadic), heuristic_no_empty_instants)
+  | DirHeuristic "minsporadic"        => (heuristic_minsporadic)
   | DirHeuristic "monotonic_sporadic" => (heuristic_monotonic_sporadic)
-  | DirHeuristic "no_empty_instants"  => raise Unreferenced_heuristic 
+  | DirHeuristic "no_empty_instants"  => (heuristic_no_empty_instants)
   | DirHeuristic "ticks_on_demand"    => raise Unreferenced_heuristic 
   | DirHeuristic _                    => raise Unreferenced_heuristic
   | _                                 => raise UnexpectedMatch

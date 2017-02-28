@@ -437,6 +437,7 @@ fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
       val introduced_cfs = (* cfl_uniq *) (List.concat (List.map (shy_adventurer_step_i) cfs))
       val _ = writeln "Applying constraints..."
       val reduce_psi_formulae = psi_reduce introduced_cfs
+      val _ = writeln "Simplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
   in reduced_haa_contexts
   end
@@ -477,7 +478,7 @@ fun exec
           then (writeln ("Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
                 writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
 		  writeln (BOLD_COLOR ^ RED_COLOR ^ "### WARNING" ^ RESET_COLOR) ;
-                writeln (BOLD_COLOR ^ RED_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " pre-models (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
+                writeln (BOLD_COLOR ^ RED_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " premodels (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
                 raise Maxstep_reached cfs)
           else ()
         (* STOPS WHEN FINITE MODEL FOUND *)
@@ -503,17 +504,21 @@ fun exec
         in let
           (* INSTANT SOLVING *)
           val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int k ^ "] #####" ^ RESET_COLOR)
-	   (* COMPUTING THE NEXT SIMULATION STEP *)
+	   (* 1. COMPUTING THE NEXT SIMULATION STEP *)
           val cfs' = exec_step cfs
-	   (* KEEPING RUN WITH CODIRECTIONS *)
+	   (* 2. KEEPING PREFIX-COMPLIANT RUNS *)
 	   val cfs_selected_by_codirection = case codirection of
 						    [] => cfs'
-						   | _  => (writeln "Filtering with codirection strategy..." ;
+						   | _  => (writeln "Keeping prefix-compliant premodels..." ;
 							     List.filter (fn (G, _, _, _) => SAT (G @ codirection)) cfs')
-	   (* KEEPING HEURISTICS *)
-          val cfs_selected_by_heuristic = (heuristic_combine heuristics) cfs_selected_by_codirection
+	   (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
+          val cfs_selected_by_heuristic = case heuristics of
+              [] => cfs_selected_by_codirection
+	     | _  => (writeln "Keeping heuristics-compliant premodels..." ;
+		       (heuristic_combine heuristics) cfs_selected_by_codirection)
+          (* END OF SIMULATION *)
 	   val end_time = Time.now()
-          val () = writeln ("--> Consistent pre-models: " ^ string_of_int (List.length cfs_selected_by_heuristic))
+          val () = writeln ("--> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
           val () = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec") in
         aux (cfs_selected_by_heuristic) (k + 1) end_time end
         handle
