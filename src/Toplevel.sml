@@ -1,3 +1,6 @@
+open OS.Process
+
+(* Structures used for lexing/parsing *)
 structure CalcLrVals =
   CalcLrValsFun(structure Token = LrParser.Token)
 
@@ -16,9 +19,45 @@ fun invoke lexstream =
      in CalcParser.parse(0,lexstream,print_error,())
     end
 
-val buffer : TESL_atomic list ref = ref [];
 
-fun parse () = 
+val maxstep                          = ref ~1
+val minstep                          = ref ~1
+val heuristics: TESL_atomic list ref = ref []
+val dumpres                          = ref false
+
+val prefix: system ref = ref []
+val prefix_strict: system ref = ref []
+
+val declared_clocks: clock list ref = ref []
+
+val snapshots: TESL_ARS_conf list ref = ref [([], 0, [], [])]
+
+fun action (stmt: TESL_atomic) = case stmt of
+    DirMinstep n	     => minstep := n
+  | DirMaxstep n	     => maxstep := n
+  | DirHeuristic _	     => heuristics := !heuristics @ [stmt]
+  | DirDumpres	     => dumpres := true
+  | DirRunprefixStrict (n_step, clocks_prefix) =>
+    let val add_haa_constrs =
+      List.map (fn c =>
+      if List.exists (fn x => x = c) clocks_prefix
+      then Ticks (c, n_step)
+      else NotTicks (c, n_step)
+      ) (!declared_clocks)
+      in prefix_strict := (!prefix_strict) @ add_haa_constrs end
+  | DirRunprefix (n_step, prefix_clocks) =>
+      prefix := (!prefix) @ (List.map (fn c => Ticks (c, n_step)) prefix_clocks)
+  | DirRun		     =>
+      snapshots := exec (!snapshots) (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
+  | DirRunStep	     =>
+      let val current_step = case List.hd (!snapshots) of (_, n, _, _) => n + 1
+      in snapshots := exec_step (!snapshots) current_step (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics) end
+  | _                     =>
+    (snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (phi @ [stmt]), psi)) (!snapshots);
+     declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt])))
+
+(* Main REPL *)
+fun toplevel () = 
   let val lexer = CalcParser.makeLexer (fn _ =>
 						   (case TextIO.inputLine TextIO.stdIn
 						    of SOME s => s
@@ -31,46 +70,18 @@ fun parse () =
 	 val (result,lexer) = invoke lexer
 	 val (nextToken,lexer) = CalcParser.Stream.get lexer
 	 val _ = case result
-		   of SOME r =>
-		      let val _ = (buffer := !buffer @ [r]) in
-			TextIO.output(TextIO.stdOut, "val it = " ^ (string_of_expr r) ^ "\n") end
+		   of SOME stmt =>
+		      let val _ = action stmt in
+			TextIO.output(TextIO.stdOut, "val it = " ^ (string_of_expr stmt) ^ "\n") end
 		     | NONE => ()
-	in if CalcParser.sameToken(nextToken,dummyEOF) then !buffer
+	in if CalcParser.sameToken(nextToken,dummyEOF) then (OS.Process.exit OS.Process.success)
 	  else loop lexer
       end
      in loop lexer
   end
 
-
-val _ = print "Heron 0.1 Release\n"
-val spec = parse()
-
-val maxstep = case List.find (fn DirMaxstep _ => true | _ => false) spec of
-    NONE => ~1
-  | SOME (DirMaxstep n) => n
-  | _ => raise UnexpectedMatch
-val minstep = case List.find (fn DirMinstep _ => true | _ => false) spec of
-    NONE => ~1
-  | SOME (DirMinstep n) => n
-  | _ => raise UnexpectedMatch
-val heuristics = List.filter (fn DirHeuristic _ => true | _ => false) spec
-val dumpres = List.exists (fn DirDumpres => true | _ => false) spec
-val prefix_strict : system =
-  let val from_spec = List.filter (fn DirRunprefixStrict _ => true | _ => false) spec
-      val clocks_universe = clocks_of_tesl_formula spec
-  in List.concat (List.map (fn DirRunprefixStrict (n_step, clocks_prefix) =>
-    List.map (fn c => (if List.exists (fn x => x = c) clocks_prefix 
-    	      	     	 then Ticks (c, n_step)
-			 else NotTicks (c, n_step))
-  ) clocks_universe |_=>raise UnexpectedMatch) from_spec)
-end
-val prefix : system =
-  let val from_spec = List.filter (fn DirRunprefix _ => true | _ => false) spec
-  in List.concat (List.map (fn DirRunprefix (n_step, clocks) =>
-    List.map (fn c => Ticks (c, n_step)) clocks| _ => raise UnexpectedMatch) from_spec)
-end
-
-val params = (minstep, maxstep, dumpres, prefix_strict @ prefix, heuristics)
-
-val _ = solve spec params
-
+(* Entry-point *)
+val _ = (
+  print "Heron 0.1 Release\n";
+  toplevel()
+)

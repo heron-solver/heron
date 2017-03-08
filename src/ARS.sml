@@ -431,15 +431,45 @@ fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
 	   psi_reduce (List.concat (List.map (shy_adventurer_step_e) cfs))
   end
 
-fun exec_step (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun exec_step
+  (cfs : TESL_ARS_conf list)
+  (step_index: int)
+  (minstep     : int,
+   maxstep     : int,
+   dumpres     : bool,
+   codirection : system,
+   heuristics  : TESL_formula
+  )
+  : TESL_ARS_conf list =
   let
+      val start_time = Time.now()
+      (* 1. COMPUTING THE NEXT SIMULATION STEP *)
+      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int step_index ^ "] #####" ^ RESET_COLOR)
       val _ = writeln "Initializing new instant..."
       val introduced_cfs = (* cfl_uniq *) (List.concat (List.map (shy_adventurer_step_i) cfs))
       val _ = writeln "Applying constraints..."
       val reduce_psi_formulae = psi_reduce introduced_cfs
       val _ = writeln "Simplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
-  in reduced_haa_contexts
+
+      (* 2. KEEPING PREFIX-COMPLIANT RUNS *)
+      val cfs_selected_by_codirection = case codirection of
+					    [] => reduced_haa_contexts
+					   | _	 => (writeln "Keeping prefix-compliant premodels..." ;
+						     List.filter (fn (G, _, _, _) => SAT (G @ codirection)) reduced_haa_contexts)
+
+      (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
+      val cfs_selected_by_heuristic = case heuristics of
+	    [] => cfs_selected_by_codirection
+	  | _	=> (writeln "Keeping heuristics-compliant premodels..." ;
+		       (heuristic_combine heuristics) cfs_selected_by_codirection)
+
+      (* END OF SIMULATION *)
+      val end_time = Time.now()
+      val _ = writeln ("--> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
+      val _ = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec")
+
+  in cfs_selected_by_heuristic
   end
 
 exception Maxstep_reached   of TESL_ARS_conf list;
@@ -470,7 +500,7 @@ fun exec
     val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
     val () = writeln ("Heuristic: " ^ (case heuristics of [] => "none (full counterfactual exploration)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch) "" heuristics))
     (* MAIN SIMULATION LOOP *)
-    fun aux cfs k start_time =
+    fun aux cfs k =
       let
         (* STOPS WHEN MAXSTEP REACHED *)
         val () =
@@ -503,24 +533,8 @@ fun exec
 		     | _  => ()
         in let
           (* INSTANT SOLVING *)
-          val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int k ^ "] #####" ^ RESET_COLOR)
-	   (* 1. COMPUTING THE NEXT SIMULATION STEP *)
-          val cfs' = exec_step cfs
-	   (* 2. KEEPING PREFIX-COMPLIANT RUNS *)
-	   val cfs_selected_by_codirection = case codirection of
-						    [] => cfs'
-						   | _  => (writeln "Keeping prefix-compliant premodels..." ;
-							     List.filter (fn (G, _, _, _) => SAT (G @ codirection)) cfs')
-	   (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
-          val cfs_selected_by_heuristic = case heuristics of
-              [] => cfs_selected_by_codirection
-	     | _  => (writeln "Keeping heuristics-compliant premodels..." ;
-		       (heuristic_combine heuristics) cfs_selected_by_codirection)
-          (* END OF SIMULATION *)
-	   val end_time = Time.now()
-          val () = writeln ("--> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
-          val () = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec") in
-        aux (cfs_selected_by_heuristic) (k + 1) end_time end
+          val next_snapshots = exec_step cfs k (minstep, maxstep, dumpres, codirection, heuristics) in
+        aux next_snapshots (k + 1) end
         handle
 	 Maxstep_reached   cfs =>
 	 (if dumpres
@@ -551,7 +565,7 @@ fun exec
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR) ;
 		     [])
       end
-  in aux cfs 1 (Time.now()) end
+  in aux cfs 1 end
 
 (* Main solver function *)
 fun solve

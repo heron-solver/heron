@@ -19,3 +19,5 @@ switoff time delayed by 60000 on ms implies lgtoff
    @prefix strict 2 lgton
 // @prefix strict 3 switoff
 // @prefix strict 4 lgtoff
+@heuristic all
+@run

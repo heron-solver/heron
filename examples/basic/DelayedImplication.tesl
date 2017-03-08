@@ -6,3 +6,4 @@ master delayed by 2 on cntin implies slave
  
 @maxstep 10
 @dumpres
+@run

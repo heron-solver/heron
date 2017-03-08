@@ -5,3 +5,4 @@ tag relation m1 = m2
 await m1 m2 implies slave
 
 @dumpres
+@run

@@ -20,7 +20,7 @@
       | WHEN | WHENNOT
       | EVERY | STARTINGAT
       | PERIODIC | OFFSET
-      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | DIR_RUNPREFIX_STRICT
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | DIR_RUNPREFIX_STRICT | DIR_RUN | DIR_RUNSTEP
 
 %nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAGS of tag list
 
@@ -63,3 +63,5 @@
       | DIR_DUMPRES                              (DirDumpres)
       | DIR_RUNPREFIX_STRICT NUM CLKS            (DirRunprefixStrict (NUM, CLKS))
       | DIR_RUNPREFIX        NUM CLKS            (DirRunprefix (NUM, CLKS))
+      | DIR_RUN                                  (DirRun)
+      | DIR_RUNSTEP                              (DirRunStep)

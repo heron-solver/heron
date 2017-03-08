@@ -16,3 +16,5 @@ compAB time delayed by 10 on CPU1t implies ABavail
 
 @dumpres
 @heuristic no_empty_instants
+@run
+

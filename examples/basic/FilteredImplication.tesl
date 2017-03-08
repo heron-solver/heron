@@ -4,3 +4,4 @@ master filtered by 1,2 (1,3)* implies slave
  
 @maxstep 15
 @dumpres
+@run

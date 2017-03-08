@@ -8,3 +8,4 @@ master when sampl implies slave
 @dumpres
 @heuristic minsporadic
 @heuristic monotonic_sporadic
+@run

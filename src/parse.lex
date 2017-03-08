@@ -10,6 +10,7 @@ fun eof () = Tokens.EOF(!pos,!pos)
 fun error (e,l : int,_) = TextIO.output (TextIO.stdOut, String.concat[
 	"line ", (Int.toString l), ": ", e, "\n"
       ])
+exception Abort
 
 %%
 %header (functor CalcLexFun(structure Tokens: Calc_TOKENS));
@@ -51,6 +52,9 @@ ws = [\ \t];
 "@dumpres"                   => (Tokens.DIR_DUMPRES(!pos,!pos));
 "@prefix strict"             => (Tokens.DIR_RUNPREFIX_STRICT(!pos,!pos));
 "@prefix"                    => (Tokens.DIR_RUNPREFIX(!pos,!pos));
+"@abort"                     => (raise Abort);
+"@run"                       => (Tokens.DIR_RUN(!pos,!pos));
+"@step"                      => (Tokens.DIR_RUNSTEP(!pos,!pos));
 "//"[^ \n]*                  => (lex());
 
 _                            => (error ("ignoring bad character " ^ yytext,!pos,!pos);

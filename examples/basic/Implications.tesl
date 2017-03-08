@@ -5,3 +5,4 @@ master1 implies slave
 master2 implies slave
  
 @dumpres
+@run
