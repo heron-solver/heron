@@ -66,6 +66,8 @@ datatype TESL_atomic =
   | DirRunStep
   | DirRun
   | DirPrint
+  | DirExit
+  | DirHelp
 
 type TESL_formula = TESL_atomic list
 
@@ -137,6 +139,8 @@ fun unsugar (f : TESL_formula) =
 	    | DirRun                => []
 	    | DirRunStep            => []
 	    | DirPrint              => []
+	    | DirExit               => []
+	    | DirHelp               => []
 	    | fatom => [fatom]
   ) f)
 

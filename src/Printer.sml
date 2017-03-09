@@ -83,16 +83,17 @@ fun string_of_affine_constr c =
     | _ => raise UnexpectedMatch
 
 (* Print HAA-system *)
-fun print_system (G : system) =
+fun print_system (step_index: int) (clocks: clock list) (G : system) =
   let
     val G = lfp (reduce) G
-    val clocks =
+(*  val clocks =
       uniq (List.concat (List.map (fn Ticks (c, _) => [c] | NotTicks (c, _) => [c] | Timestamp (c, _, _) => [c] | Affine _ => []) G))
     val nb_instants =
       List.foldl
         (fn (x, x0) => if x >= x0 then x else x0)
         0
         (List.concat (List.map (fn Ticks (_, n) => [n] | NotTicks (_, n) => [n] | Timestamp (_, n, _) => [n] | Affine _ => []) G))
+*)
     fun constrs_of_clk_instindex c n =
       List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
     fun string_of_constrs_at_clk_instindex clk n g =
@@ -118,7 +119,7 @@ fun print_system (G : system) =
       writeln ("[" ^ string_of_int n ^ "]"
 		 ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_constrs_at_clk_instindex c n (constrs_of_clk_instindex c n)) "" clocks)
     fun print_run k =
-      if k > nb_instants
+      if k > step_index
       then ()
       else (print_instant k ; print_run (k + 1))
   in print_clocks (); print_run 1

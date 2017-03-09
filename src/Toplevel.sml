@@ -19,6 +19,35 @@ fun invoke lexstream =
      in CalcParser.parse(0,lexstream,print_error,())
     end
 
+fun print_help () = (
+print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
+print "  [ID] sporadic [TAG]+\n"; 
+print "  [ID] implies [ID]\n"; 
+print "  tag relation [ID] = [TAG] * [ID] + [TAG]\n"; 
+print "  [ID] time delayed by [TAG] on [ID] implies [ID]\n"; 
+print "  [ID] delayed by [NAT] on [ID] implies [ID]\n"; 
+print "  [ID] filtered by [NAT], [NAT] ([NAT], [NAT])* implies [ID]\n"; 
+print "  [ID] sustained from [ID] to [ID] implies [ID]\n"; 
+print "  await [ID]+ implies [ID]\n"; 
+print "  [ID] when [ID] implies [ID]\n"; 
+print "  [ID] when not [ID] implies [ID]\n"; 
+print "\n"; 
+
+print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
+print "  @minstep [NAT]               define the number of minimum run steps\n"; 
+print "  @maxstep [NAT]               define the number of maximum run steps\n"; 
+print "  @heuristic [NAME]+           load heuristic(s) among:\n";
+print "                               all, minsporadic, monotonic_sporadic, no_empty_instants, ticks_on_demand\n"; 
+print "  @dumpres                     option to display the results after @run\n"; 
+print "  @prefix (strict) [NAT] [ID]+ set run prefix constraints\n"; 
+print "\n"; 
+
+print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
+print "  @exit                        exit Heron\n"; 
+print "  @run                         run the specification until model found\n"; 
+print "  @step                        run the specification for one step\n"; 
+print "  @print                       display the current snapshots\n"; 
+print "  @help                        display the list of commands\n")
 
 val maxstep                          = ref ~1
 val minstep                          = ref ~1
@@ -31,6 +60,10 @@ val prefix_strict: system ref = ref []
 val declared_clocks: clock list ref = ref []
 
 val snapshots: TESL_ARS_conf list ref = ref [([], 0, [], [])]
+
+fun quit () = case (!snapshots) of
+    [] => OS.Process.exit OS.Process.failure
+  | _  => OS.Process.exit OS.Process.success
 
 fun action (stmt: TESL_atomic) = case stmt of
     DirMinstep n	     => minstep := n
@@ -48,11 +81,13 @@ fun action (stmt: TESL_atomic) = case stmt of
   | DirRunprefix (n_step, prefix_clocks) =>
       prefix := (!prefix) @ (List.map (fn c => Ticks (c, n_step)) prefix_clocks)
   | DirRun		     =>
-      snapshots := exec (!snapshots) (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
+      snapshots := exec (!snapshots) (!declared_clocks) (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
   | DirRunStep	     =>
       let val current_step = case List.hd (!snapshots) of (_, n, _, _) => n + 1
       in snapshots := exec_step (!snapshots) current_step (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics) end
-  | DirPrint              => print_dumpres (!snapshots)
+  | DirPrint              => print_dumpres (!declared_clocks) (!snapshots)
+  | DirExit               => quit()
+  | DirHelp               => print_help()
   | _                     =>
     (snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (phi @ [stmt]), psi)) (!snapshots);
      declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt])))
@@ -75,7 +110,7 @@ fun toplevel () =
 		      let val _ = action stmt in
 			TextIO.output(TextIO.stdOut, "val it = " ^ (string_of_expr stmt) ^ "\n") end
 		     | NONE => ()
-	in if CalcParser.sameToken(nextToken,dummyEOF) then (OS.Process.exit OS.Process.success)
+	in if CalcParser.sameToken(nextToken,dummyEOF) then quit()
 	  else loop lexer
       end
      in loop lexer
@@ -84,5 +119,6 @@ fun toplevel () =
 (* Entry-point *)
 val _ = (
   print "Heron 0.1 Release\n";
+  print "Type @help for assistance.\n";
   toplevel()
 )

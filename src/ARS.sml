@@ -464,7 +464,8 @@ fun exec_step
       val cfs_selected_by_codirection = case codirection of
 					    [] => reduced_haa_contexts
 					   | _	 => (writeln "Keeping prefix-compliant premodels..." ;
-						     List.filter (fn (G, _, _, _) => SAT (G @ codirection)) reduced_haa_contexts)
+						     List.filter (fn (G, _, _, _) => SAT G)
+							(List.map (fn (G, n, phi, psi) => (G @ codirection, n, phi, psi)) reduced_haa_contexts))
 
       (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
       val cfs_selected_by_heuristic = case heuristics of
@@ -475,6 +476,7 @@ fun exec_step
       (* END OF SIMULATION *)
       val end_time = Time.now()
       val _ = writeln ("--> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
+      val _ = case cfs_selected_by_heuristic of [] => writeln (BOLD_COLOR ^ RED_COLOR ^ "    ERROR: Entering inconsistent mode" ^ RESET_COLOR) | _ => ()
       val _ = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec")
 
   in cfs_selected_by_heuristic
@@ -486,13 +488,13 @@ fun has_no_floating_ticks (f : TESL_formula) =
   (* Stop condition 2. No pending whenticking *)
   andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
   
-fun print_dumpres (cfs: TESL_ARS_conf list) = case cfs of
+fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
     [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
-  | _ => List.foldl (fn ((G, _, phi, _), _) =>
+  | _ => List.foldl (fn ((G, step, phi, _), _) =>
     let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
     (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
-     print_system G ;
+     print_system step declared_clocks G ;
      print RESET_COLOR ;
      print_affine_constrs G ;
      print_floating_ticks phi ;
@@ -502,6 +504,7 @@ fun print_dumpres (cfs: TESL_ARS_conf list) = case cfs of
 (* If [maxstep] is -1, then the simulation will be unbounded *)
 fun exec
   (cfs : TESL_ARS_conf list)
+  (declared_clocks : clock list)
   (minstep     : int,
    maxstep     : int,
    dumpres     : bool,
@@ -549,15 +552,15 @@ fun exec
         handle
 	 Maxstep_reached   cfs =>
 	 (if dumpres
-	  then print_dumpres cfs
+	  then print_dumpres declared_clocks cfs
 	  else writeln "# No output format requested" ;
 	  cfs)
         | Model_found       cfs =>
 	   (if dumpres
-	    then print_dumpres cfs
+	    then print_dumpres declared_clocks cfs
 	    else writeln "# No output format requested" ;
 	    cfs)
-	 | Abort => (print_dumpres [];
+	 | Abort => (print_dumpres declared_clocks [];
 		     [])
 
 (* Main solver function *)
