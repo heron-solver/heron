@@ -65,6 +65,7 @@ datatype TESL_atomic =
   | DirRunprefix              of int * clock list
   | DirRunStep
   | DirRun
+  | DirPrint
 
 type TESL_formula = TESL_atomic list
 
@@ -135,6 +136,7 @@ fun unsugar (f : TESL_formula) =
 	    | DirRunprefix _        => []
 	    | DirRun                => []
 	    | DirRunStep            => []
+	    | DirPrint              => []
 	    | fatom => [fatom]
   ) f)
 

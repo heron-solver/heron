@@ -431,6 +431,10 @@ fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
 	   psi_reduce (List.concat (List.map (shy_adventurer_step_e) cfs))
   end
 
+exception Maxstep_reached   of TESL_ARS_conf list;
+exception Model_found       of TESL_ARS_conf list;
+exception Abort;
+
 fun exec_step
   (cfs : TESL_ARS_conf list)
   (step_index: int)
@@ -442,6 +446,10 @@ fun exec_step
   )
   : TESL_ARS_conf list =
   let
+      (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
+      val () = case cfs of
+		[] => raise Abort
+	     | _  => ()
       val start_time = Time.now()
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
       val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int step_index ^ "] #####" ^ RESET_COLOR)
@@ -472,16 +480,23 @@ fun exec_step
   in cfs_selected_by_heuristic
   end
 
-exception Maxstep_reached   of TESL_ARS_conf list;
-exception Model_found       of TESL_ARS_conf list;
-exception Abort;
-
 fun has_no_floating_ticks (f : TESL_formula) =
   (* Stop condition 1. No pending sporadics *)
   (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
   (* Stop condition 2. No pending whenticking *)
   andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
   
+fun print_dumpres (cfs: TESL_ARS_conf list) = case cfs of
+    [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
+		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
+  | _ => List.foldl (fn ((G, _, phi, _), _) =>
+    let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
+    (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
+     print_system G ;
+     print RESET_COLOR ;
+     print_affine_constrs G ;
+     print_floating_ticks phi ;
+     writeln "## End") end) () cfs
 
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
@@ -527,50 +542,29 @@ fun exec
                 writeln ("### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models");
                 raise Model_found cfs_sat)
           else () end
-	 (* ABORT SIMULATION *)
-	 val () = case cfs of
-			[] => raise Abort
-		     | _  => ()
-        in let
-          (* INSTANT SOLVING *)
-          val next_snapshots = exec_step cfs k (minstep, maxstep, dumpres, codirection, heuristics) in
+        (* INSTANT SOLVING *)
+        val next_snapshots = exec_step cfs k (minstep, maxstep, dumpres, codirection, heuristics) in
         aux next_snapshots (k + 1) end
+  in aux cfs 1 end
         handle
 	 Maxstep_reached   cfs =>
 	 (if dumpres
-	  then List.foldl (fn ((G, _, phi, _), _) =>
-	   let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
-          (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
-           print_system G ;
-           print RESET_COLOR ;
-	    print_affine_constrs G ;
-           print_floating_ticks phi ;
-           writeln "## End") end
-			    ) () cfs
+	  then print_dumpres cfs
 	  else writeln "# No output format requested" ;
 	  cfs)
         | Model_found       cfs =>
 	   (if dumpres
-	    then List.foldl (fn ((G, _, phi, _), _) =>
-	   let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
-          (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
-           print_system G ;
-           print RESET_COLOR ;
-           print_affine_constrs G ;
-           print_floating_ticks phi ;
-           (writeln "## End")) end) () cfs
+	    then print_dumpres cfs
 	    else writeln "# No output format requested" ;
 	    cfs)
-	 | Abort => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
-		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR) ;
+	 | Abort => (print_dumpres [];
 		     [])
-      end
-  in aux cfs 1 end
 
 (* Main solver function *)
+(*
 fun solve
   (spec : TESL_formula)
   (param : int * int * bool * system * TESL_formula)
   : TESL_ARS_conf list =
   exec [([], 0, unsugar (spec), [])] param
-
+*)

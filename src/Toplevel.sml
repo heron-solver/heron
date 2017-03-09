@@ -52,6 +52,7 @@ fun action (stmt: TESL_atomic) = case stmt of
   | DirRunStep	     =>
       let val current_step = case List.hd (!snapshots) of (_, n, _, _) => n + 1
       in snapshots := exec_step (!snapshots) current_step (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics) end
+  | DirPrint              => print_dumpres (!snapshots)
   | _                     =>
     (snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (phi @ [stmt]), psi)) (!snapshots);
      declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt])))

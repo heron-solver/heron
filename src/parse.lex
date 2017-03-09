@@ -55,6 +55,7 @@ ws = [\ \t];
 "@abort"                     => (raise Abort);
 "@run"                       => (Tokens.DIR_RUN(!pos,!pos));
 "@step"                      => (Tokens.DIR_RUNSTEP(!pos,!pos));
+"@print"                     => (Tokens.DIR_PRINT(!pos,!pos));
 "//"[^ \n]*                  => (lex());
 
 _                            => (error ("ignoring bad character " ^ yytext,!pos,!pos);
