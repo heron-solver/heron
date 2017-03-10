@@ -435,9 +435,30 @@ exception Maxstep_reached   of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
 exception Abort;
 
+fun has_no_floating_ticks (f : TESL_formula) =
+  (* Stop condition 1. No pending sporadics *)
+  (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
+  (* Stop condition 2. No pending whenticking *)
+  andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
+
+(* Output snapshots *)
+fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
+    [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
+		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
+  | _ => List.foldl (fn ((G, step, phi, _), _) =>
+    let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
+    (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
+     print_system step declared_clocks G ;
+     print RESET_COLOR ;
+     print_affine_constrs G ;
+     print_floating_ticks phi ;
+     writeln "## End") end) () cfs
+
+(* Executes exactly one simulation step *)
 fun exec_step
   (cfs : TESL_ARS_conf list)
-  (step_index: int)
+  (step_index: int ref)
+  (declared_clocks : clock list)
   (minstep     : int,
    maxstep     : int,
    dumpres     : bool,
@@ -452,7 +473,7 @@ fun exec_step
 	     | _  => ()
       val start_time = Time.now()
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
-      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int step_index ^ "] #####" ^ RESET_COLOR)
+      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
       val _ = writeln "Initializing new instant..."
       val introduced_cfs = (* cfl_uniq *) (List.concat (List.map (shy_adventurer_step_i) cfs))
       val _ = writeln "Applying constraints..."
@@ -475,35 +496,21 @@ fun exec_step
 
       (* END OF SIMULATION *)
       val end_time = Time.now()
+      val _ = step_index := (!step_index) + 1
       val _ = writeln ("--> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
-      val _ = case cfs_selected_by_heuristic of [] => writeln (BOLD_COLOR ^ RED_COLOR ^ "    ERROR: Entering inconsistent mode" ^ RESET_COLOR) | _ => ()
       val _ = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec")
+      val _ = case cfs_selected_by_heuristic of [] => writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found. Simulation is now stuck in inconsistent mode." ^ RESET_COLOR) | _ => ()
 
   in cfs_selected_by_heuristic
   end
-
-fun has_no_floating_ticks (f : TESL_formula) =
-  (* Stop condition 1. No pending sporadics *)
-  (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
-  (* Stop condition 2. No pending whenticking *)
-  andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
-  
-fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
-    [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
-		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
-  | _ => List.foldl (fn ((G, step, phi, _), _) =>
-    let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
-    (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
-     print_system step declared_clocks G ;
-     print RESET_COLOR ;
-     print_affine_constrs G ;
-     print_floating_ticks phi ;
-     writeln "## End") end) () cfs
+  handle
+    Abort => (print_dumpres declared_clocks []; [])
 
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
 fun exec
   (cfs : TESL_ARS_conf list)
+  (step_index : int ref)
   (declared_clocks : clock list)
   (minstep     : int,
    maxstep     : int,
@@ -518,15 +525,15 @@ fun exec
     val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
     val () = writeln ("Heuristic: " ^ (case heuristics of [] => "none (full counterfactual exploration)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch) "" heuristics))
     (* MAIN SIMULATION LOOP *)
-    fun aux cfs k =
+    fun loop cfs =
       let
         (* STOPS WHEN MAXSTEP REACHED *)
         val () =
-          if (k = maxstep + 1)
+          if ((!step_index) = maxstep + 1)
           then (writeln ("Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
                 writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
-		  writeln (BOLD_COLOR ^ RED_COLOR ^ "### WARNING" ^ RESET_COLOR) ;
-                writeln (BOLD_COLOR ^ RED_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " premodels (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
+		  writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING:" ^ RESET_COLOR) ;
+                writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " premodels (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
                 raise Maxstep_reached cfs)
           else ()
         (* STOPS WHEN FINITE MODEL FOUND *)
@@ -537,18 +544,18 @@ fun exec
             (* Stop condition 2. No pending whenticking *)
             andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0)
             (* Stop condition 3. Minstep has already been overheaded *)
-            andalso (minstep < k)
+            andalso (minstep < (!step_index))
             ) cfs in
           if List.length cfs_sat > 0
           then (writeln ("Stopping simulation when finite model found") ;
                 writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
-                writeln ("### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models");
+                writeln (BOLD_COLOR ^ GREEN_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models" ^ RESET_COLOR);
                 raise Model_found cfs_sat)
           else () end
         (* INSTANT SOLVING *)
-        val next_snapshots = exec_step cfs k (minstep, maxstep, dumpres, codirection, heuristics) in
-        aux next_snapshots (k + 1) end
-  in aux cfs 1 end
+        val next_snapshots = exec_step cfs step_index declared_clocks (minstep, maxstep, dumpres, codirection, heuristics) in
+        loop next_snapshots end
+  in loop cfs end
         handle
 	 Maxstep_reached   cfs =>
 	 (if dumpres
@@ -560,14 +567,3 @@ fun exec
 	    then print_dumpres declared_clocks cfs
 	    else writeln "# No output format requested" ;
 	    cfs)
-	 | Abort => (print_dumpres declared_clocks [];
-		     [])
-
-(* Main solver function *)
-(*
-fun solve
-  (spec : TESL_formula)
-  (param : int * int * bool * system * TESL_formula)
-  : TESL_ARS_conf list =
-  exec [([], 0, unsugar (spec), [])] param
-*)

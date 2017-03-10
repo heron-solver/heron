@@ -1,23 +1,30 @@
-(* Heuristic 1. The heuristic is supposed to restrict the universe by choosing configurations that are relevant for simulation *)
+(* Dummy constants *)
+val MAXINT = valOf (Int.maxInt)
+val MININT = valOf (Int.minInt)
+(* Ranges integers [1 : n] *)
+fun range n = let fun aux n' l = if n' = 0 then l else aux (n' - 1) (n' :: l) in aux n [] end;
+
+(** Heuristics are supposed to restrict the universe by choosing configurations that are relevant for simulation.
+    They allow to focus on execution of models, and become handy to test your specificaitons.
+*)
+
+(* Heuristic 1. In a universe, the heuristic keeps snapshots with the minimal number of floating ticks.
+   We need to force the occurence of events as soon as possible. *)
 (* UNSAFE *)
-fun heuristic_minsporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_minimize_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    fun min_pending_spor (cfs : TESL_ARS_conf list) : int =
-    let
-      val cfs_with_spor = List.filter (fn (_, _, frun, _) => List.exists (fn Sporadic _ => true | _ => false) frun) cfs
-      val selected_cfs_min_start = case (List.nth (cfs_with_spor, 0)) of (_, _, frunsel, _) =>
-        List.length (List.filter (fn Sporadic _ => true | _ => false) frunsel) in
-    List.foldl (fn ((_, _, frun, _), n) =>
-      let val nb_spor = List.length (List.filter (fn Sporadic _ => true | _ => false) frun) in
-      if nb_spor >= n then n else nb_spor end) selected_cfs_min_start cfs_with_spor end
-    val min_spor = min_pending_spor cfs
+    fun nb_floating (frun: TESL_formula) : int =
+      List.length (List.filter (fn Sporadic _ => true | WhenTickingOn _ => true | _ => false) frun)
+    val min_spor : int =
+      List.foldl (fn ((_, _, frun, _), n) => Int.min(n, nb_floating frun)) MAXINT cfs
   in List.filter
-      (fn (_, _, frun, _) => (List.length (List.filter (fn Sporadic _ => true | _ => false) frun)) <= min_spor + 1) (* TWEAK PARAMETER *)
-      cfs end
+	  (fn (_, _, frun, _) => (nb_floating frun) <= min_spor)
+	  cfs
+  end
 
 (* Heuristic 2. Given a clock, if a sporadic was chosen to be merged, then it must be the smallest in the specification.
-   Otherwise it will eventually lead to inconsistencies *)
-fun heuristic_monotonic_sporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+   Otherwise it will surely lead to inconsistencies! *)
+fun heuristic_no_spurious_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   List.filter
     (fn (G, _, phi, _) =>
       let val G = reduce G in
@@ -25,11 +32,8 @@ fun heuristic_monotonic_sporadic (cfs : TESL_ARS_conf list) : TESL_ARS_conf list
                   | _ => true) phi end)
     cfs;
 
-(* Ranges integers [1 : n] *)
-fun range n = let fun aux n' l = if n' = 0 then l else aux (n' - 1) (n' :: l) in aux n [] end;
-
+(* Heuristic 3. Rejects runs containing empty instants. Something always have to happen at any step. *)
 (* UNSAFE *)
-(* Heuristic 3. Rejects runs containing empty instants. Something always have to happen anytime *)
 fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let fun has_at_least_one_event (G: system) (step : int) =
     List.exists (fn Ticks _ => true | _ => false) (haa_constrs_at_step G step)
@@ -42,13 +46,14 @@ fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list 
 exception Unreferenced_heuristic
 fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf list) =
   case f of
-    DirHeuristic "all"                => compose (compose (heuristic_minsporadic, heuristic_monotonic_sporadic), heuristic_no_empty_instants)
-  | DirHeuristic "minsporadic"        => (heuristic_minsporadic)
-  | DirHeuristic "monotonic_sporadic" => (heuristic_monotonic_sporadic)
-  | DirHeuristic "no_empty_instants"  => (heuristic_no_empty_instants)
-  | DirHeuristic "ticks_on_demand"    => raise Unreferenced_heuristic 
-  | DirHeuristic _                    => raise Unreferenced_heuristic
-  | _                                 => raise UnexpectedMatch
+    DirHeuristic "all"                        => heuristic_minimize_floating_ticks
+							o heuristic_no_spurious_floating_ticks
+							o heuristic_no_empty_instants
+  | DirHeuristic "minimize_floating_ticks"    => heuristic_minimize_floating_ticks
+  | DirHeuristic "no_spurious_floating_ticks" => heuristic_no_spurious_floating_ticks
+  | DirHeuristic "no_empty_instants"	    => heuristic_no_empty_instants
+  | DirHeuristic _                            => raise Unreferenced_heuristic
+  | _                                         => raise UnexpectedMatch
 
 fun heuristic_combine
   (spec: TESL_formula)
@@ -56,7 +61,7 @@ fun heuristic_combine
   case spec of
      [] => (fn x => x)
    | _  => List.foldl
-		 (fn (hname, hcurrent) => compose ((heuristic_ref_table hname), hcurrent))
+		 (fn (hname, hcurrent) => (heuristic_ref_table hname) o hcurrent)
 		 (fn x => x)
 		 spec
 

@@ -57,7 +57,6 @@ ws = [\ \t];
 "@print"                     => (Tokens.DIR_PRINT(!pos,!pos));
 "@help"                      => (Tokens.DIR_HELP(!pos,!pos));
 "//"[^ \n]*                  => (lex());
-
-_                            => (error ("ignoring bad character " ^ yytext,!pos,!pos);
+.                            => (error ("ignoring bad character " ^ yytext,!pos,!pos);
              lex());
 

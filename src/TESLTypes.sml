@@ -17,8 +17,6 @@ fun op @- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => e1 <> e2) l2) l1;
 fun is_empty l = case l of [] => true | _ => false
 fun contains x l = List.exists (fn x' => x = x') l
 
-val compose = fn (f, g) => fn x => f(g x)
-
 fun assert b =
   if b then b else raise Assert_failure
 
@@ -225,17 +223,22 @@ fun string_of_expr e = case e of
 
 fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   uniq (List.concat (List.map (fn
-    Sporadic (c, _) => [c]
-  | Sporadics (c, _) => [c]
-  | TagRelation (c1, _, c2, _) => [c1, c2]
-  | Implies (c1, c2) => [c1, c2]
-  | TimeDelayedBy (c1, _, c2, c3) => [c1, c2, c3]
-  | DelayedBy (c1, _, c2, c3) => [c1, c2, c3]
-  | FilteredBy (c1, _, _, _, _, c2) => [c1, c2]
-  | SustainedFrom (c1, c2, c3, c4) => [c1, c2, c3, c4]
+    Sporadic (c, _)                           => [c]
+  | Sporadics (c, _)                          => [c]
+  | TagRelation (c1, _, c2, _)                => [c1, c2]
+  | Implies (c1, c2)                          => [c1, c2]
+  | TimeDelayedBy (c1, _, c2, c3)             => [c1, c2, c3]
+  | DelayedBy (c1, _, c2, c3)                 => [c1, c2, c3]
+  | FilteredBy (c1, _, _, _, _, c2)           => [c1, c2]
+  | SustainedFrom (c1, c2, c3, c4)            => [c1, c2, c3, c4]
   | SustainedFromImmediately (c1, c2, c3, c4) => [c1, c2, c3, c4]
-  | Await (clks, _, _, c) => clks @ [c]
-  | WhenClock (c1, c2, c3) => [c1, c2, c3]
-  | WhenNotClock (c1, c2, c3) => [c1, c2, c3]
+  | Await (clks, _, _, c)                     => clks @ [c]
+  | WhenClock (c1, c2, c3)                    => [c1, c2, c3]
+  | WhenNotClock (c1, c2, c3)                 => [c1, c2, c3]
+  | EveryImplies (c1, _, _, c2)               => [c1, c2]
+  | NextTo (c1, c2, c3)                       => [c1, c2, c3]
+  | Periodic (c, _, _)                        => [c]
+  | DirRunprefixStrict (_, clks)              => clks
+  | DirRunprefix (_, clks)                    => clks
   | _ => []
   ) f))

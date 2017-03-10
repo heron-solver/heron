@@ -1,3 +1,5 @@
+val RELEASE_VERSION = "0.30.0+20170310"
+
 open OS.Process
 
 (* Structures used for lexing/parsing *)
@@ -20,6 +22,16 @@ fun invoke lexstream =
     end
 
 fun print_help () = (
+print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
+print (BOLD_COLOR ^ "Interactive Simulation Engine for Timed Causality Models in TESL\n" ^ RESET_COLOR); 
+print "\n";
+print "Copyright (c) Hai Nguyen Van    (2017)\n";
+print "              Universit\195\169 Paris-Sud / CNRS\n";
+(*
+print "Please cite:";
+print "\n";
+*)
+print "\n";
 print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
 print "  [ID] sporadic [TAG]+\n"; 
 print "  [ID] implies [ID]\n"; 
@@ -32,16 +44,14 @@ print "  await [ID]+ implies [ID]\n";
 print "  [ID] when [ID] implies [ID]\n"; 
 print "  [ID] when not [ID] implies [ID]\n"; 
 print "\n"; 
-
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [NAT]               define the number of minimum run steps\n"; 
 print "  @maxstep [NAT]               define the number of maximum run steps\n"; 
 print "  @heuristic [NAME]+           load heuristic(s) among:\n";
-print "                               all, minsporadic, monotonic_sporadic, no_empty_instants, ticks_on_demand\n"; 
+print "                               all, minimize_floating_ticks, no_spurious_floating_ticks, no_empty_instants\n"; 
 print "  @dumpres                     option to display the results after @run\n"; 
 print "  @prefix (strict) [NAT] [ID]+ set run prefix constraints\n"; 
 print "\n"; 
-
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
 print "  @exit                        exit Heron\n"; 
 print "  @run                         run the specification until model found\n"; 
@@ -60,12 +70,16 @@ val prefix_strict: system ref = ref []
 val declared_clocks: clock list ref = ref []
 
 val snapshots: TESL_ARS_conf list ref = ref [([], 0, [], [])]
+val current_step: int ref = ref 1
 
 fun quit () = case (!snapshots) of
     [] => OS.Process.exit OS.Process.failure
   | _  => OS.Process.exit OS.Process.success
 
-fun action (stmt: TESL_atomic) = case stmt of
+fun action (stmt: TESL_atomic) =
+  (* On-the-fly clock identifiers declaration *)
+  let val _ = declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt])) in
+  case stmt of
     DirMinstep n	     => minstep := n
   | DirMaxstep n	     => maxstep := n
   | DirHeuristic _	     => heuristics := !heuristics @ [stmt]
@@ -73,24 +87,31 @@ fun action (stmt: TESL_atomic) = case stmt of
   | DirRunprefixStrict (n_step, clocks_prefix) =>
     let val add_haa_constrs =
       List.map (fn c =>
-      if List.exists (fn x => x = c) clocks_prefix
-      then Ticks (c, n_step)
-      else NotTicks (c, n_step)
+        if List.exists (fn x => x = c) clocks_prefix
+        then Ticks (c, n_step)
+        else NotTicks (c, n_step)
       ) (!declared_clocks)
       in prefix_strict := (!prefix_strict) @ add_haa_constrs end
   | DirRunprefix (n_step, prefix_clocks) =>
       prefix := (!prefix) @ (List.map (fn c => Ticks (c, n_step)) prefix_clocks)
   | DirRun		     =>
-      snapshots := exec (!snapshots) (!declared_clocks) (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
+      snapshots := exec
+			  (!snapshots)
+			  current_step
+			  (!declared_clocks)
+			  (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
   | DirRunStep	     =>
-      let val current_step = case List.hd (!snapshots) of (_, n, _, _) => n + 1
-      in snapshots := exec_step (!snapshots) current_step (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics) end
+      snapshots := exec_step
+			  (!snapshots)
+			  current_step
+			  (!declared_clocks)
+			  (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
   | DirPrint              => print_dumpres (!declared_clocks) (!snapshots)
   | DirExit               => quit()
   | DirHelp               => print_help()
   | _                     =>
-    (snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (phi @ [stmt]), psi)) (!snapshots);
-     declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt])))
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (phi @ [stmt]), psi)) (!snapshots)
+  end
 
 (* Main REPL *)
 fun toplevel () = 
@@ -118,7 +139,7 @@ fun toplevel () =
 
 (* Entry-point *)
 val _ = (
-  print "Heron 0.1 Release\n";
+  print ("Heron " ^ RELEASE_VERSION ^" Release\n");
   print "Type @help for assistance.\n";
   toplevel()
 )
