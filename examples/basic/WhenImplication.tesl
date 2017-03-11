@@ -6,6 +6,5 @@ tag relation sampl = master
 master when sampl implies slave
 
 @dumpres
-@heuristic minsporadic
-@heuristic monotonic_sporadic
+@heuristic all
 @run

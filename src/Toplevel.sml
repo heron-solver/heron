@@ -1,4 +1,4 @@
-val RELEASE_VERSION = "0.30.0+20170310"
+val RELEASE_VERSION = "0.30.1-alpha+20170311"
 
 open OS.Process
 
@@ -23,9 +23,9 @@ fun invoke lexstream =
 
 fun print_help () = (
 print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
-print (BOLD_COLOR ^ "Interactive Simulation Engine for Timed Causality Models in TESL\n" ^ RESET_COLOR); 
+print (BOLD_COLOR ^ "Interactive Simulation Engine for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
 print "\n";
-print "Copyright (c) Hai Nguyen Van    (2017)\n";
+print "Copyright (c) 2017, Hai Nguyen Van\n";
 print "              Universit\195\169 Paris-Sud / CNRS\n";
 (*
 print "Please cite:";
@@ -43,6 +43,9 @@ print "  [ID] sustained from [ID] to [ID] implies [ID]\n";
 print "  await [ID]+ implies [ID]\n"; 
 print "  [ID] when [ID] implies [ID]\n"; 
 print "  [ID] when not [ID] implies [ID]\n"; 
+print "\n"; 
+print "  For more information about the TESL language:\n"; 
+print "  http://wwwdi.supelec.fr/software/TESL\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [NAT]               define the number of minimum run steps\n"; 
