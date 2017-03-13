@@ -451,7 +451,7 @@ fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = cas
      print_system step declared_clocks G ;
      print RESET_COLOR ;
      print_affine_constrs G ;
-     print_floating_ticks phi ;
+     print_floating_ticks declared_clocks phi ;
      writeln "## End") end) () cfs
 
 (* Executes exactly one simulation step *)

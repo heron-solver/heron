@@ -1,4 +1,4 @@
-val RELEASE_VERSION = "0.30.1-alpha+20170311"
+val RELEASE_VERSION = "0.31.0-alpha+20170313"
 
 open OS.Process
 
@@ -48,19 +48,25 @@ print "  For more information about the TESL language:\n";
 print "  http://wwwdi.supelec.fr/software/TESL\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
-print "  @minstep [NAT]               define the number of minimum run steps\n"; 
-print "  @maxstep [NAT]               define the number of maximum run steps\n"; 
-print "  @heuristic [NAME]+           load heuristic(s) among:\n";
-print "                               all, minimize_floating_ticks, no_spurious_floating_ticks, no_empty_instants\n"; 
-print "  @dumpres                     option to display the results after @run\n"; 
-print "  @prefix (strict) [NAT] [ID]+ set run prefix constraints\n"; 
+print "  @minstep [NAT]                 define the number of minimum run steps\n"; 
+print "  @maxstep [NAT]                 define the number of maximum run steps\n"; 
+print "  @heuristic [NAME]+             load heuristic(s) among:\n";
+print "                                   \u001B[1mall\u001B[0m\n"; 
+print "                                   \u001B[1mminimize_floating_ticks\u001B[0m\n";
+print "                                   \u001B[1mno_spurious_sporadics\u001B[0m\n";
+print "                                   \u001B[1mno_spurious_whentickings\u001B[0m\n";
+print "                                   \u001B[1mno_empty_instants\u001B[0m\n";
+print "                                   \u001B[1mminimize_sporadic_floating_ticks\u001B[0m\n";
+print "                                   \u001B[1mmaximize_reactiveness\u001B[0m\n";
+print "  @dumpres                       option to display the results after @run\n"; 
+print "  @scenario (strict) [NAT] [ID]+ refine snapshots with instantaneous scenario\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
-print "  @exit                        exit Heron\n"; 
-print "  @run                         run the specification until model found\n"; 
-print "  @step                        run the specification for one step\n"; 
-print "  @print                       display the current snapshots\n"; 
-print "  @help                        display the list of commands\n")
+print "  @exit                          exit Heron\n"; 
+print "  @run                           run the specification until model found\n"; 
+print "  @step                          run the specification for one step\n"; 
+print "  @print                         display the current snapshots\n"; 
+print "  @help                          display the list of commands\n")
 
 val maxstep                          = ref ~1
 val minstep                          = ref ~1

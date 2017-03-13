@@ -1,10 +1,11 @@
  (* Some colors *)
-val BOLD_COLOR   = "\u001B[1m"
-val RED_COLOR    = "\u001B[31m"
-val GREEN_COLOR  = "\u001B[32m"
-val YELLOW_COLOR = "\u001B[33m"
-val BLUE_COLOR   = "\u001B[34m"
-val RESET_COLOR  = "\u001B[0m"
+val BOLD_COLOR      = "\u001B[1m"
+val UNDERLINE_COLOR = "\u001B[4m"
+val RED_COLOR       = "\u001B[31m"
+val GREEN_COLOR     = "\u001B[32m"
+val YELLOW_COLOR    = "\u001B[33m"
+val BLUE_COLOR      = "\u001B[34m"
+val RESET_COLOR     = "\u001B[0m"
 
 fun superscript_of_char (c : char) =
   case c of
@@ -66,10 +67,11 @@ fun string_of_tag_ugly (t : tag) =
     | Add (t1, t2) => (string_of_tag_ugly t1) ^ " + " ^ (string_of_tag_ugly t2)
 fun string_of_tag_fancy (t : tag) =
   case t of
-      Int n => string_of_int n (* DEBUG *)
+      Int n => string_of_int_exp n
     | Unit  => "()"
     | Schematic (Clk c_str, n) => "X" ^ subscript_of_int n ^ superscript_of_string c_str
     | Add (t1, t2) => (string_of_tag_fancy t1) ^ " + " ^ (string_of_tag_fancy t2)
+
 (* You may change this parameter, depending on your CLI abilities *)
 val string_of_tag = (string_of_tag_fancy)
 
@@ -136,22 +138,22 @@ fun print_affine_constrs (G : system) : unit =
       List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_timestamp_constr c))) () nontriv_timestamps_constrs)
   end
   
-fun print_floating_ticks (f: TESL_formula) : unit =
+fun print_floating_ticks (clocks: clock list) (f: TESL_formula) : unit =
   let
     val sporadics = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f)
     val whentickings = (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f)
-    val clocks = uniq ((List.map (fn Sporadic (c, _) => c | _ => raise UnexpectedMatch) sporadics)
-			  @ (List.map (fn WhenTickingOn (_, _, c) => c | _ => raise UnexpectedMatch) whentickings))
     fun string_of_sporadics c =
       List.foldl (fn (Sporadic (Clk clk, tag), s) =>
 			if clk = c
 			then (string_of_tag tag) ^ ", " ^ s
-			else "" | _ => raise UnexpectedMatch) "" sporadics
+			else "" ^ s | _ => raise UnexpectedMatch) "" sporadics
     fun string_of_whentickingon c =
       List.foldl (fn (WhenTickingOn (Clk clk_meas_name, tag, Clk clk), s) =>
 			if clk = c
 			then "(" ^ BOLD_COLOR ^ "when" ^ RESET_COLOR ^ " " ^ (string_of_tag tag) ^ " " ^ BOLD_COLOR ^ "on" ^ RESET_COLOR ^ " " ^ clk_meas_name ^ "), " ^ s
-			else "" | _ => raise UnexpectedMatch) "" whentickings
-  in case (sporadics, whentickings) of ([], []) => () | _ => writeln "Floating ticks pending for merge:" ;
-     List.foldl (fn (Clk cname, _) => writeln ("\t" ^ cname ^ ": " ^ (string_of_sporadics cname) ^ (string_of_whentickingon cname))) () clocks
+			else "" ^ s | _ => raise UnexpectedMatch) "" whentickings
+  in case (sporadics, whentickings) of
+      ([], []) => ()
+    | _ => (writeln "Floating ticks pending for merge:" ;
+     List.app (fn (Clk cname) => writeln ("\t" ^ cname ^ ": " ^ (string_of_sporadics cname) ^ (string_of_whentickingon cname))) clocks)
   end

@@ -13,10 +13,10 @@ switon time delayed by 120 on s implies lgton
 switoff time delayed by 60000 on ms implies lgtoff
 
 // You can use run prefixes as follows to drive the simulation
-// @prefix strict 1 button switon
-// @prefix strict 2 lgton
-// @prefix strict 3 switoff
-// @prefix strict 4 lgtoff
+// @scenario strict 1 button switon
+// @scenario strict 2 lgton
+// @scenario strict 3 switoff
+// @scenario strict 4 lgtoff
 
 // Or you can let the solver find its own way helped by some heuristics
 @heuristic all

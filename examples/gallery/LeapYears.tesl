@@ -1,0 +1,24 @@
+// Computing leap years in TESL
+// http://wwwdi.supelec.fr/software/TESL/GalleryLeap
+
+year periodic 1 // count years
+ 
+year4 periodic 4 // build a clock with period 4 on the same time same as year
+tag relation year4 = year
+ 
+year100 periodic 100 // build a clock with period 100 on the same time same as year
+tag relation year100 = year
+ 
+year400 periodic 400 // build a clock with period 400 on the same time same as year
+tag relation year400 = year
+ 
+// A year is leap if it is divisible by 4 but not by 100
+year4 when not year100 implies leap
+// However, a year divisible by 400 is leap
+year400 implies leap
+
+//@dumpres
+@heuristic all
+@maxstep 10
+@run
+@print
