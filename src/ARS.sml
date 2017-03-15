@@ -243,6 +243,7 @@ fun ARS_rule_whennotclock_implies_3
     (G @ [Ticks (cmaster, n), NotTicks (csampl, n), Ticks (cslave, n)], n, frun, @- (finst, [fsubst]))
   | ARS_rule_whennotclock_implies_3 _ _ = raise Assert_failure;
 
+(** SUSTAINED IMMEDIATELY *)
 (* 34. Sustained-from-immediately elimination when false start premise *)
 fun ARS_rule_sustained_immediately_elim_1
   (G, n, frun, finst) (fsubst as SustainedFromImmediately (_, cstart, _, _)) =
@@ -278,6 +279,68 @@ fun ARS_rule_untilrestart_immediately_restarts_elim_2
   (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, c2, cend, cstart)) =
     (G @ [Ticks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [SustainedFromImmediately (c1, cstart, cend, c2)], @- (finst, [fsubst]))
   | ARS_rule_untilrestart_immediately_restarts_elim_2 _ _ = raise Assert_failure;
+
+(** SUSTAINED WEAKLY *)
+(* 40. Sustained-from-weakly elimination when false start premise *)
+fun ARS_rule_sustained_weakly_elim_1
+  (G, n, frun, finst) (fsubst as SustainedFromWeakly (_, cstart, _, _)) =
+    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_sustained_weakly_elim_1 _ _ = raise Assert_failure;
+
+(* 41. Sustained-from-weakly elimination when true start premise *)
+fun ARS_rule_sustained_weakly_elim_2
+  (G, n, frun, finst) (fsubst as SustainedFromWeakly (c1, cstart, cend, c2)) =
+    (G @ [Ticks (cstart, n)], n, frun @ [UntilRestartWeakly (c1, c2, cend, cstart)], @- (finst, [fsubst]))
+  | ARS_rule_sustained_weakly_elim_2 _ _ = raise Assert_failure;
+
+(* 42. Until-restart-weakly elimination when false premise *)
+fun ARS_rule_untilrestart_weakly_elim_1
+  (G, n, frun, finst) (fsubst as UntilRestartWeakly (c1, _, cend, _)) =
+    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_weakly_elim_1 _ _ = raise Assert_failure;
+
+(* 43. Until-restart-weakly elimination when true premise *)
+fun ARS_rule_untilrestart_weakly_elim_2
+  (G, n, frun, finst) (fsubst as UntilRestartWeakly (c1, c2, cend, _)) =
+    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_weakly_elim_2 _ _ = raise Assert_failure;
+
+(* 44. Until-restart-weakly elimination restarting when false premise *)
+fun ARS_rule_untilrestart_weakly_restarts_elim
+  (G, n, frun, finst) (fsubst as UntilRestartWeakly (c1, c2, cend, cstart)) =
+    (G @ [Ticks (cend, n)], n, frun @ [SustainedFromWeakly (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_weakly_restarts_elim _ _ = raise Assert_failure;
+
+(** SUSTAINED IMMEDIATELY WEAKLY *)
+(* 45. Sustained-from-immediately-weakly elimination when false start premise *)
+fun ARS_rule_sustained_immediately_weakly_elim_1
+  (G, n, frun, finst) (fsubst as SustainedFromImmediatelyWeakly (_, cstart, _, _)) =
+    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_sustained_immediately_weakly_elim_1 _ _ = raise Assert_failure;
+
+(* 46. Sustained-from-immediately-weakly elimination when true start premise *)
+fun ARS_rule_sustained_immediately_weakly_elim_2
+  (G, n, frun, finst) (fsubst as SustainedFromImmediatelyWeakly (c1, cstart, cend, c2)) =
+    (G @ [Ticks (cstart, n)], n, frun, (@- (finst, [fsubst])) @ [UntilRestartImmediatelyWeakly (c1, c2, cend, cstart)])
+  | ARS_rule_sustained_immediately_weakly_elim_2 _ _ = raise Assert_failure;
+
+(* 47. Until-restart-immediately-weakly elimination when false premise *)
+fun ARS_rule_untilrestart_immediately_weakly_elim_1
+  (G, n, frun, finst) (fsubst as UntilRestartImmediatelyWeakly (c1, _, cend, _)) =
+    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_immediately_weakly_elim_1 _ _ = raise Assert_failure;
+
+(* 48. Until-restart-immediately-weakly elimination when true premise *)
+fun ARS_rule_untilrestart_immediately_weakly_elim_2
+  (G, n, frun, finst) (fsubst as UntilRestartImmediatelyWeakly (c1, c2, cend, _)) =
+    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_immediately_weakly_elim_2 _ _ = raise Assert_failure;
+
+(* 49. Until-restart-immediately-weakly elimination restarting when false premise *)
+fun ARS_rule_untilrestart_immediately_weakly_restarts_elim
+  (G, n, frun, finst) (fsubst as UntilRestartImmediatelyWeakly (c1, c2, cend, cstart)) =
+    (G @ [Ticks (cend, n)], n, frun @ [SustainedFromImmediatelyWeakly (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+  | ARS_rule_untilrestart_immediately_weakly_restarts_elim _ _ = raise Assert_failure;
 
 
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
@@ -327,6 +390,12 @@ fun lawyer_e
         val red_sustainedfrom_immediately = (List.filter (fn fatom => case fatom of SustainedFromImmediately _ => true | _ => false) finst)
         val red_untilrestart_immediately = (List.filter (fn fatom => case fatom of UntilRestartImmediately _ => true | _ => false) finst)
 
+        val red_sustainedfrom_weakly = (List.filter (fn fatom => case fatom of SustainedFromWeakly _ => true | _ => false) finst)
+        val red_untilrestart_weakly = (List.filter (fn fatom => case fatom of UntilRestartWeakly _ => true | _ => false) finst)
+
+        val red_sustainedfrom_immediately_weakly = (List.filter (fn fatom => case fatom of SustainedFromImmediatelyWeakly _ => true | _ => false) finst)
+        val red_untilrestart_immediately_weakly = (List.filter (fn fatom => case fatom of UntilRestartImmediatelyWeakly _ => true | _ => false) finst)
+
         val red_await = (List.filter (fn fatom => case fatom of Await _ => true | _ => false) finst)
         val red_await_norem_noinst = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => is_empty Hrem andalso is_empty Hinst | _ => false) red_await)
         val red_await_rem_noinst   = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => not (is_empty Hrem) andalso is_empty Hinst | _ => false) red_await)
@@ -373,6 +442,18 @@ fun lawyer_e
          @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_elim_2)) red_untilrestart_immediately)
          @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_restarts_elim_1)) red_untilrestart_immediately)
          @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_restarts_elim_2)) red_untilrestart_immediately)
+
+         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_weakly_elim_1)) red_sustainedfrom_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_weakly_elim_2)) red_sustainedfrom_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_weakly_elim_1)) red_untilrestart_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_weakly_elim_2)) red_untilrestart_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_weakly_restarts_elim)) red_untilrestart_weakly)
+
+         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_weakly_elim_1)) red_sustainedfrom_immediately_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_weakly_elim_2)) red_sustainedfrom_immediately_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_weakly_elim_1)) red_untilrestart_immediately_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_weakly_elim_2)) red_untilrestart_immediately_weakly)
+         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_weakly_restarts_elim)) red_untilrestart_immediately_weakly)
 
          @ (List.map (fn fatom => (fatom, ARS_rule_await_instant_sigcaught)) red_await_rem_inst)
          @ (List.map (fn fatom => (fatom, ARS_rule_await_instant_sigabsent)) red_await_rem_inst)
@@ -554,7 +635,10 @@ fun exec
           else () end
         (* INSTANT SOLVING *)
         val next_snapshots = exec_step cfs step_index declared_clocks (minstep, maxstep, dumpres, codirection, heuristics) in
-        loop next_snapshots end
+	 case next_snapshots of
+	     [] => []
+	   | _ => loop next_snapshots
+        end
   in loop cfs end
         handle
 	 Maxstep_reached   cfs =>

@@ -88,6 +88,7 @@ fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list 
     ) cfs
   end
 
+(* UNSAFE *)
 (* Heuristic 6. Maximize reactiveness of clocks *)
 fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let

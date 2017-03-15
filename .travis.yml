@@ -16,6 +16,7 @@ script:
   - ./heron < examples/basic/TimeDelayed.tesl
   - ./heron < examples/gallery/ConcurrentComputations.tesl
   - ./heron < examples/gallery/LightSwitch.tesl
+  - ./heron < examples/gallery/LeapYears.tesl
   
 notifications:
   email: false

@@ -15,11 +15,12 @@
 %term ID of string | NUM of int | SPORADIC | IMPLIES
       | SEMI | EOF | EQ | PLUS | TIMES | DOT | TAGREL | TIMEDELAYEDBY | ON | DELAYEDBY
       | FILTEREDBY | LPAR | RPAR | COMMA
-      | SUSTAINEDFROM | SUSTAINEDFROMIMMEDIATELY | TO
+      | SUSTAINEDFROM | SUSTAINEDFROMIMMEDIATELY | TO | WEAKLY 
       | AWAIT
       | WHEN | WHENNOT
       | EVERY | STARTINGAT
       | PERIODIC | OFFSET
+      | NEXT
       | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | DIR_RUNPREFIX_STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
 
 %nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAGS of tag list
@@ -38,35 +39,41 @@
 
   START : EXP (SOME EXP)
         | (NONE)
-  CLK : ID                                       (Clk (ID))
-  CLKS : ID                                      ([Clk (ID)])
-       | ID CLKS                                 (Clk (ID) :: CLKS)
-  TAGS : NUM                                     ([Int (NUM)])
-       | NUM COMMA TAGS                          (Int (NUM) :: TAGS)
-  EXP : CLK SPORADIC TAGS                        (Sporadics (CLK, TAGS))
-      | CLK IMPLIES CLK                          (Implies (CLK1, CLK2))
-      | TAGREL CLK EQ NUM TIMES CLK PLUS NUM     (TagRelation (CLK1, Int (NUM1), CLK2, Int (NUM2)))
-      | TAGREL CLK EQ CLK                        (TagRelation (CLK1, Int (1), CLK2, Int (0)))
-      | CLK TIMEDELAYEDBY NUM ON CLK IMPLIES CLK (TimeDelayedBy (CLK1, Int (NUM), CLK2, CLK3))
-      | CLK DELAYEDBY NUM ON CLK IMPLIES CLK     (DelayedBy (CLK1, NUM, CLK2, CLK3))
+  CLK : ID                                                                     (Clk (ID))
+  CLKS : ID                                                                    ([Clk (ID)])
+       | ID CLKS                                                               (Clk (ID) :: CLKS)
+  TAGS : NUM                                                                   ([Int (NUM)])
+       | NUM COMMA TAGS                                                        (Int (NUM) :: TAGS)
+  EXP : CLK SPORADIC TAGS                                                      (Sporadics (CLK, TAGS))
+      | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
+      | TAGREL CLK EQ NUM TIMES CLK PLUS NUM                                   (TagRelation (CLK1, Int (NUM1), CLK2, Int (NUM2)))
+      | TAGREL CLK EQ CLK                                                      (TagRelation (CLK1, Int (1), CLK2, Int (0)))
+      | CLK TIMEDELAYEDBY NUM ON CLK IMPLIES CLK                               (TimeDelayedBy (CLK1, Int (NUM), CLK2, CLK3))
+      | CLK DELAYEDBY NUM ON CLK IMPLIES CLK                                   (DelayedBy (CLK1, NUM, CLK2, CLK3))
       | CLK FILTEREDBY NUM COMMA NUM LPAR NUM COMMA NUM RPAR TIMES IMPLIES CLK (FilteredBy (CLK1, NUM1, NUM2, NUM3, NUM4, CLK2))
-      | CLK SUSTAINEDFROM CLK TO CLK IMPLIES CLK (SustainedFrom (CLK1, CLK2, CLK3, CLK4))
-      | CLK SUSTAINEDFROMIMMEDIATELY CLK TO CLK IMPLIES CLK (SustainedFromImmediately (CLK1, CLK2, CLK3, CLK4))
-      | AWAIT CLKS IMPLIES CLK                   (Await (CLKS, CLKS, CLKS, CLK))
-      | CLK WHEN CLK IMPLIES CLK                 (WhenClock (CLK1, CLK2, CLK3))
-      | CLK WHENNOT CLK IMPLIES CLK              (WhenNotClock (CLK1, CLK2, CLK3))
-      | CLK EVERY NUM STARTINGAT NUM IMPLIES CLK (EveryImplies (CLK1, NUM1, NUM2, CLK2))
-      | CLK EVERY NUM IMPLIES CLK                (EveryImplies (CLK1, NUM, 0, CLK2))
-      | CLK PERIODIC NUM OFFSET NUM              (Periodic (CLK, Int (NUM1), Int (NUM2)))
-      | CLK PERIODIC NUM                         (Periodic (CLK, Int (NUM), Int 0))
-      | DIR_MAXSTEP NUM                          (DirMaxstep (NUM))
-      | DIR_MINSTEP NUM                          (DirMinstep (NUM))
-      | DIR_HEURISTIC ID                         (DirHeuristic (ID))
-      | DIR_DUMPRES                              (DirDumpres)
-      | DIR_RUNPREFIX_STRICT NUM CLKS            (DirRunprefixStrict (NUM, CLKS))
-      | DIR_RUNPREFIX        NUM CLKS            (DirRunprefix (NUM, CLKS))
-      | DIR_RUN                                  (DirRun)
-      | DIR_RUNSTEP                              (DirRunStep)
-      | DIR_PRINT                                (DirPrint)
-      | DIR_EXIT                                 (DirExit)
-      | DIR_HELP                                 (DirHelp)
+      | CLK SUSTAINEDFROM CLK TO CLK IMPLIES CLK                               (SustainedFrom (CLK1, CLK2, CLK3, CLK4))
+      | CLK SUSTAINEDFROMIMMEDIATELY CLK TO CLK IMPLIES CLK                    (SustainedFromImmediately (CLK1, CLK2, CLK3, CLK4))
+      | CLK SUSTAINEDFROM CLK TO CLK WEAKLY IMPLIES CLK                        (SustainedFromWeakly (CLK1, CLK2, CLK3, CLK4))
+      | CLK SUSTAINEDFROMIMMEDIATELY CLK TO CLK WEAKLY IMPLIES CLK             (SustainedFromImmediatelyWeakly (CLK1, CLK2, CLK3, CLK4))
+      | AWAIT CLKS IMPLIES CLK                                                 (Await (CLKS, CLKS, CLKS, CLK))
+      | CLK WHEN CLK IMPLIES CLK                                               (WhenClock (CLK1, CLK2, CLK3))
+      | CLK WHENNOT CLK IMPLIES CLK                                            (WhenNotClock (CLK1, CLK2, CLK3))
+      | CLK EVERY NUM STARTINGAT NUM IMPLIES CLK                               (EveryImplies (CLK1, NUM1, NUM2, CLK2))
+      | CLK EVERY NUM IMPLIES CLK                                              (EveryImplies (CLK1, NUM, 0, CLK2))
+      | CLK PERIODIC NUM OFFSET NUM                                            (Periodic (CLK, Int (NUM1), Int (NUM2)))
+      | CLK PERIODIC NUM                                                       (Periodic (CLK, Int (NUM), Int 0))
+      | CLK NEXT TO CLK IMPLIES CLK                                            (NextTo (CLK1, CLK2, CLK3))
+
+      | DIR_MAXSTEP NUM                                                        (DirMaxstep (NUM))
+      | DIR_MINSTEP NUM                                                        (DirMinstep (NUM))
+      | DIR_HEURISTIC ID                                                       (DirHeuristic (ID))
+      | DIR_DUMPRES                                                            (DirDumpres)
+      | DIR_RUNPREFIX_STRICT NUM CLKS                                          (DirRunprefixStrict (NUM, CLKS))
+      | DIR_RUNPREFIX        NUM CLKS                                          (DirRunprefix (NUM, CLKS))
+      | DIR_RUNPREFIX_STRICT NEXT CLKS                                         (DirRunprefixStrictNextStep (CLKS))
+      | DIR_RUNPREFIX        NEXT CLKS                                         (DirRunprefixNextStep (CLKS))
+      | DIR_RUN                                                                (DirRun)
+      | DIR_RUNSTEP                                                            (DirRunStep)
+      | DIR_PRINT                                                              (DirPrint)
+      | DIR_EXIT                                                               (DirExit)
+      | DIR_HELP                                                               (DirHelp)

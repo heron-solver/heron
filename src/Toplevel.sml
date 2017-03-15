@@ -1,4 +1,4 @@
-val RELEASE_VERSION = "0.31.0-alpha+20170313"
+val RELEASE_VERSION = "0.32.0-alpha+20170315"
 
 open OS.Process
 
@@ -34,15 +34,17 @@ print "\n";
 print "\n";
 print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
 print "  [ID] sporadic [TAG]+\n"; 
+print "  [ID] periodic [TAG] (offset [TAG])\n"; 
 print "  [ID] implies [ID]\n"; 
 print "  tag relation [ID] = [TAG] * [ID] + [TAG]\n"; 
 print "  [ID] time delayed by [TAG] on [ID] implies [ID]\n"; 
 print "  [ID] delayed by [NAT] on [ID] implies [ID]\n"; 
 print "  [ID] filtered by [NAT], [NAT] ([NAT], [NAT])* implies [ID]\n"; 
-print "  [ID] sustained from [ID] to [ID] implies [ID]\n"; 
+print "  [ID] every [NAT] implies [ID]\n";
+print "  [ID] sustained (immediately) from [ID] to [ID] (weakly) implies [ID]\n"; 
+print "  [ID] next to [ID] implies [ID]\n"; 
 print "  await [ID]+ implies [ID]\n"; 
-print "  [ID] when [ID] implies [ID]\n"; 
-print "  [ID] when not [ID] implies [ID]\n"; 
+print "  [ID] when (not) [ID] implies [ID]\n"; 
 print "\n"; 
 print "  For more information about the TESL language:\n"; 
 print "  http://wwwdi.supelec.fr/software/TESL\n"; 
@@ -60,6 +62,7 @@ print "                                   \u001B[1mminimize_sporadic_floating_ti
 print "                                   \u001B[1mmaximize_reactiveness\u001B[0m\n";
 print "  @dumpres                       option to display the results after @run\n"; 
 print "  @scenario (strict) [NAT] [ID]+ refine snapshots with instantaneous scenario\n"; 
+print "  @scenario (strict) next [ID]+  refine snapshots of next simulation step\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
 print "  @exit                          exit Heron\n"; 
@@ -103,6 +106,8 @@ fun action (stmt: TESL_atomic) =
       in prefix_strict := (!prefix_strict) @ add_haa_constrs end
   | DirRunprefix (n_step, prefix_clocks) =>
       prefix := (!prefix) @ (List.map (fn c => Ticks (c, n_step)) prefix_clocks)
+  | DirRunprefixNextStep (clocks_prefix) => action (DirRunprefix (!current_step, clocks_prefix))
+  | DirRunprefixStrictNextStep (clocks_prefix) => action (DirRunprefixStrict (!current_step, clocks_prefix))
   | DirRun		     =>
       snapshots := exec
 			  (!snapshots)

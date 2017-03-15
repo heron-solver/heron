@@ -36,31 +36,37 @@ type system = constr list
 
 datatype TESL_atomic =
   True
-  | Sporadic                  of clock * tag
-  | Sporadics                 of clock * (tag list)            (* Syntactic sugar *)
-  | TagRelation               of clock * tag * clock * tag
-  | Implies                   of clock * clock
-  | TimeDelayedBy             of clock * tag * clock * clock
-  | WhenTickingOn             of clock * tag * clock           (* Intermediate Form *)
-  | DelayedBy                 of clock * int * clock * clock
-  | TimesImpliesOn            of clock * int * clock           (* Intermediate Form *)
-  | FilteredBy                of clock * int * int * int * int * clock
-  | SustainedFrom             of clock * clock * clock * clock
-  | UntilRestart              of clock * clock * clock * clock (* Intermediate Form *)
-  | SustainedFromImmediately  of clock * clock * clock * clock
-  | UntilRestartImmediately   of clock * clock * clock * clock (* Intermediate Form *)
-  | Await                     of clock list * clock list * clock list * clock
-  | WhenClock                 of clock * clock * clock
-  | WhenNotClock              of clock * clock * clock
-  | EveryImplies              of clock * int * int * clock (* Syntactic sugar *)
-  | NextTo                    of clock * clock * clock     (* Syntactic sugar *)
-  | Periodic                  of clock * tag * tag         (* Syntactic sugar *)
-  | DirMaxstep                of int
-  | DirMinstep                of int
-  | DirHeuristic              of string
+  | Sporadic                       of clock * tag
+  | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
+  | TagRelation                    of clock * tag * clock * tag
+  | Implies                        of clock * clock
+  | TimeDelayedBy                  of clock * tag * clock * clock
+  | WhenTickingOn                  of clock * tag * clock           (* Intermediate Form *)
+  | DelayedBy                      of clock * int * clock * clock
+  | TimesImpliesOn                 of clock * int * clock           (* Intermediate Form *)
+  | FilteredBy                     of clock * int * int * int * int * clock
+  | SustainedFrom                  of clock * clock * clock * clock
+  | UntilRestart                   of clock * clock * clock * clock (* Intermediate Form *)
+  | SustainedFromImmediately       of clock * clock * clock * clock
+  | UntilRestartImmediately        of clock * clock * clock * clock (* Intermediate Form *)
+  | SustainedFromWeakly            of clock * clock * clock * clock
+  | UntilRestartWeakly             of clock * clock * clock * clock (* Intermediate Form *)
+  | SustainedFromImmediatelyWeakly of clock * clock * clock * clock
+  | UntilRestartImmediatelyWeakly  of clock * clock * clock * clock (* Intermediate Form *)
+  | Await                          of clock list * clock list * clock list * clock
+  | WhenClock                      of clock * clock * clock
+  | WhenNotClock                   of clock * clock * clock
+  | EveryImplies                   of clock * int * int * clock (* Syntactic sugar *)
+  | NextTo                         of clock * clock * clock     (* Syntactic sugar *)
+  | Periodic                       of clock * tag * tag         (* Syntactic sugar *)
+  | DirMaxstep                     of int
+  | DirMinstep                     of int
+  | DirHeuristic                   of string
   | DirDumpres
-  | DirRunprefixStrict        of int * clock list 
-  | DirRunprefix              of int * clock list
+  | DirRunprefixStrict             of int * clock list 
+  | DirRunprefix                   of int * clock list
+  | DirRunprefixStrictNextStep     of clock list 
+  | DirRunprefixNextStep           of clock list
   | DirRunStep
   | DirRun
   | DirPrint
@@ -212,14 +218,29 @@ fun string_of_expr e = case e of
   | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)
   | FilteredBy (master, s, k, rs, rk, slave)                => (string_of_clk master) ^ " filtered by " ^ (string_of_int s) ^ ", " ^ (string_of_int k) ^ " (" ^ (string_of_int rs) ^ ", " ^ (string_of_int rk) ^ ")* implies " ^ (string_of_clk slave)
   | SustainedFrom (master, beginclk, endclk, slave)            => (string_of_clk master) ^ " sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
-  | SustainedFromImmediately (master, beginclk, endclk, slave) => (string_of_clk master) ^ " immediately sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
+  | SustainedFromImmediately (master, beginclk, endclk, slave) => (string_of_clk master) ^ " sustained immediately from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
+  | SustainedFromWeakly (master, beginclk, endclk, slave)      => (string_of_clk master) ^ " sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " weakly implies " ^ (string_of_clk slave)
+  | SustainedFromImmediatelyWeakly (master, beginclk, endclk, slave) => (string_of_clk master) ^ " sustained immediately from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " weakly implies " ^ (string_of_clk slave)
   | Await (masters, _, _, slave)                            => "await " ^ (List.foldr (fn (clk, s) => (string_of_clk clk) ^ " " ^ s) "" masters) ^ "implies " ^ (string_of_clk slave)
   | WhenClock (m1, m2, slave)                               => (string_of_clk m1) ^ " when " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
   | WhenNotClock (m1, m2, slave)                            => (string_of_clk m1) ^ " when not " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
   | EveryImplies (master, n_every, n_start, slave)          => (string_of_clk master) ^ " every " ^ (string_of_int n_every) ^ " starting at " ^ (string_of_int n_start) ^  " implies " ^ (string_of_clk slave)
   | NextTo (c, next_c, slave)                               => (string_of_clk c) ^ " next to " ^ (string_of_clk next_c) ^ " implies " ^ (string_of_clk slave)
   | Periodic (c, per, offset)                               => (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
-  | _                                                       => "<tesl>"
+  | DirMinstep _	                                       => "<parameter>"
+  | DirMaxstep _						    => "<parameter>"
+  | DirHeuristic _						    => "<parameter>"
+  | DirDumpres						    => "<parameter>"
+  | DirRunprefixStrict _                      		    => "<parameter>" 
+  | DirRunprefix _                      			    => "<parameter>"
+  | DirRunprefixNextStep _              			    => "<parameter>"
+  | DirRunprefixStrictNextStep _              		    => "<parameter>"
+  | DirRun							    => "<directive>"
+  | DirRunStep						    => "<directive>"
+  | DirPrint							    => "<directive>"
+  | DirExit							    => "<directive>"
+  | DirHelp							    => "<directive>"
+  | _                                                       => "<unknown>"
 
 fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   uniq (List.concat (List.map (fn
@@ -240,5 +261,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | Periodic (c, _, _)                        => [c]
   | DirRunprefixStrict (_, clks)              => clks
   | DirRunprefix (_, clks)                    => clks
+  | DirRunprefixStrictNextStep (clks)         => clks
+  | DirRunprefixNextStep (clks)               => clks
   | _ => []
   ) f))
