@@ -1,15 +1,20 @@
 Heron
 ===================
 
-> Symbolic Simulation Engine for Timed Causality Models expressed in the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/)
+> Interactive Simulation Solver for Timed Causality Models expressed in TESL
 
 [![Build Status](https://travis-ci.org/EmptyStackExn/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
 
-This prototype solves specifications in TESL [1] by **structure-directed counterfactual reasoning**. Unlike the original solver, Heron [2] does not focus on execution and returns classes of execution traces. They allow to identify and isolate events (*aka* clocks) that may be **interfering** with others.
+**Heron** is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language to specify synchronization of discrete events for simulation. This prototype provides:
+
+ 1. Definition of TESL specifications for causality and time scale between events.
+ 2. Simulation by full or partial generation of execution traces.
+ 3. Runtime compliance-monitoring of systems (SUT).
+
 
 Getting started
 -------------------
-We recommend compiling with [MLton](http://mlton.org/) to enjoy the interesting code optimization features of Standard ML. To build sources, type the following
+We recommend compiling with [MLton](http://mlton.org/) to enjoy code optimization features. To build sources on Ubuntu, type the following
 ```bash
 sudo apt-get install mlton ml-lex ml-yacc
 make
@@ -17,12 +22,13 @@ make
 
 Several examples are provided in `examples` directory. To solve one of them, you can simply type
 ```bash
-./heron < examples/basic/ImplicationsTimeScales.tesl
+./heron < examples/basic/FirstExample.tesl
 ```
 
 Example
 -------------------
-Let's try to solve this specification
+The following specification is available in `ImplicationsTimeScales.tesl` and [detailled here](http://wwwdi.supelec.fr/software/TESL/#Implications).
+
 ```
 int-clock master1 sporadic 1, 4, 7
 int-clock master2 sporadic   2, 5
@@ -36,9 +42,9 @@ master2 implies slave
 The TESL tagged event engine will produce the following run:
 ![Example 3, TESL Official Website](http://wwwdi.supelec.fr/software/downloads/TESL/example3.svg)
 
-Our tool uses counterfactual reasoning on the purely-syntactic structure of TESL-formulae to derive disjunction cases. Such execution branches are iteratively abstracted as constraints in **Horn-style Affine Arithmetic**. Along the simulation, inconsistent branches are filtered out by an embedded decision procedure.
+This tool uses *counterfactual reasoning* on the purely-syntactic structure of TESL-formulae to derive disjunction cases. Such execution branches are iteratively abstracted as context constraints, which refine the desired behavior. Along the simulation, inconsistent branches are filtered out by an arithmetic decision procedure.
 
-By default, the solver stops whenever a **finite satisfying run class** is found. The simulation of the above example converges at the 5th step and returns 32 possible behaviors.
+By default, the solver stops whenever a *finite satisfying run* is found. The simulation of the above example converges at the 5th step and returns 32 possible behaviors:
 ```
 ### Solver has successfully returned 32 models
 ## Simulation result:
@@ -61,7 +67,6 @@ References
 License
 -------------------
 
-Heron is release under the MIT License.
+Heron is released under the MIT License.
 
 THE PROVIDER MAKES NO REPRESENTATIONS ABOUT THE SUITABILITY, USE, OR PERFORMANCE OF THIS SOFTWARE OR ABOUT ANY CONTENT OR INFORMATION MADE ACCESSIBLE BY THE SOFTWARE, FOR ANY PURPOSE. THE SOFTWARE IS PROVIDED "AS IS," WITHOUT EXPRESS OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NONINFRINGEMENT WITH RESPECT TO THE SOFTWARE. THE PROVIDER IS NOT OBLIGATED TO SUPPORT OR ISSUE UPDATES TO THE SOFTWARE.
-

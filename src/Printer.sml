@@ -35,6 +35,16 @@ fun superscript_of_char (c : char) =
     | #"x" => "\203\163"
     | #"y" => "\202\184"
     | #"z" => "\225\182\187"
+    | #"0" => "\226\129\176"
+    | #"1" => "\194\185"
+    | #"2" => "\194\178"
+    | #"3" => "\194\179"
+    | #"4" => "\226\129\180"
+    | #"5" => "\226\129\181"
+    | #"6" => "\226\129\182"
+    | #"7" => "\226\129\183"
+    | #"8" => "\226\129\184"
+    | #"9" => "\226\129\185"
     | _    => "\203\128"
 fun superscript_of_string (s : string) =
   String.concat (List.map (superscript_of_char) (String.explode s))
@@ -56,7 +66,7 @@ fun subscript_of_int (n : int) =
 (* Just for testing *)
 fun string_of_int_exp (n : int) =
   if n > 1000 andalso n mod 1000 = 0
-  then (string_of_int (n div 1000)) ^ "E3"
+  then (string_of_int (n div 1000)) ^ "e3"
   else string_of_int n
 		 
 fun string_of_tag_ugly (t : tag) =
@@ -90,14 +100,6 @@ fun string_of_affine_constr c =
 fun print_system (step_index: int) (clocks: clock list) (G : system) =
   let
     val G = lfp (reduce) G
-(*  val clocks =
-      uniq (List.concat (List.map (fn Ticks (c, _) => [c] | NotTicks (c, _) => [c] | Timestamp (c, _, _) => [c] | Affine _ => []) G))
-    val nb_instants =
-      List.foldl
-        (fn (x, x0) => if x >= x0 then x else x0)
-        0
-        (List.concat (List.map (fn Ticks (_, n) => [n] | NotTicks (_, n) => [n] | Timestamp (_, n, _) => [n] | Affine _ => []) G))
-*)
     fun constrs_of_clk_instindex c n =
       List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
     fun string_of_constrs_at_clk_instindex clk n g =
