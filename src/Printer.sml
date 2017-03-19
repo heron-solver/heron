@@ -61,14 +61,16 @@ fun string_of_int_exp (n : int) =
 		 
 fun string_of_tag_ugly (t : tag) =
   case t of
-      Int n => string_of_int n
-    | Unit  => "()"
+      Unit  => "()"
+    | Int n => string_of_int n
+    | Rat x => string_of_rat x
     | Schematic (Clk c_str, n) => "X\226\135\167" ^ (string_of_int n) ^ "\226\135\169" ^ c_str
     | Add (t1, t2) => (string_of_tag_ugly t1) ^ " + " ^ (string_of_tag_ugly t2)
 fun string_of_tag_fancy (t : tag) =
   case t of
-      Int n => string_of_int_exp n
-    | Unit  => "()"
+      Unit  => "()"
+    | Int n => string_of_int_exp n
+    | Rat x => string_of_rat x
     | Schematic (Clk c_str, n) => "X" ^ subscript_of_int n ^ superscript_of_string c_str
     | Add (t1, t2) => (string_of_tag_fancy t1) ^ " + " ^ (string_of_tag_fancy t2)
 
@@ -100,7 +102,7 @@ fun print_system (step_index: int) (clocks: clock list) (G : system) =
       List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
     fun string_of_constrs_at_clk_instindex clk n g =
       let
-        val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Int _ => true | Unit => true | _ => false) | _ => false) g
+        val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Unit => true | Int _ => true | Rat _ => true | _ => false) | _ => false) g
       in
       if contains (Ticks (clk, n)) g andalso List.length timestamps > 0
       then "\226\135\145 " (* \<Up> *) ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))

@@ -1,16 +1,16 @@
 // A light switch and a fluorescent bulb
 // http://wwwdi.supelec.fr/software/TESL/GalleryLightSwitch
 
-tag relation ms = 1000 * s + 0
-tag relation s = 60 * min + 0
-button sporadic 60000
-tag relation button = 1 * ms + 0
+tag relation ms = 1000.0 * s
+tag relation s = 60.0 * min
+button sporadic 500.0
+tag relation button = 1.0 * ms
 
 button implies switon
 
-switon time delayed by 10 on min implies switoff
-switon time delayed by 120 on s implies lgton
-switoff time delayed by 60000 on ms implies lgtoff
+switon time delayed by 1.0 on min implies switoff
+switon time delayed by 1.0 on s implies lgton
+switoff time delayed by 50.0 on ms implies lgtoff
 
 // You can use run prefixes as follows to drive the simulation
 // @scenario strict 1 button switon

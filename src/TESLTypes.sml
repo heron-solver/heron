@@ -21,8 +21,9 @@ fun assert b =
   if b then b else raise Assert_failure
 
 datatype tag =
-    Int of int
-  | Unit
+    Unit
+  | Int of int
+  | Rat of rat
   | Schematic of clock * instant_index
   | Add of tag * tag
 
@@ -107,6 +108,14 @@ fun SporadicNowSubs (f : TESL_formula) : TESL_formula =
           else aux spors' kept
         | _ => raise UnexpectedMatch
         )
+      | Sporadic (clk, Rat x) :: spors' => (case List.find (fn Sporadic (clk', _) => clk = clk' | _ => raise UnexpectedMatch) kept of
+          NONE => aux spors' (Sporadic (clk, Rat x) :: kept)
+        | SOME (Sporadic (clk', Rat x')) =>
+          if </ (x, x')
+          then aux spors' (Sporadic (clk, Rat x) :: (@- (kept, [Sporadic (clk', Rat x')])))
+          else aux spors' kept
+        | _ => raise UnexpectedMatch
+        )
       | _ => raise UnexpectedMatch
     in aux spors [] end
   in earliest_sporadics sporadics end
@@ -150,14 +159,16 @@ fun unsugar (f : TESL_formula) =
 
 (* Asserts if two tags have the same type *)
 fun op ::~ (tag, tag') = case (tag, tag') of
-    (Int _, Int _) => true
-  | (Unit, Unit)   => true
+    (Unit, Unit)   => true
+  | (Int _, Int _) => true
+  | (Rat _, Rat _) => true
   | _              => raise Assert_failure
 
 (* Asserts if a tag is less or equal another when they are constants *)
 fun op ::<= (tag, tag') = case (tag, tag') of
-    (Int i1, Int i2) => i1 <= i2
-  | (Unit, Unit)     => true
+    (Unit, Unit)     => true
+  | (Int i1, Int i2) => i1 <= i2
+  | (Rat x1, Rat x2) => <=/ (x1, x2)
   | _                => raise Assert_failure
 
 (* Decides if two lists contain the same elements exactly *)
@@ -176,7 +187,6 @@ fun cfs_eq ((G1, s1, phi1, psi1) : TESL_ARS_conf) ((G2, s2, phi2, psi2) : TESL_A
 
 (* Computes the least fixpoint of a functional [ff] starting at [x] *)
 fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
-  (* What's the difference between ['a] and [''a] ? *)
   let val x' = ff x in
   (if x = x' then x else lfp (ff) x') end
 
@@ -203,11 +213,13 @@ fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
   end
 
 fun string_of_tag t = case t of
-    Int n => string_of_int n
+    Unit  => "()"
+  | Int n => string_of_int n
+  | Rat x => string_of_rat x
   | _     => "<tag>"
 	      
 fun string_of_clk c = case c of
-    Clk cname => cname
+  Clk cname => cname
 
 fun string_of_expr e = case e of
     Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)

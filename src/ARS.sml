@@ -557,7 +557,7 @@ fun exec_step
       val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
       val _ = writeln "Initializing new instant..."
       val introduced_cfs = (* cfl_uniq *) (List.concat (List.map (shy_adventurer_step_i) cfs))
-      val _ = writeln "Applying constraints..."
+      val _ = writeln "Preparing constraints..."
       val reduce_psi_formulae = psi_reduce introduced_cfs
       val _ = writeln "Simplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
