@@ -66,9 +66,9 @@ fun string_of_rat ((p, q): rat) : string =
   end
 
 (* WARNING: Using Real.fromString is dangerous.
-   Temporary solution.
    Gets buggy for 0.111
 *)
+(*
 fun rat_of_real (r: real) =
   let fun loop (r: real) (exp: int) =
     let val {frac: real, whole: real} = Real.split r in
@@ -83,3 +83,40 @@ fun rat_of_string (s: string) : rat option =
   case Real.fromString s of
       NONE   => NONE
     | SOME r => SOME (rat_of_real r)
+*)
+fun rat_of_int (n: int): rat =
+  (n, 1)
+
+fun string_length (s: string) =
+  List.length (String.explode s)
+
+fun digits_of_string (s: string) =
+  let
+      fun empty_to_zero s = case s of "" => "0" | _ => s
+      val dotpos = ref 0
+      val dotstate = ref false
+      val (whole, frac) =
+	   case List.find (fn #"." => true
+			    | _ => (if !dotstate then () else dotpos := !dotpos + 1 ; false)) (String.explode s) of
+		NONE   =>
+		(empty_to_zero s, "0")
+	     | SOME _ =>
+		(empty_to_zero (String.substring (s, 0, !dotpos)),
+		 empty_to_zero (String.substring (s, !dotpos + 1, (string_length s) - (!dotpos + 1))))
+  in (whole, frac)
+  end
+
+fun exp a b =
+  case b of
+      0 => 1
+    | 1 => a
+    | _ => if b < 0 then raise NegativeExponent else a * (exp a (b - 1))
+
+fun rat_of_digits (whole: string, frac: string): rat option =
+  case (Int.fromString whole, Int.fromString frac) of
+    (SOME w, SOME f) => SOME (+/ (rat_of_int w,
+				      (f, exp 10 (List.length (String.explode frac)))))
+  | _                => NONE
+
+val rat_of_string =
+  rat_of_digits o digits_of_string

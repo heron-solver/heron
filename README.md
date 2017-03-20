@@ -27,7 +27,7 @@ Several examples are provided in `examples` directory. To solve one of them, you
 
 Example
 -------------------
-The following specification is available in `ImplicationsTimeScales.tesl` and [detailled here](http://wwwdi.supelec.fr/software/TESL/#Implications).
+The following specification is available in `ImplicationsTimeScales.tesl` and [detailed here](http://wwwdi.supelec.fr/software/TESL/#Implications).
 
 ```
 int-clock master1 sporadic 1, 4, 7
