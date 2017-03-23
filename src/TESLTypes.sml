@@ -20,12 +20,44 @@ fun contains x l = List.exists (fn x' => x = x') l
 fun assert b =
   if b then b else raise Assert_failure
 
+(* Returns a list of unique elements *)
+fun uniq G =
+  let
+    fun aux (constr :: G') acc =
+          if List.exists (fn constr' => constr' = constr) acc
+          then aux G' acc
+          else aux G' (constr :: acc)
+      | aux [] acc             = acc
+  in List.rev (aux G [])
+  end
+
 datatype tag =
     Unit
   | Int of int
   | Rat of rat
   | Schematic of clock * instant_index
   | Add of tag * tag
+
+datatype tag_t =
+    Unit_t
+  | Int_t
+  | Rat_t
+
+exception ImpossibleTagTypeInference
+fun type_of_tag (t: tag) = case t of
+    Unit  => Unit_t
+  | Int _ => Int_t
+  | Rat _ => Rat_t
+  | _     => raise ImpossibleTagTypeInference
+
+exception TagTypeInconsistency of clock * tag_t * tag_t
+fun type_of_tags (clk: clock) (tlist: tag list) =
+  case tlist of
+      []          => Unit_t (* Questionable design choice *)
+    | [t]         => type_of_tag t
+    | t :: tlist' => if (type_of_tag t) = type_of_tags clk tlist'
+			then type_of_tag t
+			else raise TagTypeInconsistency (clk, type_of_tag t, type_of_tags clk tlist')
 
 datatype constr =
     Timestamp of clock * instant_index * tag
@@ -37,9 +69,12 @@ type system = constr list
 
 datatype TESL_atomic =
   True
+  | TypeDecl                       of clock * tag_t
   | Sporadic                       of clock * tag
   | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
+  | TypeDeclSporadics              of tag_t * clock * (tag list)    (* Syntactic sugar *)
   | TagRelation                    of clock * tag * clock * tag
+  | TagRelationRefl                of clock * clock                 (* Syntactic sugar *)
   | Implies                        of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * clock
   | WhenTickingOn                  of clock * tag * clock           (* Intermediate Form *)
@@ -134,14 +169,47 @@ fun SelfModifyingSubs f = List.filter (fn f' => case f' of
   | Await _          => true
   | _                => false) f
 
-exception UnsupportedTESLOperator;
+fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref) : unit =
+  clock_types :=
+  uniq ((case stmt of
+	TypeDecl decl                     => [decl]
+     | Sporadic (clk, t)                 => [(clk, type_of_tag t)]
+     | Sporadics (clk, tlist)            => [(clk, type_of_tags clk tlist)]
+     | TypeDeclSporadics (ty, clk, tags) => (clk, ty) :: (List.map (fn t => (clk, type_of_tag t)) tags)
+     | TagRelation (c1, t1, c2, t2)      => [(c1, type_of_tags c1 [t1, t2]), (c2, type_of_tags c2 [t1, t2])]
+     | TimeDelayedBy (_, t, clk, _)      => [(clk, type_of_tag t)]
+     | Periodic (c, t1, t2)              => [(c, type_of_tags c [t1, t2])]
+     | _                                 => []
+  ) @ !clock_types)
+
+fun type_check (clock_types: (clock * tag_t) list) =
+  List.app (fn (clk, ty) => case List.find (fn (clk', ty') => clk = clk' andalso ty <> ty') clock_types of
+				  NONE          => ()
+				| SOME (_, ty') => raise TagTypeInconsistency (clk, ty, ty')
+	    ) clock_types
+
+exception UnconcretizedTagType of clock
+fun clk_type_lookup clock_types (clk: clock): tag_t =
+  case List.find (fn (clk', ty) => clk = clk') clock_types of
+      NONE         => raise UnconcretizedTagType (clk)
+    | SOME (_, ty) => ty
+
+exception UnsupportedTESLOperator
+exception UnitTagRelationFault
 (* Rephrase TESL formulae with syntactic sugar *)
-fun unsugar (f : TESL_formula) =
+fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
   List.concat (List.map (fn
-	      Sporadics (master, tags)            => (List.map (fn t => Sporadic (master, t)) tags)
-	    | EveryImplies (master, n, x, slave)  => [FilteredBy (master, x, 1, n - 1, 1, slave)]
-	    | NextTo (master, master_next, slave) => [SustainedFromImmediately (master, master_next, master, slave)]
-	    | Periodic (clk, period, offset)      => [Sporadic (clk, offset),
+	      Sporadics (master, tags)             => (List.map (fn t => Sporadic (master, t)) tags)
+           | TagRelationRefl (c1, c2)             => (case (clk_type_lookup clock_types c1, clk_type_lookup clock_types c2) of
+               (Unit_t, Unit_t) => raise UnitTagRelationFault
+             | (Int_t, Int_t)   => [TagRelation (c1, Int 1, c2, Int 0)]
+             | (Rat_t, Rat_t)   => [TagRelation (c1, Rat rat_one, c2, Rat rat_zero)]
+             | (ty, ty')        => raise TagTypeInconsistency (c1, ty, ty'))
+           | TypeDeclSporadics (ty, master, tags) => unsugar clock_types [Sporadics (master, tags)]
+           | TypeDecl (ty, clk)                   => []
+	    | EveryImplies (master, n, x, slave)   => [FilteredBy (master, x, 1, n - 1, 1, slave)]
+	    | NextTo (master, master_next, slave)  => [SustainedFromImmediately (master, master_next, master, slave)]
+	    | Periodic (clk, period, offset)       => [Sporadic (clk, offset),
 							    TimeDelayedBy (clk, period, clk, clk)]
 	    | DirMinstep _          => []
 	    | DirMaxstep _          => []
@@ -190,17 +258,6 @@ fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
   let val x' = ff x in
   (if x = x' then x else lfp (ff) x') end
 
-(* Returns a list of unique elements *)
-fun uniq G =
-  let
-    fun aux (constr :: G') acc =
-          if List.exists (fn constr' => constr' = constr) acc
-          then aux G' acc
-          else aux G' (constr :: acc)
-      | aux [] acc             = acc
-  in List.rev (aux G [])
-  end
-
 (* Removes redundants ARS configurations *)
 fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
@@ -221,11 +278,19 @@ fun string_of_tag t = case t of
 fun string_of_clk c = case c of
   Clk cname => cname
 
+fun string_of_tag_type ty = case ty of
+    Unit_t => "unit"
+  | Int_t =>  "int"
+  | Rat_t =>  "rational"
+
 fun string_of_expr e = case e of
-    Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
+    TypeDecl (c, ty)                                        => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c)
+  | Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
   | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
+  | TypeDeclSporadics (ty, c, tags)                         => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
   | TagRelation (c1, a, c2, b)                              => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
+  | TagRelationRefl (c1, c2)                                => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk c2)
   | TimeDelayedBy (master, t, measuring, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
   | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)
   | FilteredBy (master, s, k, rs, rk, slave)                => (string_of_clk master) ^ " filtered by " ^ (string_of_int s) ^ ", " ^ (string_of_int k) ^ " (" ^ (string_of_int rs) ^ ", " ^ (string_of_int rk) ^ ")* implies " ^ (string_of_clk slave)
@@ -256,9 +321,12 @@ fun string_of_expr e = case e of
 
 fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   uniq (List.concat (List.map (fn
-    Sporadic (c, _)                           => [c]
+    TypeDecl (c, _)                           => [c]
+  | Sporadic (c, _)                           => [c]
   | Sporadics (c, _)                          => [c]
+  | TypeDeclSporadics (_, c, _)               => [c]
   | TagRelation (c1, _, c2, _)                => [c1, c2]
+  | TagRelationRefl (c1, c2)                  => [c1, c2]
   | Implies (c1, c2)                          => [c1, c2]
   | TimeDelayedBy (c1, _, c2, c3)             => [c1, c2, c3]
   | DelayedBy (c1, _, c2, c3)                 => [c1, c2, c3]

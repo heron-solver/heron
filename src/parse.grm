@@ -11,7 +11,7 @@ exception UnsupportedParsedTerm
 %left SPORADIC
 %left IMPLIES
 
-%term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES
+%term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t
       | SEMI | EOF | EQ | PLUS | TIMES | TAGREL | TIMEDELAYEDBY | ON | DELAYEDBY
       | FILTEREDBY | LPAR | RPAR | COMMA
       | SUSTAINEDFROM | SUSTAINEDFROMIMMEDIATELY | TO | WEAKLY 
@@ -20,9 +20,12 @@ exception UnsupportedParsedTerm
       | EVERY | STARTINGAT
       | PERIODIC | OFFSET
       | NEXT
+      | WITH
+      | RESET
+      | UNIT_VAL
       | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | DIR_RUNPREFIX_STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
 
-%nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list
+%nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list 
 
 %name Calc
 
@@ -41,18 +44,23 @@ exception UnsupportedParsedTerm
   CLK : ID                                                                     (Clk (ID))
   CLKS : ID                                                                    ([Clk (ID)])
        | ID CLKS                                                               (Clk (ID) :: CLKS)
-  TAG  : NUM                                                                   (Int (NUM))
+  TAG  : UNIT_VAL                                                              (Unit)
+	| NUM                                                                   (Int (NUM))
        | DECNUM                                                                (Rat (DECNUM))
   TAGS : TAG                                                                   ([TAG])
        | TAG COMMA TAGS                                                        (TAG :: TAGS)
-  EXP : CLK SPORADIC TAGS                                                      (Sporadics (CLK, TAGS))
+  EXP : 
+	 TYPEDECL CLK                                                           (TypeDecl (CLK, TYPEDECL))
+      | CLK SPORADIC TAGS                                                      (Sporadics (CLK, TAGS))
+      | TYPEDECL CLK SPORADIC TAGS                                             (TypeDeclSporadics (TYPEDECL, CLK, TAGS))
       | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
       | TAGREL CLK EQ TAG TIMES CLK PLUS TAG                                   (TagRelation (CLK1, TAG1, CLK2, TAG2))
       | TAGREL CLK EQ TAG TIMES CLK                                            (case TAG of Int _ => TagRelation (CLK1, TAG, CLK2, Int (0))
 												      | Rat _ => TagRelation (CLK1, TAG, CLK2, Rat (rat_zero))
-												      | _     => raise UnexpectedMatch)
-      | TAGREL CLK EQ CLK                                                      (raise UnsupportedParsedTerm)
+												      | _     => raise UnsupportedParsedTerm)
+      | TAGREL CLK EQ CLK                                                      (TagRelationRefl (CLK1, CLK2))
       | CLK TIMEDELAYEDBY TAG ON CLK IMPLIES CLK                               (TimeDelayedBy (CLK1, TAG, CLK2, CLK3))
+      | CLK TIMEDELAYEDBY TAG ON CLK WITH RESET ON CLK IMPLIES CLK             (raise UnsupportedParsedTerm)
       | CLK DELAYEDBY NUM ON CLK IMPLIES CLK                                   (DelayedBy (CLK1, NUM, CLK2, CLK3))
       | CLK FILTEREDBY NUM COMMA NUM LPAR NUM COMMA NUM RPAR TIMES IMPLIES CLK (FilteredBy (CLK1, NUM1, NUM2, NUM3, NUM4, CLK2))
       | CLK SUSTAINEDFROM CLK TO CLK IMPLIES CLK                               (SustainedFrom (CLK1, CLK2, CLK3, CLK4))
@@ -67,7 +75,7 @@ exception UnsupportedParsedTerm
       | CLK PERIODIC TAG OFFSET TAG                                            (Periodic (CLK, TAG1, TAG2))
       | CLK PERIODIC TAG                                                       (case TAG of Int _ => Periodic (CLK, TAG, Int 0) 
 												      | Rat _ => Periodic (CLK, TAG, Rat rat_zero)
-												      | _     => raise UnexpectedMatch)
+												      | _     => raise UnsupportedParsedTerm)
       | CLK NEXT TO CLK IMPLIES CLK                                            (NextTo (CLK1, CLK2, CLK3))
 
       | DIR_MAXSTEP NUM                                                        (DirMaxstep (NUM))

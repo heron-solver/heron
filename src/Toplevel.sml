@@ -1,4 +1,4 @@
-val RELEASE_VERSION = "0.33.1-alpha+20170320"
+val RELEASE_VERSION = "0.34.0-alpha+20170323"
 
 open OS.Process
 
@@ -84,13 +84,19 @@ val declared_clocks: clock list ref = ref []
 val snapshots: TESL_ARS_conf list ref = ref [([], 0, [], [])]
 val current_step: int ref = ref 1
 
+val clock_types: (clock * tag_t) list ref = ref []
+
 fun quit () = case (!snapshots) of
     [] => OS.Process.exit OS.Process.failure
   | _  => OS.Process.exit OS.Process.success
 
 fun action (stmt: TESL_atomic) =
   (* On-the-fly clock identifiers declaration *)
-  let val _ = declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt])) in
+  let
+      val _ = declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt]))
+      val _ = clk_type_declare stmt clock_types
+      val _ = type_check (!clock_types)
+  in
   case stmt of
     DirMinstep n	     => minstep := n
   | DirMaxstep n	     => maxstep := n
@@ -124,7 +130,7 @@ fun action (stmt: TESL_atomic) =
   | DirExit               => quit()
   | DirHelp               => print_help()
   | _                     =>
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (phi @ [stmt]), psi)) (!snapshots)
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   end
 
 (* Main REPL *)
