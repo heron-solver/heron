@@ -89,13 +89,13 @@ fun ARS_rule_filtered_update_3
     (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun @ [FilteredBy (c1, rs, rk, rs, rk, c2)], @- (finst, [fsubst])))
   | ARS_rule_filtered_update_3 _ _ = raise Assert_failure;
 
-(* 13. Delayed elimination when true premise *)
+(* 13. Delayed elimination when false premise *)
 fun ARS_rule_delayed_elim_1
   (G, n, frun, finst) (fsubst as DelayedBy (c1, _, _, _)) =
     (G @ [NotTicks (c1, n)], n, frun, @- (finst, [fsubst]))
   | ARS_rule_delayed_elim_1 _ _ = raise Assert_failure;
 
-(* 14. Delayed elimination when false premise *)
+(* 14. Delayed elimination when true premise *)
 fun ARS_rule_delayed_elim_2
   (G, n, frun, finst) (fsubst as DelayedBy (c1, dp, c2, c3)) =
     (G @ [Ticks (c1, n)], n, frun @ [TimesImpliesOn (c2, dp, c3)], @- (finst, [fsubst]))
@@ -342,6 +342,17 @@ fun ARS_rule_untilrestart_immediately_weakly_restarts_elim
     (G @ [Ticks (cend, n)], n, frun @ [SustainedFromImmediatelyWeakly (c1, cstart, cend, c2)], @- (finst, [fsubst]))
   | ARS_rule_untilrestart_immediately_weakly_restarts_elim _ _ = raise Assert_failure;
 
+(* 50. Immediately delayed elimination when false premise *)
+fun ARS_rule_immediately_delayed_elim_1
+  (G, n, frun, finst) (fsubst as ImmediatelyDelayedBy (c1, _, _, _)) =
+    (G @ [NotTicks (c1, n)], n, frun, @- (finst, [fsubst]))
+  | ARS_rule_immediately_delayed_elim_1 _ _ = raise Assert_failure;
+
+(* 51. Immediately delayed elimination when true premise *)
+fun ARS_rule_immediately_delayed_elim_2
+  (G, n, frun, finst) (fsubst as ImmediatelyDelayedBy (c1, dp, c2, c3)) =
+    (G @ [Ticks (c1, n)], n, frun, (@- (finst, [fsubst])) @ [TimesImpliesOn (c2, dp, c3)])
+  | ARS_rule_immediately_delayed_elim_2 _ _ = raise Assert_failure;
 
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
@@ -384,6 +395,8 @@ fun lawyer_e
         val red_timesimplies_nonneg = (List.filter (fn fatom => case fatom of TimesImpliesOn (_, dp, _) => dp > 1 | _ => false) red_timesimplies)
         val red_timesimplies_now = (List.filter (fn fatom => case fatom of TimesImpliesOn (_, dp, _) => dp = 1 | _ => false) red_timesimplies)
 
+        val red_immediately_delayeds = (List.filter (fn fatom => case fatom of ImmediatelyDelayedBy _ => true | _ => false) finst)
+
         val red_sustainedfrom = (List.filter (fn fatom => case fatom of SustainedFrom _ => true | _ => false) finst)
         val red_untilrestart = (List.filter (fn fatom => case fatom of UntilRestart _ => true | _ => false) finst)
 
@@ -424,6 +437,9 @@ fun lawyer_e
 
          @ (List.map (fn fatom => (fatom, ARS_rule_delayed_elim_1)) red_delayeds)
          @ (List.map (fn fatom => (fatom, ARS_rule_delayed_elim_2)) red_delayeds)
+
+         @ (List.map (fn fatom => (fatom, ARS_rule_immediately_delayed_elim_1)) red_immediately_delayeds)
+         @ (List.map (fn fatom => (fatom, ARS_rule_immediately_delayed_elim_2)) red_immediately_delayeds)
 
          @ (List.map (fn fatom => (fatom, ARS_rule_timesticking_false)) red_timesimplies)
          @ (List.map (fn fatom => (fatom, ARS_rule_timesticking_update)) red_timesimplies_nonneg)

@@ -1,4 +1,3 @@
-exception UnsupportedParsedTerm
 %%
 
 %eop EOF SEMI
@@ -12,18 +11,21 @@ exception UnsupportedParsedTerm
 %left IMPLIES
 
 %term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t
-      | SEMI | EOF | EQ | PLUS | TIMES | TAGREL | TIMEDELAYEDBY | ON | DELAYEDBY
-      | FILTEREDBY | LPAR | RPAR | COMMA
-      | SUSTAINEDFROM | SUSTAINEDFROMIMMEDIATELY | TO | WEAKLY 
-      | AWAIT
-      | WHEN | WHENNOT
-      | EVERY | STARTINGAT
+      | SEMI | EOF | EQ | PLUS | TIMES | TAGREL | TIME | ON | DELAYED
+      | FILTERED | LPAR | RPAR | LDIP | RDIP | COMMA
+      | SUSTAINED | IMMEDIATELY | TO | WEAKLY 
+      | AWAIT | WEAK | STRONG
+      | WHEN | NOT
+      | EVERY | STARTING | AT
       | PERIODIC | OFFSET
       | NEXT
       | WITH
       | RESET
       | UNIT_VAL
-      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | DIR_RUNPREFIX_STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
+      | BY
+      | FROM
+      | LET | INT | DECIMAL | RATIONAL | FLOAT
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
 
 %nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list 
 
@@ -47,10 +49,15 @@ exception UnsupportedParsedTerm
   TAG  : UNIT_VAL                                                              (Unit)
 	| NUM                                                                   (Int (NUM))
        | DECNUM                                                                (Rat (DECNUM))
+       | LDIP NUM COMMA NUM RDIP                                               (Rat (rat_normal (NUM1, NUM2)))
   TAGS : TAG                                                                   ([TAG])
        | TAG COMMA TAGS                                                        (TAG :: TAGS)
   EXP : 
 	 TYPEDECL CLK                                                           (TypeDecl (CLK, TYPEDECL))
+      | LET INT ID EQ TAG                                                      (raise UnsupportedParsedTerm) 
+      | LET DECIMAL ID EQ TAG							  (raise UnsupportedParsedTerm) 
+      | LET RATIONAL ID EQ TAG							  (raise UnsupportedParsedTerm) 
+      | LET FLOAT ID EQ TAG								  (raise UnsupportedParsedTerm) 
       | CLK SPORADIC TAGS                                                      (Sporadics (CLK, TAGS))
       | TYPEDECL CLK SPORADIC TAGS                                             (TypeDeclSporadics (TYPEDECL, CLK, TAGS))
       | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
@@ -59,32 +66,39 @@ exception UnsupportedParsedTerm
 												      | Rat _ => TagRelation (CLK1, TAG, CLK2, Rat (rat_zero))
 												      | _     => raise UnsupportedParsedTerm)
       | TAGREL CLK EQ CLK                                                      (TagRelationRefl (CLK1, CLK2))
-      | CLK TIMEDELAYEDBY TAG ON CLK IMPLIES CLK                               (TimeDelayedBy (CLK1, TAG, CLK2, CLK3))
-      | CLK TIMEDELAYEDBY TAG ON CLK WITH RESET ON CLK IMPLIES CLK             (raise UnsupportedParsedTerm)
-      | CLK DELAYEDBY NUM ON CLK IMPLIES CLK                                   (DelayedBy (CLK1, NUM, CLK2, CLK3))
-      | CLK FILTEREDBY NUM COMMA NUM LPAR NUM COMMA NUM RPAR TIMES IMPLIES CLK (FilteredBy (CLK1, NUM1, NUM2, NUM3, NUM4, CLK2))
-      | CLK SUSTAINEDFROM CLK TO CLK IMPLIES CLK                               (SustainedFrom (CLK1, CLK2, CLK3, CLK4))
-      | CLK SUSTAINEDFROMIMMEDIATELY CLK TO CLK IMPLIES CLK                    (SustainedFromImmediately (CLK1, CLK2, CLK3, CLK4))
-      | CLK SUSTAINEDFROM CLK TO CLK WEAKLY IMPLIES CLK                        (SustainedFromWeakly (CLK1, CLK2, CLK3, CLK4))
-      | CLK SUSTAINEDFROMIMMEDIATELY CLK TO CLK WEAKLY IMPLIES CLK             (SustainedFromImmediatelyWeakly (CLK1, CLK2, CLK3, CLK4))
+      | CLK TIME DELAYED BY TAG ON CLK IMPLIES CLK                             (TimeDelayedBy (CLK1, TAG, CLK2, CLK3))
+      | CLK TIME DELAYED BY TAG ON CLK WITH RESET ON CLK IMPLIES CLK		  (raise UnsupportedParsedTerm)
+      | CLK DELAYED BY NUM ON CLK IMPLIES CLK                                  (DelayedBy (CLK1, NUM, CLK2, CLK3))
+      | CLK IMMEDIATELY DELAYED BY NUM ON CLK IMPLIES CLK                      (ImmediatelyDelayedBy (CLK1, NUM, CLK2, CLK3))
+      | CLK DELAYED BY NUM ON CLK WITH RESET ON CLK IMPLIES CLK                (raise UnsupportedParsedTerm)
+      | CLK IMMEDIATELY DELAYED BY NUM ON CLK WITH RESET ON CLK IMPLIES CLK    (raise UnsupportedParsedTerm)
+      | CLK FILTERED BY NUM COMMA NUM LPAR NUM COMMA NUM RPAR TIMES IMPLIES CLK (FilteredBy (CLK1, NUM1, NUM2, NUM3, NUM4, CLK2))
+      | CLK SUSTAINED FROM CLK TO CLK IMPLIES CLK                              (SustainedFrom (CLK1, CLK2, CLK3, CLK4))
+      | CLK SUSTAINED IMMEDIATELY FROM CLK TO CLK IMPLIES CLK                  (SustainedFromImmediately (CLK1, CLK2, CLK3, CLK4))
+      | CLK SUSTAINED FROM CLK TO CLK WEAKLY IMPLIES CLK                       (SustainedFromWeakly (CLK1, CLK2, CLK3, CLK4))
+      | CLK SUSTAINED IMMEDIATELY FROM CLK TO CLK WEAKLY IMPLIES CLK           (SustainedFromImmediatelyWeakly (CLK1, CLK2, CLK3, CLK4))
       | AWAIT CLKS IMPLIES CLK                                                 (Await (CLKS, CLKS, CLKS, CLK))
+      | AWAIT CLKS WITH WEAK RESET ON CLK IMPLIES CLK                          (raise UnsupportedParsedTerm)
+      | AWAIT CLKS WITH STRONG RESET ON CLK IMPLIES CLK				  (raise UnsupportedParsedTerm)
       | CLK WHEN CLK IMPLIES CLK                                               (WhenClock (CLK1, CLK2, CLK3))
-      | CLK WHENNOT CLK IMPLIES CLK                                            (WhenNotClock (CLK1, CLK2, CLK3))
-      | CLK EVERY NUM STARTINGAT NUM IMPLIES CLK                               (EveryImplies (CLK1, NUM1, NUM2, CLK2))
+      | CLK WHEN NOT CLK IMPLIES CLK                                           (WhenNotClock (CLK1, CLK2, CLK3))
+      | CLK EVERY NUM STARTING AT NUM IMPLIES CLK                              (EveryImplies (CLK1, NUM1, NUM2, CLK2))
       | CLK EVERY NUM IMPLIES CLK                                              (EveryImplies (CLK1, NUM, 0, CLK2))
       | CLK PERIODIC TAG OFFSET TAG                                            (Periodic (CLK, TAG1, TAG2))
       | CLK PERIODIC TAG                                                       (case TAG of Int _ => Periodic (CLK, TAG, Int 0) 
 												      | Rat _ => Periodic (CLK, TAG, Rat rat_zero)
 												      | _     => raise UnsupportedParsedTerm)
+      | TYPEDECL CLK PERIODIC TAG OFFSET TAG                                   (TypeDeclPeriodic (TYPEDECL, CLK, TAG1, TAG2)) 
+      | TYPEDECL CLK PERIODIC TAG							  (raise UnsupportedParsedTerm) 
       | CLK NEXT TO CLK IMPLIES CLK                                            (NextTo (CLK1, CLK2, CLK3))
 
       | DIR_MAXSTEP NUM                                                        (DirMaxstep (NUM))
       | DIR_MINSTEP NUM                                                        (DirMinstep (NUM))
       | DIR_HEURISTIC ID                                                       (DirHeuristic (ID))
       | DIR_DUMPRES                                                            (DirDumpres)
-      | DIR_RUNPREFIX_STRICT NUM CLKS                                          (DirRunprefixStrict (NUM, CLKS))
+      | DIR_RUNPREFIX STRICT NUM CLKS                                          (DirRunprefixStrict (NUM, CLKS))
       | DIR_RUNPREFIX        NUM CLKS                                          (DirRunprefix (NUM, CLKS))
-      | DIR_RUNPREFIX_STRICT NEXT CLKS                                         (DirRunprefixStrictNextStep (CLKS))
+      | DIR_RUNPREFIX STRICT NEXT CLKS                                         (DirRunprefixStrictNextStep (CLKS))
       | DIR_RUNPREFIX        NEXT CLKS                                         (DirRunprefixNextStep (CLKS))
       | DIR_RUN                                                                (DirRun)
       | DIR_RUNSTEP                                                            (DirRunStep)

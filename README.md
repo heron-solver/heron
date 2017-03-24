@@ -14,15 +14,25 @@ Heron
 
 Getting started
 -------------------
-We recommend compiling with [MLton](http://mlton.org/) to enjoy code optimization features. To build sources on Ubuntu, type the following
+### Binary distribution
+The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest). Several examples are provided in [`examples`](examples) directory. To solve one of them, you can simply type
 ```bash
-sudo apt-get install mlton ml-lex ml-yacc
+./heron < examples/basic/FirstExample.tesl
+```
+
+### From sources
+If you want to build from sources, we recommend compiling with [MLton](http://mlton.org/).
+
+#### Ubuntu
+```bash
+sudo apt-get install mlton
 make
 ```
 
-Several examples are provided in `examples` directory. To solve one of them, you can simply type
+#### OS X
 ```bash
-./heron < examples/basic/FirstExample.tesl
+brew install mlton
+make
 ```
 
 Example
