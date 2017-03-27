@@ -13,8 +13,9 @@ fun error (e,l : int,_) = TextIO.output (TextIO.stdOut, String.concat[
 
 %%
 %header (functor CalcLexFun(structure Tokens: Calc_TOKENS));
-alpha=[A-Za-z '_'];
+alpha=[A-Za-z];
 digit=[0-9];
+optsign=("+"|"-")?;
 ws = [\ \t];
 %%
 \n       => (Tokens.SEMI(!pos,!pos));
@@ -56,9 +57,6 @@ ws = [\ \t];
 "next"                       => (Tokens.NEXT(!pos,!pos));
 "with"                       => (Tokens.WITH(!pos,!pos));
 "reset"                      => (Tokens.RESET(!pos,!pos));
-{alpha}+{digit}*{alpha}*     => (Tokens.ID(yytext,!pos,!pos));
-{digit}+"."{digit}+          => (Tokens.DECNUM (valOf (rat_of_string yytext), !pos, !pos));
-{digit}+                     => (Tokens.NUM (valOf (Int.fromString yytext), !pos, !pos));
 "="                          => (Tokens.EQ(!pos,!pos));
 "+"                          => (Tokens.PLUS(!pos,!pos));
 "*"                          => (Tokens.TIMES(!pos,!pos));
@@ -79,6 +77,9 @@ ws = [\ \t];
 "@step"                      => (Tokens.DIR_RUNSTEP(!pos,!pos));
 "@print"                     => (Tokens.DIR_PRINT(!pos,!pos));
 "@help"                      => (Tokens.DIR_HELP(!pos,!pos));
+{alpha}({alpha}|{digit}|"_")* => (Tokens.ID(yytext,!pos,!pos));
+{optsign}{digit}+"."{digit}+ => (Tokens.DECNUM (valOf (rat_of_string yytext), !pos, !pos));
+{optsign}{digit}+            => (Tokens.NUM (valOf (Int.fromString yytext), !pos, !pos));
 "//"[^ \n]*                  => (lex());
 .                            => (error ("ignoring bad character " ^ yytext,!pos,!pos);
              lex());

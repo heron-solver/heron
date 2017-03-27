@@ -45,6 +45,11 @@ datatype tag_t =
   | Int_t
   | Rat_t
 
+fun string_of_tag_t ty = case ty of
+    Unit_t => "[unit]"
+  | Int_t  => "[int]"
+  | Rat_t  => "[rational]"
+
 exception ImpossibleTagTypeInference
 fun type_of_tag (t: tag) = case t of
     Unit  => Unit_t
@@ -155,6 +160,10 @@ fun SporadicNowSubs (f : TESL_formula) : TESL_formula =
           else aux spors' kept
         | _ => raise UnexpectedMatch
         )
+      | Sporadic (clk, Unit) :: spors' => (case List.find (fn Sporadic (clk', _) => clk = clk' | _ => raise UnexpectedMatch) kept of
+          NONE => aux spors' (Sporadic (clk, Unit) :: kept)
+        | SOME _ => aux spors' kept
+      )
       | _ => raise UnexpectedMatch
     in aux spors [] end
   in earliest_sporadics sporadics end

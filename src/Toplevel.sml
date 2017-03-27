@@ -1,4 +1,4 @@
-val RELEASE_VERSION = "0.34.0-alpha+20170323"
+val RELEASE_VERSION = "0.35.1-alpha+20170327"
 
 open OS.Process
 
@@ -132,6 +132,16 @@ fun action (stmt: TESL_atomic) =
   | _                     =>
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   end
+  handle
+  TagTypeInconsistency (Clk cname, ty, ty') =>
+  (print (BOLD_COLOR ^ RED_COLOR);
+   print "### ERROR: Type error.\n";
+   print ("  expects: " ^ (string_of_tag_t ty') ^ "\n");
+   print ("  but got: " ^ (string_of_tag_t ty) ^ "\n");
+   print ("  in: " ^ cname ^ "\n");
+   print RESET_COLOR;
+   OS.Process.exit OS.Process.failure
+  )
 
 (* Main REPL *)
 fun toplevel () = 

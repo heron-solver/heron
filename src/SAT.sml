@@ -409,8 +409,7 @@ fun reduce (G: system) =
 fun SAT (G: system) : bool =
   let val G_prop_and_elim_until_fp = lfp (reduce) G (* Keep reducing *)
   in decide G_prop_and_elim_until_fp                 (* Then decide! *)
-  end;
+  end
 
 fun context_SAT ((G, _, _, _) : TESL_ARS_conf) =
-  SAT G;
-
+  SAT G
