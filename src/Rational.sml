@@ -115,12 +115,20 @@ fun exp a b =
 fun rat_of_digits (whole: string, frac: string): rat option =
   case (Int.fromString whole, Int.fromString frac) of
     (SOME w, SOME f) =>
-    if w < 0
-    then SOME (+/ (rat_of_int w,
-		     (f, exp 10 (List.length (String.explode frac)))))
-    else SOME (-/ (rat_of_int w,
-		     (f, exp 10 (List.length (String.explode frac)))))
-  | _                => NONE
+    if w = 0
+    then
+	 case String.explode whole of
+	     #"-" :: _ => SOME (-/ (rat_of_int w,
+					(f, exp 10 (List.length (String.explode frac)))))
+	   | _         => SOME (+/ (rat_of_int w,
+					(f, exp 10 (List.length (String.explode frac)))))
+    else
+	 if w < 0
+	 then SOME (-/ (rat_of_int w,
+			  (f, exp 10 (List.length (String.explode frac)))))
+	 else SOME (+/ (rat_of_int w,
+			  (f, exp 10 (List.length (String.explode frac)))))
+   | _                => NONE
 
 val rat_of_string =
   rat_of_digits o digits_of_string

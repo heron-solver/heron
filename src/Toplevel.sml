@@ -1,4 +1,4 @@
-val RELEASE_VERSION = "0.35.1-alpha+20170327"
+val RELEASE_VERSION = "0.35.2-alpha+20170328"
 
 open OS.Process
 
@@ -23,7 +23,7 @@ fun invoke lexstream =
 
 fun print_help () = (
 print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
-print (BOLD_COLOR ^ "Interactive Simulation Engine for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
+print (BOLD_COLOR ^ "Interactive Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
 print "\n";
 print "Copyright (c) 2017, Hai Nguyen Van\n";
 print "              Universit\195\169 Paris-Sud / CNRS\n";
