@@ -1,4 +1,5 @@
 local
+ Version.sml
  $(SML_LIB)/basis/basis.mlb
  $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
  PervasivesPlus.sml
@@ -9,6 +10,7 @@ local
  parse.lex.sml
  SAT.sml
  Printer.sml
+ VCD.sml
  Heuristic.sml
  ARS.sml
 in

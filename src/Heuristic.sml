@@ -1,8 +1,6 @@
 (* Dummy constants *)
 val MAXINT = valOf (Int.maxInt)
 val MININT = valOf (Int.minInt)
-(* Ranges integers [1 : n] *)
-fun range n = let fun aux n' l = if n' = 0 then l else aux (n' - 1) (n' :: l) in aux n [] end;
 
 (** Heuristics are supposed to restrict the universe by choosing configurations that are relevant for simulation.
     They allow to focus on execution of models, and become handy to test your specificaitons.

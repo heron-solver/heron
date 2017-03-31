@@ -1,5 +1,3 @@
-val RELEASE_VERSION = "0.35.2-alpha+20170328"
-
 open OS.Process
 
 (* Structures used for lexing/parsing *)
@@ -63,12 +61,14 @@ print "                                   \u001B[1mmaximize_reactiveness\u001B[0
 print "  @dumpres                       option to display the results after @run\n"; 
 print "  @scenario (strict) [NAT] [ID]+ refine snapshots with instantaneous scenario\n"; 
 print "  @scenario (strict) next [ID]+  refine snapshots of next simulation step\n"; 
+print "  @select [NAT]                  select and keep only one simulation state\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
 print "  @exit                          exit Heron\n"; 
 print "  @run                           run the specification until model found\n"; 
 print "  @step                          run the specification for one step\n"; 
 print "  @print                         display the current snapshots\n"; 
+print "  @output vcd                    export to VCD file\n"; 
 print "  @help                          display the list of commands\n")
 
 val maxstep                          = ref ~1
@@ -127,6 +127,19 @@ fun action (stmt: TESL_atomic) =
 			  (!declared_clocks)
 			  (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
   | DirPrint              => print_dumpres (!declared_clocks) (!snapshots)
+  | DirOutputVCD          =>
+    (case !snapshots of
+	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)
+      | [s] => 
+	 (print ("## Writing vcd output to " ^ (OS.FileSys.getDir ()) ^ "/output.vcd\n");
+	  writeFile "output.vcd" (VCD_toString (!current_step - 1) (!declared_clocks) s))
+      | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
+  | DirSelect n           =>
+    (print ("## Selecting " ^ (Int.toString n) ^ "th simulation state\n");
+     if n < 1 orelse n > List.length (!snapshots)
+     then print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: State does not exist. Try again.\n" ^ RESET_COLOR)
+     else snapshots := [List.nth (!snapshots, n - 1)]
+     )
   | DirExit               => quit()
   | DirHelp               => print_help()
   | _                     =>

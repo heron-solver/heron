@@ -1,0 +1,1 @@
+val RELEASE_VERSION = "0.36.0-alpha+20170331"

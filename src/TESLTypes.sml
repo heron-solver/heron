@@ -114,6 +114,8 @@ datatype TESL_atomic =
   | DirRunprefixNextStep           of clock list
   | DirRunStep
   | DirRun
+  | DirSelect                      of int
+  | DirOutputVCD
   | DirPrint
   | DirExit
   | DirHelp
@@ -239,9 +241,11 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | DirRunprefix _        => []
 	    | DirRun                => []
 	    | DirRunStep            => []
+	    | DirSelect _           => []
 	    | DirPrint              => []
 	    | DirExit               => []
 	    | DirHelp               => []
+	    | DirOutputVCD          => []
 	    | fatom => [fatom]
   ) f)
 
@@ -336,7 +340,8 @@ fun string_of_expr e = case e of
   | DirRunprefixStrictNextStep _              		    => "<parameter>"
   | DirRun							    => "<directive>"
   | DirRunStep						    => "<directive>"
-  | DirPrint							    => "<directive>"
+  | DirSelect _						    => "<directive>"
+  | DirOutputVCD						    => "<directive>"
   | DirExit							    => "<directive>"
   | DirHelp							    => "<directive>"
   | _                                                       => "<unknown>"
