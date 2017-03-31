@@ -1,11 +1,11 @@
 Heron
 ===================
 
-> Interactive Simulation Solver for Timed Causality Models expressed in TESL
+> Simulation Solver for Timed Causality Models expressed in TESL
 
-[![Build Status](https://travis-ci.org/EmptyStackExn/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
+[![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
 
-**Heron** is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language to specify synchronization of discrete events for simulation. This prototype provides:
+**Heron** is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation. This prototype provides:
 
  1. Definition of TESL specifications for causality and time scale between events.
  2. Simulation by full or partial generation of execution traces.
@@ -21,15 +21,13 @@ The easiest way to start with Heron is to get the [latest binary release](https:
 ```
 
 ### From sources
-If you want to build from sources, we recommend compiling with [MLton](http://mlton.org/).
-
 #### Ubuntu
 ```bash
 sudo apt-get install mlton
 make
 ```
 
-#### OS X
+#### macOS
 ```bash
 brew install mlton
 make
@@ -47,6 +45,9 @@ tag relation master1 = master2
 
 master1 implies slave
 master2 implies slave
+
+@dumpres
+@run
 ```
 
 The TESL tagged event engine will produce the following run:
@@ -73,6 +74,16 @@ References
 
  1. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
  2. The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer.
+
+People
+-------------------
+
+ - Hai Nguyen Van
+ - Thibaut Balabonski
+ - Frédéric Boulanger
+ - Chantal Keller
+ - Benoît Valiron
+ - Burkhart Wolff
 
 License
 -------------------

@@ -1,12 +1,12 @@
 (** Rules used for reduction *)
 (* 1. New instant introduction *)
 fun ARS_rule_instant_intro
-  (G, n, f, []) True =
+  (G, n, f, []) =
     (G,
      n + 1,
      @- (@- (@- (f, SelfModifyingSubs f), ConsumingSubs f), SporadicNowSubs f),
      (ConsumingSubs f) @ (SporadicNowSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
-  | ARS_rule_instant_intro _ _ = raise Assert_failure;
+  | ARS_rule_instant_intro _ = raise Assert_failure;
 
 (* 2. Sporadic elimination when deciding to trigger tick sporadicaly *)
 fun ARS_rule_sporadic_1
@@ -359,13 +359,6 @@ fun ARS_rule_immediately_delayed_elim_2
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
    the least fixed-point.
 *)
-fun lawyer_i
-  ((_, _, _, finst) : TESL_ARS_conf)
-  : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
-  if finst = [] (* No pending red formulae *)
-  then [(True, ARS_rule_instant_intro)]
-  else []
-
 fun lawyer_e
   ((_, _, _, finst) : TESL_ARS_conf)
   : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
@@ -485,12 +478,8 @@ fun lawyer_e
          @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_3)) red_whennotclock)
       end;
 
-fun shy_adventurer_step_i (c : TESL_ARS_conf) : TESL_ARS_conf list =
-  let val choices = lawyer_i c in
-  case choices of
-      [] => [c]
-    | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
-  end
+fun new_instant_init (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  List.map (ARS_rule_instant_intro) cfs
 
 (*
 fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
@@ -515,41 +504,71 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
 		      ) [] choices
   end
 
-fun psi_reduce (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  let
-      val pending_psi_to_reduce = List.length (List.filter (fn (_, _, _, psi) => psi <> []) cfs)
-      val _ = print ("\rRemaining universes pending for constraint reduction: " ^ (string_of_int pending_psi_to_reduce))
-  in
-      if pending_psi_to_reduce = 0
-      then
-	   (writeln "       " ;
-	    cfs)
-      else
-	   psi_reduce (List.concat (List.map (shy_adventurer_step_e) cfs))
-  end
+fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list): TESL_ARS_conf list =
+  case pending of
+      [] =>
+      (writeln "\b\b\b, done.       " ;
+	last_reduced)
+    | _  =>
+      let
+	   val reduced = List.concat (List.map (shy_adventurer_step_e) pending)
+	   val next_pending = List.filter (fn (_, _, _, psi) => psi <> []) reduced
+	   val next_counter = List.length next_pending
+	   val next_reduced = List.filter (fn (_, _, _, psi) => psi = []) reduced
+	   val _ = print ("\rRemaining universes pending for constraint reduction: " ^ (Int.toString next_counter))
+	   val _ = if last_counter < next_counter
+		    then print (BOLD_COLOR ^ RED_COLOR ^ " \226\150\178 " ^ RESET_COLOR) (* Or use \226\134\145 *)
+		    else print (BOLD_COLOR ^ GREEN_COLOR ^ " \226\150\188 " ^ RESET_COLOR) (* Or use \226\134\147 *)
+      in 
+	   psi_reduce next_counter (next_reduced @ last_reduced) next_pending
+      end
 
 exception Maxstep_reached   of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
 exception Abort;
 
-fun has_no_floating_ticks (f : TESL_formula) =
-  (* Stop condition 1. No pending sporadics *)
-  (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
-  (* Stop condition 2. No pending whenticking *)
-  andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
+fun simplify_whentickings (G: system) (frun: TESL_formula) =
+  let
+    fun simplify_tag t: tag = case t of
+      Unit => t
+    | Int _ => t
+    | Schematic (clk, n) => (case List.find (fn
+              Timestamp(clk', n', Int const) => clk = clk' andalso n = n'
+            | Timestamp(clk', n', Rat const) => clk = clk' andalso n = n'
+            | _ => false) G of
+        NONE => t
+      | SOME (Timestamp(_, _, cst)) => cst
+      | _ => raise UnexpectedMatch)
+    | Add (Int n1, Int n2) => Int (n1 + n2)
+    | Rat _ => t
+    | Add (Rat x1, Rat x2) => Rat (+/ (x1, x2))
+    | Add (t1, t2) => Add (simplify_tag t1, simplify_tag t2)
+  in List.map (fn
+         WhenTickingOn (c1, tag, c2) => WhenTickingOn (c1, lfp (simplify_tag) tag, c2)
+	| f => f
+     ) frun
+  end
 
-(* Output snapshots *)
-fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
-    [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
-		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
-  | _ => List.foldl (fn ((G, step, phi, _), _) =>
-    let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
-    (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
-     print_system step declared_clocks G ;
-     print RESET_COLOR ;
-     print_affine_constrs G ;
-     print_floating_ticks declared_clocks phi ;
-     writeln "## End") end) () cfs
+(* Tweak. Given a clock, if a sporadic was chosen to be merged, then it must be the smallest in the specification.
+   Otherwise it will surely lead to inconsistencies. Indeed, if time has progressed enough and a past tick is pending
+   for merge, the clock of this tick will never react! The tick will be delayed for merge forever, and never merged in
+   the future *)
+fun policy_no_spurious_sporadics (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  List.filter
+    (fn (G, _, phi, _) =>
+      List.all (fn Sporadic (clk, Int n1) => (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n2 <= n1) | _ => true) G)
+               | Sporadic (clk, Rat q1) => (List.all (fn Timestamp (clk', _, Rat q2) => not (clk = clk') orelse (<=/ (q2, q1)) | _ => true) G)
+               | _ => true) phi)
+    cfs;
+fun policy_no_spurious_whentickings (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  List.filter
+    (fn (G, _, phi, _) =>
+      List.all (fn
+        WhenTickingOn (clk, Int n1, _) => (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
+      | WhenTickingOn (clk, Rat x1, _) => (List.all (fn Timestamp (clk', _, Rat x2) => not (clk = clk') orelse (<=/ (x2, x1)) | _ => true) G)
+      | _ => true) phi)
+    cfs;
+
 
 (* Executes exactly one simulation step *)
 fun exec_step
@@ -572,20 +591,28 @@ fun exec_step
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
       val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
       val _ = writeln "Initializing new instant..."
-      val introduced_cfs = (* cfl_uniq *) (List.concat (List.map (shy_adventurer_step_i) cfs))
+      val introduced_cfs = new_instant_init cfs
       val _ = writeln "Preparing constraints..."
-      val reduce_psi_formulae = psi_reduce introduced_cfs
+      val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs 
       val _ = writeln "Simplifying premodels..."
-      val reduced_haa_contexts = List.map (fn (G, n, phi, psi) => ((lfp reduce) G, n, phi, psi)) reduce_psi_formulae
+      val reduced_haa_contexts = List.map (fn (G, n, phi, psi) =>
+						    let 
+							 val G'   = (lfp reduce) G
+							 val phi' = simplify_whentickings G' phi
+						    in (G', n, phi', psi)
+						    end) reduce_psi_formulae
 
-      (* 2. KEEPING PREFIX-COMPLIANT RUNS *)
+      (* 2. REMOVE CONFIGURATIONS IN DEADLOCK STATE DUE TO UNMERGEABLE SPORADICS *)
+      val no_deadlock = policy_no_spurious_sporadics (policy_no_spurious_whentickings reduced_haa_contexts)
+
+      (* 3. KEEPING PREFIX-COMPLIANT RUNS *)
       val cfs_selected_by_codirection = case codirection of
-					    [] => reduced_haa_contexts
+					    [] => no_deadlock
 					   | _	 => (writeln "Keeping prefix-compliant premodels..." ;
 						     List.filter (fn (G, _, _, _) => SAT G)
-							(List.map (fn (G, n, phi, psi) => (G @ codirection, n, phi, psi)) reduced_haa_contexts))
+							(List.map (fn (G, n, phi, psi) => (G @ codirection, n, phi, psi)) no_deadlock))
 
-      (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
+      (* 4. KEEPING HEURISTICS-COMPLIANT RUNS *)
       val cfs_selected_by_heuristic = case heuristics of
 	    [] => cfs_selected_by_codirection
 	  | _	=> (writeln "Keeping heuristics-compliant premodels..." ;

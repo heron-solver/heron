@@ -376,3 +376,9 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | DirRunprefixNextStep (clks)               => clks
   | _ => []
   ) f))
+
+fun has_no_floating_ticks (f : TESL_formula) =
+  (* Stop condition 1. No pending sporadics *)
+  (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
+  (* Stop condition 2. No pending whenticking *)
+  andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)

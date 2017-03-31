@@ -53,8 +53,6 @@ print "  @maxstep [NAT]                 define the number of maximum run steps\n
 print "  @heuristic [NAME]+             load heuristic(s) among:\n";
 print "                                   \u001B[1mall\u001B[0m\n"; 
 print "                                   \u001B[1mminimize_floating_ticks\u001B[0m\n";
-print "                                   \u001B[1mno_spurious_sporadics\u001B[0m\n";
-print "                                   \u001B[1mno_spurious_whentickings\u001B[0m\n";
 print "                                   \u001B[1mno_empty_instants\u001B[0m\n";
 print "                                   \u001B[1mminimize_sporadic_floating_ticks\u001B[0m\n";
 print "                                   \u001B[1mmaximize_reactiveness\u001B[0m\n";
