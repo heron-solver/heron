@@ -90,6 +90,9 @@ fun string_of_affine_constr c =
 (* Print HAA-system *)
 fun print_system (step_index: int) (clocks: clock list) (G : system) =
   let
+    (* Old tick symbol: \226\135\145 to get ⇑ *)
+    val TICK_SYM = "\226\134\145"       (* ↑ *)
+    val FORBIDDEN_SYM = "\226\138\152"  (* ⊘ *)
     val G = lfp (reduce) G
     fun constrs_of_clk_instindex c n =
       List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
@@ -98,13 +101,13 @@ fun print_system (step_index: int) (clocks: clock list) (G : system) =
         val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Unit => true | Int _ => true | Rat _ => true | _ => false) | _ => false) g
       in
       if contains (Ticks (clk, n)) g andalso List.length timestamps > 0
-      then "\226\135\145 " (* \<Up> *) ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
+      then TICK_SYM ^ " " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
       else
         if contains (Ticks (clk, n)) g
-        then "\226\135\145" (* \<Up> *)
+        then TICK_SYM
         else
           if contains (NotTicks (clk, n)) g
-          then "\226\138\152"  (* \<oslash> *)
+          then FORBIDDEN_SYM
           else
             if List.length timestamps > 0
             then "  " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))

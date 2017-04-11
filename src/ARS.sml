@@ -623,8 +623,11 @@ fun exec_step
       val _ = step_index := (!step_index) + 1
       val _ = writeln ("--> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
       val _ = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec")
-      val _ = case cfs_selected_by_heuristic of [] => writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found. Simulation is now stuck in inconsistent mode." ^ RESET_COLOR) | _ => ()
-
+      val _ = case cfs_selected_by_heuristic of
+		    [] =>
+		    (writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;
+		     writeln ("           Simulation is now stuck in inconsistent mode." ^ RESET_COLOR))
+		  | _ => ()  
   in cfs_selected_by_heuristic
   end
   handle

@@ -103,7 +103,7 @@ fun digits_of_string (s: string) =
 	     | SOME _ =>
 		(empty_to_zero (String.substring (s, 0, !dotpos)),
 		 empty_to_zero (String.substring (s, !dotpos + 1, (string_length s) - (!dotpos + 1))))
-  in (whole, frac)
+  in (case whole of "-" => "-0" | _ => whole, frac)
   end
 
 fun exp a b =

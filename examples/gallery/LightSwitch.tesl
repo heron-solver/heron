@@ -19,7 +19,7 @@ switoff time delayed by 50.0 on ms implies lgtoff
 // @scenario strict 4 lgtoff
 
 // Or you can let the solver find its own way helped by some heuristics
-@heuristic all
+@heuristic asap
 
 @dumpres
 @run

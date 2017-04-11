@@ -40,6 +40,12 @@ datatype tag =
   | Schematic of clock * instant_index
   | Add of tag * tag
 
+fun is_tag_constant (t: tag) = case t of
+    Unit  => true
+  | Int _ => true
+  | Rat _ => true
+  | _ => true
+
 datatype tag_t =
     Unit_t
   | Int_t
@@ -343,6 +349,7 @@ fun string_of_expr e = case e of
   | DirSelect _						    => "<directive>"
   | DirOutputVCD						    => "<directive>"
   | DirExit							    => "<directive>"
+  | DirPrint							    => "<directive>"
   | DirHelp							    => "<directive>"
   | _                                                       => "<unknown>"
 
@@ -351,6 +358,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
     TypeDecl (c, _)                           => [c]
   | Sporadic (c, _)                           => [c]
   | Sporadics (c, _)                          => [c]
+  | WhenTickingOn (c1, _, c2)                 => [c1, c2]
   | TypeDeclSporadics (_, c, _)               => [c]
   | TagRelation (c1, _, c2, _)                => [c1, c2]
   | TagRelationRefl (c1, c2)                  => [c1, c2]
@@ -376,6 +384,15 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | DirRunprefixNextStep (clks)               => clks
   | _ => []
   ) f))
+
+fun clocks_of_system (G: system) =
+  uniq (List.concat (List.map (fn
+    Timestamp (c, _, _) => [c]
+  | Ticks (c, _)        => [c]
+  | NotTicks (c, _)     => [c]
+  | _ => []
+  ) G))
+  
 
 fun has_no_floating_ticks (f : TESL_formula) =
   (* Stop condition 1. No pending sporadics *)
