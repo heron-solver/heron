@@ -5,31 +5,28 @@ Heron
 
 [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
 
-**Heron** is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation. This prototype provides:
+**Heron** is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [1]. This prototype provides:
 
  1. Definition of TESL specifications for causality and time scale between events.
- 2. Simulation by full or partial generation of execution traces.
- 3. Runtime compliance-monitoring of systems (SUT).
+ 2. Simulation by exhaustive or partial generation of execution traces.
+ 3. Scenario testing.
 
 
 Getting started
 -------------------
 ### Binary distribution
-The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest). Several examples are provided in [`examples`](examples) directory. To solve one of them, you can simply type
+The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest). Several examples are provided in [`examples`](examples). To solve one of them, you can simply type
 ```bash
 ./heron < examples/basic/FirstExample.tesl
 ```
 
 ### From sources
-#### Ubuntu
 ```bash
-sudo apt-get install mlton
-make
-```
+sudo apt-get install mlton  #If Ubuntu
+brew install mlton          #If macOS
 
-#### macOS
-```bash
-brew install mlton
+git clone https://github.com/heron-solver/heron.git
+cd heron
 make
 ```
 
@@ -60,11 +57,11 @@ By default, the solver stops whenever a *finite satisfying run* is found. The si
 ### Solver has successfully returned 32 models
 ## Simulation result:
 		m1		m2		slave		
-[1]		⇑ 1		⊘		⇑
-[2]		⊘		⇑ 2		⇑
-[3]		⇑ 4		⊘		⇑
-[4]		⊘		⇑ 5		⇑
-[5]		⇑ 7		⊘		⇑
+[1]		↑ 1		⊘		↑
+[2]		⊘		↑ 2		↑
+[3]		↑ 4		⊘		↑
+[4]		⊘		↑ 5		↑
+[5]		↑ 7		⊘		↑
 ## End
 ...
 ```
