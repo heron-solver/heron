@@ -18,7 +18,7 @@ year4 when not year100 implies leap
 year400 implies leap
 
 //@dumpres
-@heuristic asap
+@policy asap
 @maxstep 10
 @run
 @print

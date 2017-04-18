@@ -1,0 +1,25 @@
+// Using tag relations for modeling engine ignition
+// http://wwwdi.supelec.fr/software/TESL/GalleryEngine
+
+Q-clock realtime    // in seconds
+Q-clock crankshaft  // in degrees
+Q-clock camshaft    // in degrees
+tag relation crankshaft = 2.0 * camshaft + 0.0 // crankshaft turns twice as fast as camshaft
+
+tag relation crankshaft = 12000.0 * realtime + 0.0
+
+Q-clock top_dead_center periodic 1. offset 0.
+tag relation crankshaft = 360.0 * top_dead_center + 0.0
+
+U-clock exhaust_tdc
+top_dead_center every 2 implies exhaust_tdc
+U-clock compress_tdc
+top_dead_center every 2 starting at 1 implies compress_tdc
+
+U-clock ignition
+exhaust_tdc time delayed by <11/500> on realtime implies ignition
+
+@policy asap
+@maxstep 5
+@dumpres
+@run

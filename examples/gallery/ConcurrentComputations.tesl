@@ -15,6 +15,6 @@ Bavail sustained immediately from Aavail to compAB implies compAB
 compAB time delayed by 10 on CPU1t implies ABavail
 
 @dumpres
-@heuristic asap
+@policy asap
 @run
 

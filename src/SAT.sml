@@ -115,16 +115,16 @@ fun schematic_elim_step (G: system) =
     val affines        = (List.filter (fn cstr => case cstr of Affine _ => true | _ => false) G)
     val eliminable_constr =
       List.filter (fn
-        Affine (x1, a, x2, b) => List.exists (fn
+        Affine (x1 as Schematic _, a, x2, b) => List.exists (fn
           Affine (_, _, x2', _) =>
-            x1 = x2' | _ => raise UnexpectedMatch) (@-(affines, [Affine(x1, a, x2, b)])) | _ => raise UnexpectedMatch) affines
+            x1 = x2' | _ => raise UnexpectedMatch) (@-(affines, [Affine(x1, a, x2, b)])) | _ => false) affines
     val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch) eliminable_constr
   in
     if is_empty (eliminable_vars)
     then G
     else schematic_elim G (List.nth (eliminable_vars, 0))
   end;
-fun schematic_elim (G: system) =
+fun all_schematic_elim (G: system) =
   lfp (schematic_elim_step) G
 
 (* Apply a complete substitution where tag [t1] is substituted by tag [t2] in constraint system [G] *)
@@ -400,11 +400,12 @@ fun decide (G: system) : bool =
   andalso check_type_consistency G
   andalso check_fixpoint_affeqns G
   andalso check_constants_affeqns G
-  andalso check_no_shared_var_affeqns G
+  (* UNSAFE: Please investigate *)
+  (* andalso check_no_shared_var_affeqns G *)
   andalso check_varright_affeqns G;
 
 fun reduce (G: system) =
-  no_trivial_schem_timestamp (constant_affine_eqns_elim (schematic_elim (constants_propagation (uniq G))))
+  no_trivial_schem_timestamp (constant_affine_eqns_elim (all_schematic_elim (constants_propagation (uniq G))))
 
 fun SAT (G: system) : bool =
   let val G_prop_and_elim_until_fp = lfp (reduce) G (* Keep reducing *)

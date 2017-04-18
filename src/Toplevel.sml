@@ -50,7 +50,7 @@ print "\n";
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [INT]                    define the number of minimum run steps\n"; 
 print "  @maxstep [INT]                    define the number of maximum run steps\n"; 
-print "  @heuristic [NAME]+                load heuristic(s) among:\n";
+print "  @policy [NAME]                    load a simulation policy among:\n";
 print "                                      \u001B[1masap\u001B[0m\n"; 
 print "                                      \u001B[1mminimize_ticks\u001B[0m\n";
 print "                                      \u001B[1mspeedup_event_occ\u001B[0m\n";

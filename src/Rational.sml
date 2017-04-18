@@ -1,36 +1,40 @@
-type rat = int * int
+type rat = LargeInt.int * LargeInt.int
 exception DenominatorIsZero
 exception NegativeExponent
 
-fun gcd (p: int, q: int) =
-  if p = 0 then q else gcd (q mod p, p)
+fun gcd (p: LargeInt.int, q: LargeInt.int) =
+  if p = (LargeInt.fromInt 0) then q else gcd (LargeInt.mod (q, p), p)
 
 fun rat_normal ((p, q): rat): rat = (* q is assumed to be positive *)
   let
-    val (p, q) = if q > 0 then (p, q) else (~p, ~q)
-    val gcd0 = if p > 0 then gcd (p, q) else gcd (~p, q)
+    val (p, q) = if q > 0 then (p, q) else (LargeInt.~p, LargeInt.~q)
+    val gcd0 = if p > 0 then gcd (p, q) else gcd (LargeInt.~p, q)
   in
-    (p div gcd0, q div gcd0)
+    (LargeInt.div (p, gcd0), LargeInt.div(q, gcd0))
   end
 
 fun rat_make (p: int, q: int): rat =
-  if q = 0 then raise DenominatorIsZero
-  else rat_normal (p, q)
+  if (LargeInt.fromInt q) = (LargeInt.fromInt 0) then raise DenominatorIsZero
+  else rat_normal (LargeInt.fromInt p, LargeInt.fromInt q)
 
 fun op ~/ (p, q) =
-  rat_normal (~p, q);
+  rat_normal (LargeInt.~p, q);
 
 fun op +/ ((p, q), (p', q')) =
-  rat_normal (p * q' + p' * q, q * q');
+  (* rat_normal (p * q' + p' * q, q * q'); *)
+  rat_normal (LargeInt.+ (LargeInt.* (p, q'), LargeInt.* (p', q)), LargeInt.* (q, q'));
 
 fun op -/ ((p, q), (p', q')) =
-  rat_normal (p * q' - p' * q, q * q');
+  (* rat_normal (p * q' - p' * q, q * q'); *)
+  rat_normal (LargeInt.- (LargeInt.* (p, q'), LargeInt.* (p', q)), LargeInt.* (q, q'));
 
 fun op */ ((p, q), (p', q')) =
-  rat_normal (p * p', q * q');
+  (* rat_normal (p * p', q * q'); *)
+  rat_normal (LargeInt.* (p, p'), LargeInt.* (q, q'));
 
 fun op // ((p, q), (p', q')) =
-  rat_normal (p * q', q * p');
+  (* rat_normal (p * q', q * p'); *)
+  rat_normal (LargeInt.* (p, q'), LargeInt.* (q, p'));
 
 fun op =/ (x, x') =
   (rat_normal x) = (rat_normal x')
@@ -38,26 +42,27 @@ fun op =/ (x, x') =
 fun op <>/ (x, x') =
   (rat_normal x) <> (rat_normal x')
 
-val rat_zero = (0, 1);
-val rat_one = (1, 1);
+val rat_zero = (LargeInt.fromInt 0, LargeInt.fromInt 1);
+val rat_one  = (LargeInt.fromInt 1, LargeInt.fromInt 1);
 
 fun op </ ((p, q), (p', q')) =
   let
-    val ((p, q), (p', q')) = ((p * q', q * q'), (p' * q, q * q'))
+    (* val ((p, q), (p', q')) = ((p * q', q * q'), (p' * q, q * q')) *)
+    val ((p, q), (p', q')) = ((LargeInt.* (p, q'), LargeInt.* (q, q')), (LargeInt.* (p', q), LargeInt.* (q, q')))
   in
-    p < p'
+    LargeInt.< (p, p')
   end
 
 fun op <=/ ((p, q), (p', q')) =
   let
-    val ((p, q), (p', q')) = ((p * q', q * q'), (p' * q, q * q'))
+    val ((p, q), (p', q')) = ((LargeInt.* (p, q'), LargeInt.* (q, q')), (LargeInt.* (p', q), LargeInt.* (q, q')))
   in
-    p <= p'
+    LargeInt.<= (p, p')
   end
 
 fun string_of_rat ((p, q): rat) : string =
   let
-      val as_real = (Real.fromInt p) / (Real.fromInt q)
+      val as_real = (Real.fromLargeInt p) / (Real.fromLargeInt q)
       val {frac: real, whole: real} = Real.split as_real
   in
       if Real.== (frac, 0.0)
@@ -84,8 +89,8 @@ fun rat_of_string (s: string) : rat option =
       NONE   => NONE
     | SOME r => SOME (rat_of_real r)
 *)
-fun rat_of_int (n: int): rat =
-  (n, 1)
+fun rat_of_LargeInt (n: LargeInt.int): rat =
+  (n, LargeInt.fromInt 1)
 
 fun string_length (s: string) =
   List.length (String.explode s)
@@ -106,28 +111,28 @@ fun digits_of_string (s: string) =
   in (case whole of "-" => "-0" | _ => whole, frac)
   end
 
-fun exp a b =
+fun exp (a: LargeInt.int) (b: LargeInt.int) =
   case b of
       0 => 1
     | 1 => a
     | _ => if b < 0 then raise NegativeExponent else a * (exp a (b - 1))
 
 fun rat_of_digits (whole: string, frac: string): rat option =
-  case (Int.fromString whole, Int.fromString frac) of
+  case (LargeInt.fromString whole, LargeInt.fromString frac) of
     (SOME w, SOME f) =>
     if w = 0
     then
 	 case String.explode whole of
-	     #"-" :: _ => SOME (-/ (rat_of_int w,
-					(f, exp 10 (List.length (String.explode frac)))))
-	   | _         => SOME (+/ (rat_of_int w,
-					(f, exp 10 (List.length (String.explode frac)))))
+	     #"-" :: _ => SOME (-/ (rat_of_LargeInt w,
+					(f, exp (LargeInt.fromInt 10) (LargeInt.fromInt (List.length (String.explode frac))))))
+	   | _         => SOME (+/ (rat_of_LargeInt w,
+					(f, exp (LargeInt.fromInt 10) (LargeInt.fromInt (List.length (String.explode frac))))))
     else
 	 if w < 0
-	 then SOME (-/ (rat_of_int w,
-			  (f, exp 10 (List.length (String.explode frac)))))
-	 else SOME (+/ (rat_of_int w,
-			  (f, exp 10 (List.length (String.explode frac)))))
+	 then SOME (-/ (rat_of_LargeInt w,
+			  (f, exp (LargeInt.fromInt 10) (LargeInt.fromInt (List.length (String.explode frac))))))
+	 else SOME (+/ (rat_of_LargeInt w,
+			  (f, exp (LargeInt.fromInt 10) (LargeInt.fromInt (List.length (String.explode frac))))))
    | _                => NONE
 
 val rat_of_string =

@@ -71,7 +71,7 @@ fun ARS_rule_filtered_false
 (* 10. Filtered update skipping when true premise *)
 fun ARS_rule_filtered_update_1
   (G, n, frun, finst) (fsubst as FilteredBy (c1, s, k, rs, rk, c2)) =
-    (assert (s > 0 andalso k > 1);
+    (assert (s > 0 andalso k >= 1);
     (G @ [Ticks (c1, n)], n, frun @ [FilteredBy (c1, s - 1, k, rs, rk, c2)], @- (finst, [fsubst])))
   | ARS_rule_filtered_update_1 _ _ = raise Assert_failure;
 
@@ -378,7 +378,7 @@ fun lawyer_e
         val red_timedelayeds = (List.filter (fn fatom => case fatom of TimeDelayedBy _ => true | _ => false) finst)
 
         val red_filtereds = (List.filter (fn fatom => case fatom of FilteredBy _ => true | _ => false) finst)
-        val red_filtereds_nonneg_s_k = (List.filter (fn fatom => case fatom of FilteredBy (_, s, k, _, _, _) => s > 0 andalso k > 1 | _ => false) red_filtereds)
+        val red_filtereds_nonneg_s_k = (List.filter (fn fatom => case fatom of FilteredBy (_, s, k, _, _, _) => s > 0 andalso k >= 1 | _ => false) red_filtereds)
         val red_filtereds_noskip = (List.filter (fn fatom => case fatom of FilteredBy (_, s, k, _, _, _) => s = 0 andalso k > 1  | _ => false) red_filtereds)
         val red_filtereds_noskip_nokeep = (List.filter (fn fatom => case fatom of FilteredBy (_, s, k, _, _, _) => s = 0 andalso k = 1 | _ => false) red_filtereds)
 

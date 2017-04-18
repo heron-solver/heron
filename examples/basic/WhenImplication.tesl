@@ -6,5 +6,5 @@ tag relation sampl = 1 * master
 master when sampl implies slave
 
 @dumpres
-@heuristic asap
+@policy asap
 @run

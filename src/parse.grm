@@ -11,7 +11,7 @@
 %left IMPLIES
 
 %term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t
-      | SEMI | EOF | EQ | PLUS | TIMES | TAGREL | TIME | ON | DELAYED
+      | SEMI | EOF | EQ | PLUS | TIMES | DIV | TAGREL | TIME | ON | DELAYED
       | FILTERED | LPAR | RPAR | LDIP | RDIP | COMMA
       | SUSTAINED | IMMEDIATELY | TO | WEAKLY 
       | AWAIT | WEAK | STRONG
@@ -51,7 +51,7 @@
   TAG  : UNIT_VAL                                                              (Unit)
 	| NUM                                                                   (Int (NUM))
        | DECNUM                                                                (Rat (DECNUM))
-       | LDIP NUM COMMA NUM RDIP                                               (Rat (rat_normal (NUM1, NUM2)))
+       | LDIP NUM DIV NUM RDIP                                                 (Rat (rat_normal (LargeInt.fromInt NUM1, LargeInt.fromInt NUM2)))
   TAGS : TAG                                                                   ([TAG])
        | TAG COMMA TAGS                                                        (TAG :: TAGS)
   EXP : 
