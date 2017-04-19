@@ -15,10 +15,12 @@ Heron
 Getting started
 -------------------
 ### Binary distribution
-The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest). Several examples are provided in [`examples`](examples). To solve one of them, you can simply type
+The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems). Several examples are provided in [`examples`](examples). To solve one of them, you can simply type
 ```bash
 ./heron < examples/basic/FirstExample.tesl
 ```
+
+![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
 
 ### From sources
 ```bash
@@ -28,42 +30,6 @@ brew install mlton          #If macOS
 git clone https://github.com/heron-solver/heron.git
 cd heron
 make
-```
-
-Example
--------------------
-The following specification is available in `ImplicationsTimeScales.tesl` and [detailed here](http://wwwdi.supelec.fr/software/TESL/#Implications).
-
-```
-int-clock master1 sporadic 1, 4, 7
-int-clock master2 sporadic   2, 5
-unit-clock slave
-tag relation master1 = master2
-
-master1 implies slave
-master2 implies slave
-
-@dumpres
-@run
-```
-
-The TESL tagged event engine will produce the following run:
-![Example 3, TESL Official Website](http://wwwdi.supelec.fr/software/downloads/TESL/example3.svg)
-
-This tool uses *counterfactual reasoning* on the purely-syntactic structure of TESL-formulae to derive disjunction cases. Such execution branches are iteratively abstracted as context constraints, which refine the desired behavior. Along the simulation, inconsistent branches are filtered out by an arithmetic decision procedure.
-
-By default, the solver stops whenever a *finite satisfying run* is found. The simulation of the above example converges at the 5th step and returns 32 possible behaviors:
-```
-### Solver has successfully returned 32 models
-## Simulation result:
-		m1		m2		slave		
-[1]		↑ 1		⊘		↑
-[2]		⊘		↑ 2		↑
-[3]		↑ 4		⊘		↑
-[4]		⊘		↑ 5		↑
-[5]		↑ 7		⊘		↑
-## End
-...
 ```
 
 References

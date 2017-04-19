@@ -22,6 +22,7 @@ script:
   - ./heron < examples/gallery/ConcurrentComputations.tesl
   - ./heron < examples/gallery/LightSwitch.tesl
   - ./heron < examples/gallery/LeapYears.tesl
+  - ./heron < examples/gallery/Engine.tesl
   
 notifications:
   email: false
