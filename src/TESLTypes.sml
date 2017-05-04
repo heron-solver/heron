@@ -114,10 +114,8 @@ datatype TESL_atomic =
   | DirMinstep                     of int
   | DirHeuristic                   of string
   | DirDumpres
-  | DirRunprefixStrict             of int * clock list 
-  | DirRunprefix                   of int * clock list
-  | DirRunprefixStrictNextStep     of clock list 
-  | DirRunprefixNextStep           of clock list
+  | DirScenario                    of bool * int option * (clock * tag option) list
+                                      (* strict?, next or index, clk with tag (or not) *)
   | DirRunStep
   | DirRun
   | DirSelect                      of int
@@ -243,8 +241,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | DirMaxstep _          => []
 	    | DirHeuristic _        => []
 	    | DirDumpres            => []
-	    | DirRunprefixStrict _  => []
-	    | DirRunprefix _        => []
+	    | DirScenario _         => []
 	    | DirRun                => []
 	    | DirRunStep            => []
 	    | DirSelect _           => []
@@ -340,10 +337,7 @@ fun string_of_expr e = case e of
   | DirMaxstep _						    => "<parameter>"
   | DirHeuristic _						    => "<parameter>"
   | DirDumpres						    => "<parameter>"
-  | DirRunprefixStrict _                      		    => "<parameter>" 
-  | DirRunprefix _                      			    => "<parameter>"
-  | DirRunprefixNextStep _              			    => "<parameter>"
-  | DirRunprefixStrictNextStep _              		    => "<parameter>"
+  | DirScenario _                      			    => "<parameter>"
   | DirRun							    => "<directive>"
   | DirRunStep						    => "<directive>"
   | DirSelect _						    => "<directive>"
@@ -378,10 +372,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | NextTo (c1, c2, c3)                       => [c1, c2, c3]
   | Periodic (c, _, _)                        => [c]
   | TypeDeclPeriodic (_, c, _, _)             => [c]
-  | DirRunprefixStrict (_, clks)              => clks
-  | DirRunprefix (_, clks)                    => clks
-  | DirRunprefixStrictNextStep (clks)         => clks
-  | DirRunprefixNextStep (clks)               => clks
+  | DirScenario (_, _, tclks)                 => List.map (fn (clk, _) => clk) tclks
   | _ => []
   ) f))
 

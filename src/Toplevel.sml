@@ -76,8 +76,7 @@ val minstep                          = ref ~1
 val heuristics: TESL_atomic list ref = ref []
 val dumpres                          = ref false
 
-val prefix: system ref = ref []
-val prefix_strict: system ref = ref []
+val scenario: system ref = ref []
 
 val declared_clocks: clock list ref = ref []
 
@@ -89,6 +88,9 @@ val clock_types: (clock * tag_t) list ref = ref []
 fun quit () = case (!snapshots) of
     [] => OS.Process.exit OS.Process.failure
   | _  => OS.Process.exit OS.Process.success
+
+infix 1 <>>
+fun rl <>> x = rl := (!rl) @ [x]
 
 fun action (stmt: TESL_atomic) =
   (* On-the-fly clock identifiers declaration *)
@@ -102,30 +104,32 @@ fun action (stmt: TESL_atomic) =
   | DirMaxstep n	     => maxstep := n
   | DirHeuristic _	     => heuristics := !heuristics @ [stmt]
   | DirDumpres	     => dumpres := true
-  | DirRunprefixStrict (n_step, clocks_prefix) =>
-    let val add_haa_constrs =
-      List.map (fn c =>
-        if List.exists (fn x => x = c) clocks_prefix
-        then Ticks (c, n_step)
-        else NotTicks (c, n_step)
-      ) (!declared_clocks)
-      in prefix_strict := (!prefix_strict) @ add_haa_constrs end
-  | DirRunprefix (n_step, prefix_clocks) =>
-      prefix := (!prefix) @ (List.map (fn c => Ticks (c, n_step)) prefix_clocks)
-  | DirRunprefixNextStep (clocks_prefix) => action (DirRunprefix (!current_step, clocks_prefix))
-  | DirRunprefixStrictNextStep (clocks_prefix) => action (DirRunprefixStrict (!current_step, clocks_prefix))
+  | DirScenario (strictness, step_index, tclks) =>
+    let
+	 val n = (case step_index of NONE => !current_step
+				      | SOME n => n)
+	 val _ = List.app (fn (c, otag) => (scenario <>> (Ticks (c, n)) ;
+						 case otag of SOME tag => scenario <>> (Timestamp (c, n, tag)) | NONE => ())) tclks
+	 val _ = if strictness
+		  then
+		      List.app (fn c => if List.exists (fn (x, _) => x = c) tclks
+					   then ()
+					   else scenario <>> NotTicks (c, n)) (!declared_clocks)
+		  else ()
+    in ()
+    end
   | DirRun		     =>
       snapshots := exec
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
-			  (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
+			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics)
   | DirRunStep	     =>
       snapshots := exec_step
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
-			  (!minstep, !maxstep, !dumpres, !prefix_strict @ !prefix, !heuristics)
+			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics)
   | DirPrint              => print_dumpres (!declared_clocks) (!snapshots)
   | DirOutputVCD          =>
     (case !snapshots of

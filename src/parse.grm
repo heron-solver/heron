@@ -25,11 +25,12 @@
       | BY
       | FROM
       | LET | INT | DECIMAL | RATIONAL | FLOAT
-      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_RUNPREFIX | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
       | DIR_OUTPUT | VCD | SVG
-      | DIR_SELECT
+      | DIR_SELECT 
+      | ARROW
 
-%nonterm CLK of clock | CLKS of clock list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list 
+%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list 
 
 %name Calc
 
@@ -37,7 +38,6 @@
 %keyword SEMI
 
 %noshift EOF
-%value ID ("bogus")
 %verbose
 %%
 
@@ -54,6 +54,10 @@
        | LDIP NUM DIV NUM RDIP                                                 (Rat (rat_normal (LargeInt.fromInt NUM1, LargeInt.fromInt NUM2)))
   TAGS : TAG                                                                   ([TAG])
        | TAG COMMA TAGS                                                        (TAG :: TAGS)
+  TCLKS : ID                                                                   ([(Clk ID, NONE)])
+        | ID TCLKS                                                             ((Clk ID, NONE) :: TCLKS)
+	 | LPAR ID ARROW TAG RPAR                                               ([(Clk ID, SOME TAG)])
+        | LPAR ID ARROW TAG RPAR TCLKS                                        ((Clk ID, SOME TAG) :: TCLKS)
   EXP : 
 	 TYPEDECL CLK                                                           (TypeDecl (CLK, TYPEDECL))
       | LET INT ID EQ TAG                                                      (raise UnsupportedParsedTerm) 
@@ -103,10 +107,10 @@
       | DIR_MINSTEP NUM                                                        (DirMinstep (NUM))
       | DIR_HEURISTIC ID                                                       (DirHeuristic (ID))
       | DIR_DUMPRES                                                            (DirDumpres)
-      | DIR_RUNPREFIX STRICT NEXT CLKS                                         (DirRunprefixStrictNextStep (CLKS))
-      | DIR_RUNPREFIX STRICT NUM CLKS                                          (DirRunprefixStrict (NUM, CLKS))
-      | DIR_RUNPREFIX        NEXT CLKS                                         (DirRunprefixNextStep (CLKS))
-      | DIR_RUNPREFIX        NUM CLKS                                          (DirRunprefix (NUM, CLKS))
+      | DIR_SCENARIO STRICT NEXT TCLKS						  (DirScenario (true, NONE, TCLKS))
+      | DIR_SCENARIO STRICT NUM  TCLKS						  (DirScenario (true, SOME NUM, TCLKS))
+      | DIR_SCENARIO		NEXT TCLKS						  (DirScenario (false, NONE, TCLKS))
+      | DIR_SCENARIO		NUM  TCLKS						  (DirScenario (false, SOME NUM, TCLKS))
       | DIR_RUN                                                                (DirRun)
       | DIR_RUNSTEP                                                            (DirRunStep)
       | DIR_PRINT                                                              (DirPrint)
