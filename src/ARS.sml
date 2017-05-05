@@ -4,157 +4,157 @@ fun ARS_rule_instant_intro
   (G, n, f, []) =
     (G,
      n + 1,
-     @- (@- (@- (f, SelfModifyingSubs f), ConsumingSubs f), SporadicNowSubs f),
+     f @- (SelfModifyingSubs f) @- (ConsumingSubs f) @- (SporadicNowSubs f),
      (ConsumingSubs f) @ (SporadicNowSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
   | ARS_rule_instant_intro _ = raise Assert_failure;
 
 (* 2. Sporadic elimination when deciding to trigger tick sporadicaly *)
 fun ARS_rule_sporadic_1
   (G, n, frun, finst) (fsubst as Sporadic (clock, tag)) =
-    (G @ [Ticks (clock, n), Timestamp (clock, n, tag)], n, frun, @- (finst, [fsubst]))
+    (G @ [Ticks (clock, n), Timestamp (clock, n, tag)], n, frun, finst @- [fsubst])
   | ARS_rule_sporadic_1 _ _ = raise Assert_failure;
 
 (* 2 Bis. Sporadic elimination when deciding to postpone it *)
 fun ARS_rule_sporadic_2
   (G, n, frun, finst) (fsubst as Sporadic (_, _)) =
-    (G, n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G, n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_sporadic_2 _ _ = raise Assert_failure;
 
 (* 3. Implies elimination when premise is false *)
 fun ARS_rule_implies_1
   (G, n, frun, finst) (fsubst as Implies (c1, _)) =
-    (G @ [NotTicks (c1, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
   | ARS_rule_implies_1 _ _ = raise Assert_failure;
 
 (* 4. Implies elimination when premise is true *)
 fun ARS_rule_implies_2
   (G, n, frun, finst) (fsubst as Implies (c1, c2)) =
-    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun, finst @- [fsubst])
   | ARS_rule_implies_2 _ _ = raise Assert_failure;
 
 (* 5. Tag relation elimination *)
 fun ARS_rule_tagrel_elim
   (G, n, frun, finst) (fsubst as TagRelation (c1, tag1, c2, tag2)) =
-    (G @ [Timestamp (c1, n, Schematic (c1, n)), Timestamp (c2, n, Schematic (c2, n)), Affine (Schematic (c1, n), tag1, Schematic (c2, n), tag2)], n, frun, @- (finst, [fsubst]))
+    (G @ [Timestamp (c1, n, Schematic (c1, n)), Timestamp (c2, n, Schematic (c2, n)), Affine (Schematic (c1, n), tag1, Schematic (c2, n), tag2)], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_elim _ _ = raise Assert_failure;
 
 (* 6. Time delayed elimination when premise is false *)
 fun ARS_rule_timedelayed_elim_1
   (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, _, _, _)) =
-    (G @ [NotTicks (c1, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
   | ARS_rule_timedelayed_elim_1 _ _ = raise Assert_failure;
 
 (* 7. Time delayed elimination when premise is true (introduces when-ticking) *)
 fun ARS_rule_timedelayed_elim_2
   (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, dt, c2, c3)) =
-    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun @ [WhenTickingOn (c2, Add (Schematic (c2, n), dt), c3)], @- (finst, [fsubst]))
+    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun @ [WhenTickingOn (c2, Add (Schematic (c2, n), dt), c3)], finst @- [fsubst])
   | ARS_rule_timedelayed_elim_2 _ _ = raise Assert_failure;
 
 (* 8. When ticking elimination with merge *)
 fun ARS_rule_whentickingon_1
   (G, n, frun, finst) (fsubst as WhenTickingOn (c1, tag, c2)) =
-    (G @ [Timestamp (c1, n, tag), Ticks (c2, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [Timestamp (c1, n, tag), Ticks (c2, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whentickingon_1 _ _ = raise Assert_failure;
 
 (* 8 Bis. When ticking elimination postponed *)
 fun ARS_rule_whentickingon_2
   (G, n, frun, finst) (fsubst as WhenTickingOn _) =
-    (G, n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G, n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_whentickingon_2 _ _ = raise Assert_failure;
 
 (* 9. Filtered update when false premise *)
 fun ARS_rule_filtered_false
   (G, n, frun, finst) (fsubst as FilteredBy (c1, _, _, _, _, _)) =
-    (G @ [NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (c1, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_filtered_false _ _ = raise Assert_failure;
 
 (* 10. Filtered update skipping when true premise *)
 fun ARS_rule_filtered_update_1
   (G, n, frun, finst) (fsubst as FilteredBy (c1, s, k, rs, rk, c2)) =
     (assert (s > 0 andalso k >= 1);
-    (G @ [Ticks (c1, n)], n, frun @ [FilteredBy (c1, s - 1, k, rs, rk, c2)], @- (finst, [fsubst])))
+    (G @ [Ticks (c1, n)], n, frun @ [FilteredBy (c1, s - 1, k, rs, rk, c2)], finst @- [fsubst]))
   | ARS_rule_filtered_update_1 _ _ = raise Assert_failure;
 
 (* 11. Filtered update keeping when true premise *)
 fun ARS_rule_filtered_update_2
   (G, n, frun, finst) (fsubst as FilteredBy (c1, s, k, rs, rk, c2)) =
     (assert (s = 0 andalso k > 1);
-    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun @ [FilteredBy (c1, 0, k - 1, rs, rk, c2)], @- (finst, [fsubst])))
+    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun @ [FilteredBy (c1, 0, k - 1, rs, rk, c2)], finst @- [fsubst]))
   | ARS_rule_filtered_update_2 _ _ = raise Assert_failure;
 
 (* 12. Filtered update resetting when true premise *)
 fun ARS_rule_filtered_update_3
   (G, n, frun, finst) (fsubst as FilteredBy (c1, s, k, rs, rk, c2)) =
     (assert (s = 0 andalso k = 1);
-    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun @ [FilteredBy (c1, rs, rk, rs, rk, c2)], @- (finst, [fsubst])))
+    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun @ [FilteredBy (c1, rs, rk, rs, rk, c2)], finst @- [fsubst]))
   | ARS_rule_filtered_update_3 _ _ = raise Assert_failure;
 
 (* 13. Delayed elimination when false premise *)
 fun ARS_rule_delayed_elim_1
   (G, n, frun, finst) (fsubst as DelayedBy (c1, _, _, _)) =
-    (G @ [NotTicks (c1, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
   | ARS_rule_delayed_elim_1 _ _ = raise Assert_failure;
 
 (* 14. Delayed elimination when true premise *)
 fun ARS_rule_delayed_elim_2
   (G, n, frun, finst) (fsubst as DelayedBy (c1, dp, c2, c3)) =
-    (G @ [Ticks (c1, n)], n, frun @ [TimesImpliesOn (c2, dp, c3)], @- (finst, [fsubst]))
+    (G @ [Ticks (c1, n)], n, frun @ [TimesImpliesOn (c2, dp, c3)], finst @- [fsubst])
   | ARS_rule_delayed_elim_2 _ _ = raise Assert_failure;
 
 (* 15. Times-implies when false premise *)
 fun ARS_rule_timesticking_false
   (G, n, frun, finst) (fsubst as TimesImpliesOn (c1, dp, c3)) =
-    (G @ [NotTicks (c1, n)], n, frun @ [TimesImpliesOn (c1, dp, c3)], @- (finst, [fsubst]))
+    (G @ [NotTicks (c1, n)], n, frun @ [TimesImpliesOn (c1, dp, c3)], finst @- [fsubst])
   | ARS_rule_timesticking_false _ _ = raise Assert_failure;
 
 (* 16. Times-implies update decrementing when true premise *)
 fun ARS_rule_timesticking_update
   (G, n, frun, finst) (fsubst as TimesImpliesOn (c1, dp, c3)) =
     (assert (dp > 1);
-    (G @ [Ticks (c1, n)], n, frun @ [TimesImpliesOn (c1, dp - 1, c3)], @- (finst, [fsubst])))
+    (G @ [Ticks (c1, n)], n, frun @ [TimesImpliesOn (c1, dp - 1, c3)], finst @- [fsubst]))
   | ARS_rule_timesticking_update _ _ = raise Assert_failure;
 
 (* 17. Times-implies update resetting when true premise *)
 fun ARS_rule_timesticking_elim
   (G, n, frun, finst) (fsubst as TimesImpliesOn (c1, dp, c2)) =
     (assert (dp = 1);
-    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun, @- (finst, [fsubst])))
+    (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun, finst @- [fsubst]))
   | ARS_rule_timesticking_elim _ _ = raise Assert_failure;
 
 (* 18. Sustained-from elimination when false start premise *)
 fun ARS_rule_sustained_elim_1
   (G, n, frun, finst) (fsubst as SustainedFrom (_, cstart, _, _)) =
-    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_sustained_elim_1 _ _ = raise Assert_failure;
 
 (* 19. Sustained-from elimination when true start premise *)
 fun ARS_rule_sustained_elim_2
   (G, n, frun, finst) (fsubst as SustainedFrom (c1, cstart, cend, c2)) =
-    (G @ [Ticks (cstart, n)], n, frun @ [UntilRestart (c1, c2, cend, cstart)], @- (finst, [fsubst]))
+    (G @ [Ticks (cstart, n)], n, frun @ [UntilRestart (c1, c2, cend, cstart)], finst @- [fsubst])
   | ARS_rule_sustained_elim_2 _ _ = raise Assert_failure;
 
 (* 20. Until-restart elimination when false premise *)
 fun ARS_rule_untilrestart_elim_1
   (G, n, frun, finst) (fsubst as UntilRestart (c1, _, cend, _)) =
-    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_elim_1 _ _ = raise Assert_failure;
 
 (* 21. Until-restart elimination when true premise *)
 fun ARS_rule_untilrestart_elim_2
   (G, n, frun, finst) (fsubst as UntilRestart (c1, c2, cend, _)) =
-    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_elim_2 _ _ = raise Assert_failure;
 
 (* 22. Until-restart elimination restarting when false premise *)
 fun ARS_rule_untilrestart_restarts_elim_1
   (G, n, frun, finst) (fsubst as UntilRestart (c1, c2, cend, cstart)) =
-    (G @ [Ticks (cend, n), NotTicks (c1, n)], n, frun @ [SustainedFrom (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+    (G @ [Ticks (cend, n), NotTicks (c1, n)], n, frun @ [SustainedFrom (c1, cstart, cend, c2)], finst @- [fsubst])
   | ARS_rule_untilrestart_restarts_elim_1 _ _ = raise Assert_failure;
 
 (* 23. Until-restart elimination restarting when true premise *)
 fun ARS_rule_untilrestart_restarts_elim_2
   (G, n, frun, finst) (fsubst as UntilRestart (c1, c2, cend, cstart)) =
-    (G @ [Ticks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [SustainedFrom (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+    (G @ [Ticks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [SustainedFrom (c1, cstart, cend, c2)], finst @- [fsubst])
   | ARS_rule_untilrestart_restarts_elim_2 _ _ = raise Assert_failure;
 
 (* 24. Await-remaining instant update when caught signal on listening clock [hlisten] *)
@@ -167,7 +167,7 @@ fun ARS_rule_await_instant_sigcaught
      (G @ [Ticks (hlisten, n)],
       n,
       frun,
-      @- (finst, [fsubst]) @ [Await (Hawait, @- (Hremains, [hlisten]), @- (Hinst, [hlisten]), himp)]) end
+      finst @- [fsubst] @ [Await (Hawait, Hremains @- [hlisten], Hinst @- [hlisten], himp)]) end
   | ARS_rule_await_instant_sigcaught _ _ = raise Assert_failure;
 
 (* 25. Await-remaining instant update when no signal on clock [hlisten] *)
@@ -180,7 +180,7 @@ fun ARS_rule_await_instant_sigabsent
      (G @ [NotTicks (hlisten, n)],
       n,
       frun,
-      @- (finst, [fsubst]) @ [Await (Hawait, Hremains, @- (Hinst, [hlisten]), himp)]) end
+      finst @- [fsubst] @ [Await (Hawait, Hremains, Hinst @- [hlisten], himp)]) end
   | ARS_rule_await_instant_sigabsent _ _ = raise Assert_failure;
 
 (* 26. Await-remaining instant update when no signal triggered on clock [hlisten] *)
@@ -191,7 +191,7 @@ fun ARS_rule_await_next_instant
      (G,
       n,
       frun @ [Await (Hawait, Hremains, Hremains, himp)],
-      @- (finst, [fsubst])) end
+      finst @- [fsubst]) end
   | ARS_rule_await_next_instant _ _ = raise Assert_failure;
 
 (* 27. Await-remaining instant fire when no remaining signals to wait for *)
@@ -204,154 +204,154 @@ fun ARS_rule_await_fire
      (G @ [Ticks (himp, n)],
       n,
       frun @ [Await (Hawait, Hawait, Hawait, himp)],
-      @- (finst, [fsubst])) end
+      finst @- [fsubst]) end
   | ARS_rule_await_fire _ _ = raise Assert_failure;
 
 (* 28. When-clock implication when premise master clock is false *)
 fun ARS_rule_whenclock_implies_1
   (G, n, frun, finst) (fsubst as WhenClock (cmaster, _, _)) =
-    (G @ [NotTicks (cmaster, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [NotTicks (cmaster, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whenclock_implies_1 _ _ = raise Assert_failure;
 
 (* 29. When-clock implication when premise sampling clock is false*)
 fun ARS_rule_whenclock_implies_2
   (G, n, frun, finst) (fsubst as WhenClock (_, csampl, _)) =
-    (G @ [NotTicks (csampl, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [NotTicks (csampl, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whenclock_implies_2 _ _ = raise Assert_failure;
 
 (* 30. When-clock implication when premise and conclusion clocks are true *)
 fun ARS_rule_whenclock_implies_3
   (G, n, frun, finst) (fsubst as WhenClock (cmaster, csampl, cslave)) =
-    (G @ [Ticks (cmaster, n), Ticks (csampl, n), Ticks (cslave, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [Ticks (cmaster, n), Ticks (csampl, n), Ticks (cslave, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whenclock_implies_3 _ _ = raise Assert_failure;
 
 (* 31. When-clock implication when premise master clock is false *)
 fun ARS_rule_whennotclock_implies_1
   (G, n, frun, finst) (fsubst as WhenNotClock (cmaster, _, _)) =
-    (G @ [NotTicks (cmaster, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [NotTicks (cmaster, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whennotclock_implies_1 _ _ = raise Assert_failure;
 
 (* 32. When-clock implication when premise clocks are true *)
 fun ARS_rule_whennotclock_implies_2
   (G, n, frun, finst) (fsubst as WhenNotClock (cmaster, csampl, _)) =
-    (G @ [Ticks (cmaster, n), Ticks (csampl, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [Ticks (cmaster, n), Ticks (csampl, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whennotclock_implies_2 _ _ = raise Assert_failure;
 
 (* 33. When-clock implication when premise and conclusion clocks are true *)
 fun ARS_rule_whennotclock_implies_3
   (G, n, frun, finst) (fsubst as WhenNotClock (cmaster, csampl, cslave)) =
-    (G @ [Ticks (cmaster, n), NotTicks (csampl, n), Ticks (cslave, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [Ticks (cmaster, n), NotTicks (csampl, n), Ticks (cslave, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whennotclock_implies_3 _ _ = raise Assert_failure;
 
 (** SUSTAINED IMMEDIATELY *)
 (* 34. Sustained-from-immediately elimination when false start premise *)
 fun ARS_rule_sustained_immediately_elim_1
   (G, n, frun, finst) (fsubst as SustainedFromImmediately (_, cstart, _, _)) =
-    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_sustained_immediately_elim_1 _ _ = raise Assert_failure;
 
 (* 35. Sustained-from-immediately elimination when true start premise *)
 fun ARS_rule_sustained_immediately_elim_2
   (G, n, frun, finst) (fsubst as SustainedFromImmediately (c1, cstart, cend, c2)) =
-    (G @ [Ticks (cstart, n)], n, frun, (@- (finst, [fsubst])) @ [UntilRestartImmediately (c1, c2, cend, cstart)])
+    (G @ [Ticks (cstart, n)], n, frun, (finst @- [fsubst]) @ [UntilRestartImmediately (c1, c2, cend, cstart)])
   | ARS_rule_sustained_immediately_elim_2 _ _ = raise Assert_failure;
 
 (* 36. Until-restart-immediately elimination when false premise *)
 fun ARS_rule_untilrestart_immediately_elim_1
   (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, _, cend, _)) =
-    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_immediately_elim_1 _ _ = raise Assert_failure;
 
 (* 37. Until-restart-immediately elimination when true premise *)
 fun ARS_rule_untilrestart_immediately_elim_2
   (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, c2, cend, _)) =
-    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_immediately_elim_2 _ _ = raise Assert_failure;
 
 (* 38. Until-restart-immediately elimination restarting when false premise *)
 fun ARS_rule_untilrestart_immediately_restarts_elim_1
   (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, c2, cend, cstart)) =
-    (G @ [Ticks (cend, n), NotTicks (c1, n)], n, frun @ [SustainedFromImmediately (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+    (G @ [Ticks (cend, n), NotTicks (c1, n)], n, frun @ [SustainedFromImmediately (c1, cstart, cend, c2)], finst @- [fsubst])
   | ARS_rule_untilrestart_immediately_restarts_elim_1 _ _ = raise Assert_failure;
 
 (* 39. Until-restart-immediately elimination restarting when true premise *)
 fun ARS_rule_untilrestart_immediately_restarts_elim_2
   (G, n, frun, finst) (fsubst as UntilRestartImmediately (c1, c2, cend, cstart)) =
-    (G @ [Ticks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [SustainedFromImmediately (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+    (G @ [Ticks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [SustainedFromImmediately (c1, cstart, cend, c2)], finst @- [fsubst])
   | ARS_rule_untilrestart_immediately_restarts_elim_2 _ _ = raise Assert_failure;
 
 (** SUSTAINED WEAKLY *)
 (* 40. Sustained-from-weakly elimination when false start premise *)
 fun ARS_rule_sustained_weakly_elim_1
   (G, n, frun, finst) (fsubst as SustainedFromWeakly (_, cstart, _, _)) =
-    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_sustained_weakly_elim_1 _ _ = raise Assert_failure;
 
 (* 41. Sustained-from-weakly elimination when true start premise *)
 fun ARS_rule_sustained_weakly_elim_2
   (G, n, frun, finst) (fsubst as SustainedFromWeakly (c1, cstart, cend, c2)) =
-    (G @ [Ticks (cstart, n)], n, frun @ [UntilRestartWeakly (c1, c2, cend, cstart)], @- (finst, [fsubst]))
+    (G @ [Ticks (cstart, n)], n, frun @ [UntilRestartWeakly (c1, c2, cend, cstart)], finst @- [fsubst])
   | ARS_rule_sustained_weakly_elim_2 _ _ = raise Assert_failure;
 
 (* 42. Until-restart-weakly elimination when false premise *)
 fun ARS_rule_untilrestart_weakly_elim_1
   (G, n, frun, finst) (fsubst as UntilRestartWeakly (c1, _, cend, _)) =
-    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_weakly_elim_1 _ _ = raise Assert_failure;
 
 (* 43. Until-restart-weakly elimination when true premise *)
 fun ARS_rule_untilrestart_weakly_elim_2
   (G, n, frun, finst) (fsubst as UntilRestartWeakly (c1, c2, cend, _)) =
-    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_weakly_elim_2 _ _ = raise Assert_failure;
 
 (* 44. Until-restart-weakly elimination restarting when false premise *)
 fun ARS_rule_untilrestart_weakly_restarts_elim
   (G, n, frun, finst) (fsubst as UntilRestartWeakly (c1, c2, cend, cstart)) =
-    (G @ [Ticks (cend, n)], n, frun @ [SustainedFromWeakly (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+    (G @ [Ticks (cend, n)], n, frun @ [SustainedFromWeakly (c1, cstart, cend, c2)], finst @- [fsubst])
   | ARS_rule_untilrestart_weakly_restarts_elim _ _ = raise Assert_failure;
 
 (** SUSTAINED IMMEDIATELY WEAKLY *)
 (* 45. Sustained-from-immediately-weakly elimination when false start premise *)
 fun ARS_rule_sustained_immediately_weakly_elim_1
   (G, n, frun, finst) (fsubst as SustainedFromImmediatelyWeakly (_, cstart, _, _)) =
-    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cstart, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_sustained_immediately_weakly_elim_1 _ _ = raise Assert_failure;
 
 (* 46. Sustained-from-immediately-weakly elimination when true start premise *)
 fun ARS_rule_sustained_immediately_weakly_elim_2
   (G, n, frun, finst) (fsubst as SustainedFromImmediatelyWeakly (c1, cstart, cend, c2)) =
-    (G @ [Ticks (cstart, n)], n, frun, (@- (finst, [fsubst])) @ [UntilRestartImmediatelyWeakly (c1, c2, cend, cstart)])
+    (G @ [Ticks (cstart, n)], n, frun, (finst @- [fsubst]) @ [UntilRestartImmediatelyWeakly (c1, c2, cend, cstart)])
   | ARS_rule_sustained_immediately_weakly_elim_2 _ _ = raise Assert_failure;
 
 (* 47. Until-restart-immediately-weakly elimination when false premise *)
 fun ARS_rule_untilrestart_immediately_weakly_elim_1
   (G, n, frun, finst) (fsubst as UntilRestartImmediatelyWeakly (c1, _, cend, _)) =
-    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), NotTicks (c1, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_immediately_weakly_elim_1 _ _ = raise Assert_failure;
 
 (* 48. Until-restart-immediately-weakly elimination when true premise *)
 fun ARS_rule_untilrestart_immediately_weakly_elim_2
   (G, n, frun, finst) (fsubst as UntilRestartImmediatelyWeakly (c1, c2, cend, _)) =
-    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], @- (finst, [fsubst]))
+    (G @ [NotTicks (cend, n), Ticks (c1, n), Ticks (c2, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_untilrestart_immediately_weakly_elim_2 _ _ = raise Assert_failure;
 
 (* 49. Until-restart-immediately-weakly elimination restarting when false premise *)
 fun ARS_rule_untilrestart_immediately_weakly_restarts_elim
   (G, n, frun, finst) (fsubst as UntilRestartImmediatelyWeakly (c1, c2, cend, cstart)) =
-    (G @ [Ticks (cend, n)], n, frun @ [SustainedFromImmediatelyWeakly (c1, cstart, cend, c2)], @- (finst, [fsubst]))
+    (G @ [Ticks (cend, n)], n, frun @ [SustainedFromImmediatelyWeakly (c1, cstart, cend, c2)], finst @- [fsubst])
   | ARS_rule_untilrestart_immediately_weakly_restarts_elim _ _ = raise Assert_failure;
 
 (* 50. Immediately delayed elimination when false premise *)
 fun ARS_rule_immediately_delayed_elim_1
   (G, n, frun, finst) (fsubst as ImmediatelyDelayedBy (c1, _, _, _)) =
-    (G @ [NotTicks (c1, n)], n, frun, @- (finst, [fsubst]))
+    (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
   | ARS_rule_immediately_delayed_elim_1 _ _ = raise Assert_failure;
 
 (* 51. Immediately delayed elimination when true premise *)
 fun ARS_rule_immediately_delayed_elim_2
   (G, n, frun, finst) (fsubst as ImmediatelyDelayedBy (c1, dp, c2, c3)) =
-    (G @ [Ticks (c1, n)], n, frun, (@- (finst, [fsubst])) @ [TimesImpliesOn (c2, dp, c3)])
+    (G @ [Ticks (c1, n)], n, frun, (finst @- [fsubst]) @ [TimesImpliesOn (c2, dp, c3)])
   | ARS_rule_immediately_delayed_elim_2 _ _ = raise Assert_failure;
 
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.

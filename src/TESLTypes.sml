@@ -1,9 +1,3 @@
-(* WARNING *)
-(* COMMENT THE FOLLOWING LINE IF YOU WISH TO USE Isabelle/jEdit IDE *)
-fun writeln s = print (s ^ "\n")
-fun string_of_int n = Int.toString n
-(* **************************************************************** *)
-
 (* To easily read the code, you can remove the following string but warnings will appear:
  | _ => raise UnexpectedMatch
 *)
@@ -14,24 +8,9 @@ type instant_index = int;
 
 exception UnsupportedParsedTerm
 
-(* Returns the sublist of [l1] without occurences of elements of [l2] *)
-fun op @- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => e1 <> e2) l2) l1;
-fun is_empty l = case l of [] => true | _ => false
-fun contains x l = List.exists (fn x' => x = x') l
-
 fun assert b =
   if b then b else raise Assert_failure
 
-(* Returns a list of unique elements *)
-fun uniq G =
-  let
-    fun aux (constr :: G') acc =
-          if List.exists (fn constr' => constr' = constr) acc
-          then aux G' acc
-          else aux G' (constr :: acc)
-      | aux [] acc             = acc
-  in List.rev (aux G [])
-  end
 
 datatype tag =
     Unit
@@ -119,6 +98,7 @@ datatype TESL_atomic =
   | DirRunStep
   | DirRun
   | DirSelect                      of int
+  | DirDrivingClock                of clock list
   | DirOutputVCD
   | DirPrint
   | DirExit
@@ -154,7 +134,7 @@ fun SporadicNowSubs (f : TESL_formula) : TESL_formula =
           NONE => aux spors' (Sporadic (clk, Int i) :: kept)
         | SOME (Sporadic (clk', Int i')) =>
           if i < i'
-          then aux spors' (Sporadic (clk, Int i) :: (@- (kept, [Sporadic (clk', Int i')])))
+          then aux spors' (Sporadic (clk, Int i) :: (kept @- [Sporadic (clk', Int i')]))
           else aux spors' kept
         | _ => raise UnexpectedMatch
         )
@@ -162,7 +142,7 @@ fun SporadicNowSubs (f : TESL_formula) : TESL_formula =
           NONE => aux spors' (Sporadic (clk, Rat x) :: kept)
         | SOME (Sporadic (clk', Rat x')) =>
           if </ (x, x')
-          then aux spors' (Sporadic (clk, Rat x) :: (@- (kept, [Sporadic (clk', Rat x')])))
+          then aux spors' (Sporadic (clk, Rat x) :: (kept @- [Sporadic (clk', Rat x')]))
           else aux spors' kept
         | _ => raise UnexpectedMatch
         )
@@ -244,6 +224,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | DirScenario _         => []
 	    | DirRun                => []
 	    | DirRunStep            => []
+	    | DirDrivingClock _     => []
 	    | DirSelect _           => []
 	    | DirPrint              => []
 	    | DirExit               => []
@@ -338,6 +319,7 @@ fun string_of_expr e = case e of
   | DirHeuristic _						    => "<parameter>"
   | DirDumpres						    => "<parameter>"
   | DirScenario _                      			    => "<parameter>"
+  | DirDrivingClock _				           => "<parameter>"
   | DirRun							    => "<directive>"
   | DirRunStep						    => "<directive>"
   | DirSelect _						    => "<directive>"
@@ -373,6 +355,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | Periodic (c, _, _)                        => [c]
   | TypeDeclPeriodic (_, c, _, _)             => [c]
   | DirScenario (_, _, tclks)                 => List.map (fn (clk, _) => clk) tclks
+  | DirDrivingClock clks                      => clks
   | _ => []
   ) f))
 

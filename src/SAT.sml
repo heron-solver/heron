@@ -100,10 +100,10 @@ fun schematic_elim (G: system) (evar: tag) : system =
     val eliminated = List.concat (List.map (fn
         Affine (x1, Int a, evar, Int b) => List.map (fn
           Affine (_, Int a', x3, Int b') =>
-            Affine (x1, Int (a * a'), x3, Int (a * b' + b)) | _ => raise UnexpectedMatch) (@- (left_occ, [Affine (x1, Int a, evar, Int b)]))
+            Affine (x1, Int (a * a'), x3, Int (a * b' + b)) | _ => raise UnexpectedMatch) (left_occ @- [Affine (x1, Int a, evar, Int b)])
       | Affine (x1, Rat a, evar, Rat b) => List.map (fn
           Affine (_, Rat a', x3, Rat b') =>
-            Affine (x1, Rat ( */ (a, a')), x3, Rat (+/ ( */ (a, b'), b))) | _ => raise UnexpectedMatch) (@- (left_occ, [Affine (x1, Rat a, evar, Rat b)]))
+            Affine (x1, Rat ( */ (a, a')), x3, Rat (+/ ( */ (a, b'), b))) | _ => raise UnexpectedMatch) (left_occ @- [Affine (x1, Rat a, evar, Rat b)])
       | _ => raise UnexpectedMatch) right_occ)
   in
     eliminated @ no_occ
@@ -117,7 +117,7 @@ fun schematic_elim_step (G: system) =
       List.filter (fn
         Affine (x1 as Schematic _, a, x2, b) => List.exists (fn
           Affine (_, _, x2', _) =>
-            x1 = x2' | _ => raise UnexpectedMatch) (@-(affines, [Affine(x1, a, x2, b)])) | _ => false) affines
+            x1 = x2' | _ => raise UnexpectedMatch) (affines @- [Affine(x1, a, x2, b)]) | _ => false) affines
     val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch) eliminable_constr
   in
     if is_empty (eliminable_vars)

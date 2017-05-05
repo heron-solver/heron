@@ -10,6 +10,7 @@ heron:
 release-archive: heron
 	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-$(shell uname -m)-$(shell uname | tr A-Z a-z).tar.gz \
 		heron \
+		examples/HandWatch* \
 		examples/basic \
 		examples/gallery
 

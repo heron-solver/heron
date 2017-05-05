@@ -81,6 +81,7 @@ ws = [\ \t];
 "@help"                      => (Tokens.DIR_HELP(!pos,!pos));
 "@tagref"			 => (raise UnsupportedParsedTerm);
 "@output"                    => (Tokens.DIR_OUTPUT(!pos,!pos));
+"@driving-clock"             => (Tokens.DIR_DRIVINGDECL(!pos,!pos));
 "vcd"				 => (Tokens.VCD(!pos,!pos));
 "svg"				 => (Tokens.SVG(!pos,!pos));
 "@select"                    => (Tokens.DIR_SELECT(!pos,!pos));

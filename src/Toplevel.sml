@@ -79,6 +79,7 @@ val dumpres                          = ref false
 val scenario: system ref = ref []
 
 val declared_clocks: clock list ref = ref []
+val declared_driving_clocks: clock list ref = ref []
 
 val snapshots: TESL_ARS_conf list ref = ref [([], 0, [], [])]
 val current_step: int ref = ref 1
@@ -88,9 +89,6 @@ val clock_types: (clock * tag_t) list ref = ref []
 fun quit () = case (!snapshots) of
     [] => OS.Process.exit OS.Process.failure
   | _  => OS.Process.exit OS.Process.success
-
-infix 1 <>>
-fun rl <>> x = rl := (!rl) @ [x]
 
 fun action (stmt: TESL_atomic) =
   (* On-the-fly clock identifiers declaration *)
@@ -102,22 +100,22 @@ fun action (stmt: TESL_atomic) =
   case stmt of
     DirMinstep n	     => minstep := n
   | DirMaxstep n	     => maxstep := n
-  | DirHeuristic _	     => heuristics := !heuristics @ [stmt]
+  | DirHeuristic _	     => heuristics <>> stmt
   | DirDumpres	     => dumpres := true
   | DirScenario (strictness, step_index, tclks) =>
-    let
-	 val n = (case step_index of NONE => !current_step
+    let val n = (case step_index of NONE => !current_step
 				      | SOME n => n)
-	 val _ = List.app (fn (c, otag) => (scenario <>> (Ticks (c, n)) ;
-						 case otag of SOME tag => scenario <>> (Timestamp (c, n, tag)) | NONE => ())) tclks
+	 val _ = List.app (fn (c, otag) =>
+				 (scenario <>> (Ticks (c, n)) ;
+				  case otag of SOME tag => scenario <>> (Timestamp (c, n, tag)) | NONE => ())) tclks
 	 val _ = if strictness
-		  then
-		      List.app (fn c => if List.exists (fn (x, _) => x = c) tclks
-					   then ()
-					   else scenario <>> NotTicks (c, n)) (!declared_clocks)
+		  then List.app (fn c => if List.exists (fn (x, _) => x = c) tclks
+					    then ()
+					    else scenario <>> NotTicks (c, n)) (!declared_clocks)
 		  else ()
     in ()
     end
+  | DirDrivingClock c     => declared_driving_clocks <>>> c
   | DirRun		     =>
       snapshots := exec
 			  (!snapshots)

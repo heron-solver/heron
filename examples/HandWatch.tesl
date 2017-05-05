@@ -1,0 +1,20 @@
+// HandWatch
+// Exhaustive policy
+
+// The following example depicts two clocks: `sec` and `min`
+// respectively denote time in different scales; `move` occurs whenever
+// the hand of a watch has moved.
+
+rational-clock sec
+rational-clock min sporadic 0.0
+unit-clock move
+tag relation sec = 60.0 * min
+min implies move
+min time delayed by 1.0 on min implies min
+
+@step
+@step
+@step
+@step
+
+@print
