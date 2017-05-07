@@ -9,6 +9,7 @@
    4. Conjunction
 *)
 
+
 (* Returns HAA-constrains for a given specific step *)
 fun haa_constrs_at_step (G: system) (step: int) =
   List.filter (fn

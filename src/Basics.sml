@@ -41,3 +41,41 @@ fun uniq l =
       | aux [] acc             = acc
   in List.rev (aux l [])
   end
+
+exception Assert_failure
+fun assert b =
+  if b then b else raise Assert_failure
+
+(* Returns the minimum of a list [l] of elements totally ordered by [leq] *)
+fun min_list (leq: 'a * 'a -> bool) (l: 'a list) : 'a option = case l of
+    []      => NONE
+  | [x]     => SOME x
+  | x :: l' => SOME (List.foldl (fn (e, current_min) => if leq (e, current_min)
+								then e
+								else current_min) x l')
+
+(* Returns the maximum of a list [l] of elements totally ordered by [leq] *)
+fun max_list (leq: 'a * 'a -> bool) (l: 'a list) : 'a option = case l of
+    []      => NONE
+  | [x]     => SOME x
+  | x :: l' => SOME (List.foldl (fn (e, current_max) => if leq (e, current_max)
+								then current_max
+								else e) x l')
+
+(* Given a seed [s], returns a random integer in [i, j] int interval *)
+fun random_int_range (i: int, j: int) (s: word): int = 
+  if j < i
+  then raise Assert_failure
+  else
+    if j = i then i
+    else
+      let 
+	 val m : Int32.int = 2147483647  (* 2^31 - 1 *)
+	 val R = (Int32.fromInt j) - (Int32.fromInt i)
+	 val cvt = Word.toIntX o Word.fromLargeInt o Int32.toLarge
+      in
+	 if R = m
+	 then Word.toIntX s
+	 else i + cvt (((Int32.fromLarge o Word.toLargeInt) s) mod (R+1))
+      end
+handle Overflow => random_int_range (i, j) (valOf (MLton.Random.useed ()));

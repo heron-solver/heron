@@ -4,7 +4,7 @@ fun writeFile filename content =
         val _ = TextIO.closeOut fd
     in () end
 
-fun VCD_toString (step_index: int) (clocks: clock list) (G: system, _, _, _) =
+fun VCD_toString (RELEASE_VERSION: string) (step_index: int) (clocks: clock list) (G: system, _, _, _) =
   let
       val date = "$date\n"
 		   ^ (Date.toString (Date.fromTimeUniv (Time.now()))) ^ "\n"

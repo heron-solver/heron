@@ -1,3 +1,57 @@
+fun print_help () = (
+print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
+print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
+print "\n";
+print "Copyright (c) 2017, Hai Nguyen Van\n";
+print "              Universit\195\169 Paris-Sud / CNRS\n";
+(*
+print "Please cite:";
+print "\n";
+*)
+print "\n";
+print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
+print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG]+\n"; 
+print "  [CLOCK] \u001B[1mperiodic\u001B[0m [TAG] (\u001B[1moffset\u001B[0m [TAG])\n"; 
+print "  [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  \u001B[1mtag relation\u001B[0m [CLOCK] = [TAG] * [CLOCK] + [TAG]\n"; 
+print "  [CLOCK] \u001B[1mtime delayed by\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mdelayed by\u001B[0m [INT] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mfiltered by\u001B[0m [INT], [INT] ([INT], [INT])* \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mevery\u001B[0m [INT] \u001B[1mimplies\u001B[0m [CLOCK]\n";
+print "  [CLOCK] \u001B[1msustained\u001B[0m (\u001B[1mimmediately\u001B[0m) \u001B[1mfrom\u001B[0m [CLOCK] \u001B[1mto\u001B[0m [CLOCK] (\u001B[1mweakly\u001B[0m) \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mnext to\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  \u001B[1mawait\u001B[0m [CLOCK]+ \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mwhen\u001B[0m (\u001B[1mnot\u001B[0m) [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "\n"; 
+print "  For more information about the TESL language:\n"; 
+print "  http://wwwdi.supelec.fr/software/TESL\n"; 
+print "\n"; 
+print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
+print "  @minstep [INT]                    define the number of minimum run steps\n"; 
+print "  @maxstep [INT]                    define the number of maximum run steps\n"; 
+print "  @policy [NAME]                    load a simulation policy among:\n";
+print "                                      \u001B[1masap\u001B[0m\n"; 
+print "                                      \u001B[1mminimize_ticks\u001B[0m\n";
+print "                                      \u001B[1mspeedup_event_occ\u001B[0m\n";
+print "                                      \u001B[1mminimize_floating_ticks\u001B[0m\n";
+print "                                      \u001B[1mminimize_unsolved_affine\u001B[0m\n";
+print "                                      \u001B[1mno_empty_instants\u001B[0m\n";
+print "                                      \u001B[1mmaximize_reactiveness\u001B[0m\n";
+print "  @dumpres                          option to display the results after @run\n"; 
+print "  @scenario (strict) [INT] [CLOCK]+ refine snapshots with instantaneous scenario\n"; 
+print "  @scenario (strict) next [CLOCK]+  refine snapshots of next simulation step\n"; 
+print "  @select [INT]                     select by keeping only one simulation state\n"; 
+print "  @driving-clock [CLOCK]+           declare driving clocks\n"; 
+print "\n"; 
+print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
+print "  @exit                          exit Heron\n"; 
+print "  @run                           run the specification until model found\n"; 
+print "  @step                          run the specification for one step\n"; 
+print "  @event-concretize              concretize ticks/tags of driving clocks\n"; 
+print "  @print                         display the current snapshots\n"; 
+print "  @output vcd                    export to VCD file\n"; 
+print "  @help                          display the list of commands\n")
+
 fun superscript_of_char (c : char) =
   case c of
       #"a" => "\225\181\131"
@@ -99,19 +153,19 @@ fun print_system (step_index: int) (clocks: clock list) (G : system) =
     fun string_of_constrs_at_clk_instindex clk n g =
       let
         val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Unit => true | Int _ => true | Rat _ => true | _ => false) | _ => false) g
-      in
-      if contains (Ticks (clk, n)) g andalso List.length timestamps > 0
-      then TICK_SYM ^ " " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
-      else
-        if contains (Ticks (clk, n)) g
-        then TICK_SYM
-        else
-          if contains (NotTicks (clk, n)) g
-          then FORBIDDEN_SYM
-          else
-            if List.length timestamps > 0
-            then "  " ^ (string_of_tag (case List.nth (timestamps, 0) of Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch))
-            else ""
+	 val tick_string =
+	   if contains (Ticks (clk, n)) g
+	   then TICK_SYM
+	   else
+	     if contains (NotTicks (clk, n)) g
+	     then FORBIDDEN_SYM
+	     else ""
+	 val tag_string =
+	     case List.find (fn Timestamp (_, _, _) => true | _ => false) timestamps of
+		  NONE                         => " "
+		| SOME (Timestamp (_, _, tag)) => string_of_tag tag
+		| _ => raise UnexpectedMatch
+      in tick_string ^ " " ^ tag_string
     end
     fun print_clocks () =
       writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
@@ -168,3 +222,42 @@ fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = cas
      print_affine_constrs G ;
      print_floating_ticks declared_clocks phi ;
      writeln "## End") end) () cfs
+
+fun string_of_expr e = case e of
+    TypeDecl (c, ty)                                        => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c)
+  | Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
+  | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
+  | TypeDeclSporadics (ty, c, tags)                         => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
+  | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
+  | TagRelation (c1, a, c2, b)                              => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
+  | TagRelationRefl (c1, c2)                                => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk c2)
+  | TimeDelayedBy (master, t, measuring, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
+  | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)
+  | ImmediatelyDelayedBy (master, n, counting, slave)       => (string_of_clk master) ^ " immediately delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)
+  | FilteredBy (master, s, k, rs, rk, slave)                => (string_of_clk master) ^ " filtered by " ^ (string_of_int s) ^ ", " ^ (string_of_int k) ^ " (" ^ (string_of_int rs) ^ ", " ^ (string_of_int rk) ^ ")* implies " ^ (string_of_clk slave)
+  | SustainedFrom (master, beginclk, endclk, slave)            => (string_of_clk master) ^ " sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
+  | SustainedFromImmediately (master, beginclk, endclk, slave) => (string_of_clk master) ^ " sustained immediately from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
+  | SustainedFromWeakly (master, beginclk, endclk, slave)      => (string_of_clk master) ^ " sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " weakly implies " ^ (string_of_clk slave)
+  | SustainedFromImmediatelyWeakly (master, beginclk, endclk, slave) => (string_of_clk master) ^ " sustained immediately from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " weakly implies " ^ (string_of_clk slave)
+  | Await (masters, _, _, slave)                            => "await " ^ (List.foldr (fn (clk, s) => (string_of_clk clk) ^ " " ^ s) "" masters) ^ "implies " ^ (string_of_clk slave)
+  | WhenClock (m1, m2, slave)                               => (string_of_clk m1) ^ " when " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
+  | WhenNotClock (m1, m2, slave)                            => (string_of_clk m1) ^ " when not " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
+  | EveryImplies (master, n_every, n_start, slave)          => (string_of_clk master) ^ " every " ^ (string_of_int n_every) ^ " starting at " ^ (string_of_int n_start) ^  " implies " ^ (string_of_clk slave)
+  | NextTo (c, next_c, slave)                               => (string_of_clk c) ^ " next to " ^ (string_of_clk next_c) ^ " implies " ^ (string_of_clk slave)
+  | Periodic (c, per, offset)                               => (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
+  | TypeDeclPeriodic (ty, c, per, offset)                   => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
+  | DirMinstep _	                                       => "<parameter>"
+  | DirMaxstep _						    => "<parameter>"
+  | DirHeuristic _						    => "<parameter>"
+  | DirDumpres						    => "<parameter>"
+  | DirScenario _                      			    => "<parameter>"
+  | DirDrivingClock _				           => "<parameter>"
+  | DirRun							    => "<directive>"
+  | DirRunStep						    => "<directive>"
+  | DirSelect _						    => "<directive>"
+  | DirEventConcretize _					    => "<directive>"
+  | DirOutputVCD						    => "<directive>"
+  | DirExit							    => "<directive>"
+  | DirPrint							    => "<directive>"
+  | DirHelp							    => "<directive>"
+  | _                                                       => "<unknown>"

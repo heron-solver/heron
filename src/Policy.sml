@@ -1,8 +1,8 @@
-(** Heuristics are supposed to restrict the universe by choosing configurations that are relevant for simulation.
+(** Policies are supposed to restrict the universe by choosing configurations that are relevant for simulation.
     They allow to focus on execution of models, and become handy to test your specifications.
 *)
 
-(* Heuristic 1. In a universe, the heuristic keeps snapshots with the minimal number of floating ticks.
+(* Policy 1. In a universe, the heuristic keeps snapshots with the minimal number of floating ticks.
    We need to force the occurence of events as soon as possible. *)
 fun heuristic_minimize_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
@@ -15,7 +15,7 @@ fun heuristic_minimize_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf
 	  cfs
   end
 
-(* Heuristic 2. Rejects runs containing empty instants. Something always have to happen at any step. *)
+(* Policy 2. Rejects runs containing empty instants. Something always have to happen at any step. *)
 fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let fun has_at_least_one_event (G: system) (step : int) =
     List.exists (fn Ticks _ => true | _ => false) (haa_constrs_at_step G step)
@@ -25,7 +25,7 @@ fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list 
     ) cfs
   end
 
-(* Heuristic 3. Maximize reactiveness of clocks *)
+(* Policy 3. Maximize reactiveness of clocks *)
 fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
@@ -38,7 +38,7 @@ fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf l
 	  cfs
   end
 
-(* Heuristic 4. Minimizes the number of affine constraints containing variables. *)
+(* Policy 4. Minimizes the number of affine constraints containing variables. *)
 fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
@@ -58,7 +58,7 @@ fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_con
 	  cfs
   end
 
-(* Heuristic 5. Minimizes the number of affine constraints containing variables. *)
+(* Policy 5. Minimizes the number of affine constraints containing variables. *)
 fun heuristic_minimize_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
@@ -71,7 +71,7 @@ fun heuristic_minimize_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
 	  cfs
   end
 
-(* Heuristic 5. Minimizes the number of affine constraints containing variables. *)
+(* Policy 5. Minimizes the number of affine constraints containing variables. *)
 fun heuristic_minimize_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
@@ -90,7 +90,7 @@ fun intlist_lexleq (l1, l2) = case (l1, l2) of
   | (x1 :: l1', x2 :: l2') => x1 <= x2 andalso (intlist_lexleq (l1', l2'))
 *)
 
-(* Heuristic 6. Maximize time progress. *)
+(* Policy 6. Maximize time progress. *)
 (*
 fun heuristic_maximize_time_progress (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
@@ -123,7 +123,7 @@ fun heuristic_maximize_time_progress (cfs : TESL_ARS_conf list) : TESL_ARS_conf 
   end
 *)
 
-(* Heuristic 6. Maximize time progress by triggering events ASAP. *)
+(* Policy 6. Maximize time progress by triggering events ASAP. *)
 fun heuristic_speedup_event_occ (cfs : TESL_ARS_conf list) =
   let
     val clock_decl = List.foldl (fn ((G, _, frun, _), l) => uniq (l @ (clocks_of_system G) @ (clocks_of_tesl_formula frun))) [] cfs
@@ -184,3 +184,74 @@ fun heuristic_combine
 		 (fn x => x)
 		 spec
 
+(* Event concretization is necessary for I/O test generation *)
+(* BETA: Using bounded random *)
+fun event_concretize
+  declared_driving_clocks
+  clock_types
+  index
+  snapshots =
+  let
+    fun concretize_cf (G, current, phi, _) dclk i = let
+      (* Concretizing ticking predicate *)
+      val G =
+	 if List.exists (fn Ticks (clk, i') => clk = dclk andalso i' = i | _ => false) G
+	 then G
+	 else NotTicks (dclk, i) :: G (* OR SHOULD IT BE RANDOM TOO? *)
+      (* Concretizing tag variable *)
+      val seed = valOf (MLton.Random.useed ())
+      val G = if List.exists (fn Timestamp (clk, i', _) => clk = dclk andalso i' = i | _ => false) G
+		then G
+		else case clk_type_lookup clock_types dclk of
+		    Unit_t => Timestamp (dclk, i, Unit) :: G
+		  | Int_t => let 
+		    val inf_bound = max_list (::<=)
+						 (List.map
+						      (fn Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch)
+						      (List.filter (fn Timestamp (clk, i', _) => clk = dclk andalso i' < i | _ => false) G))
+		    val sup_bound = min_list (::<=)
+						 (List.map
+						      (fn Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch)
+						      (List.filter (fn Timestamp (clk, i', _) => clk = dclk andalso i' > i | _ => false) G))
+		    val delta = 10
+		    (* HERE COMES THE MAGIC *)
+		    val chosen_tag = case (inf_bound, sup_bound) of
+		        (NONE, NONE)                     => Int (random_int_range (0, delta) seed)
+		      | (SOME (Int inf), NONE)           => Int (random_int_range (inf, inf + delta) seed)
+		      | (NONE, SOME (Int sup))           => Int (random_int_range (sup - delta, sup) seed)
+		      | (SOME (Int inf), SOME (Int sup)) => Int (random_int_range (inf, sup) seed)
+		      | _                                => raise UnexpectedMatch
+		  in Timestamp (dclk, i, chosen_tag) :: G
+		  end
+		  | Rat_t => let 
+		    val inf_bound = max_list (::<=)
+						 (List.map
+						      (fn Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch)
+						      (List.filter (fn Timestamp (clk, i', _) => clk = dclk andalso i' < i | _ => false) G))
+		    val sup_bound = min_list (::<=)
+						 (List.map
+						      (fn Timestamp (_, _, tag) => tag | _ => raise UnexpectedMatch)
+						      (List.filter (fn Timestamp (clk, i', _) => clk = dclk andalso i' > i | _ => false) G))
+		    val rdelta = */ (random_rat seed, rat_make (10, 1)) (* Rational number between [0.0, 10.0] *)
+		    val chosen_tag = case (inf_bound, sup_bound) of
+		        (NONE, NONE)                     => Rat (rdelta)
+		      | (SOME (Rat inf), NONE)	      => Rat (+/ (inf, rdelta))
+		      | (NONE, SOME (Rat sup))	      => Rat (-/ (sup, rdelta))
+		      | (SOME (Rat inf), SOME (Rat sup)) => Rat (+/ (inf, */ (random_rat seed, -/(sup,inf))))
+		      | _                                => raise UnexpectedMatch
+		  in Timestamp (dclk, i, chosen_tag) :: G
+		  end
+    in ((* POTENTIAL BUG *) reduce G, current, phi, [])
+    end
+  in case index of
+	  (* Concretize all snapshots*)
+	  NONE   =>
+	  List.map (fn cf => List.foldl (fn (dclk, (G, current_step, phi, _)) =>
+						 List.foldl (fn (k, cf) => concretize_cf cf dclk k) (G, current_step, phi, []) (range current_step)
+					    ) cf declared_driving_clocks) snapshots
+	  (* Concretize [index]-th snapshot *)
+	| SOME _ =>
+	  List.map (fn cf => List.foldl (fn (dclk, cf) =>
+						 concretize_cf cf dclk (valOf index)
+					    ) cf declared_driving_clocks) snapshots
+  end

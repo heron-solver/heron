@@ -1,1 +1,0 @@
-val RELEASE_VERSION = "0.39.1-alpha+20170506"

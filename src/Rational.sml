@@ -137,3 +137,30 @@ fun rat_of_digits (whole: string, frac: string): rat option =
 
 val rat_of_string =
   rat_of_digits o digits_of_string
+
+(* Given a seed [s], returns a random rational in [i, j] rat interval *)
+(*
+fun random_int_range (i: int, j: int) (s: word): int = 
+  if j < i
+  then raise Assert_failure
+  else
+    if j = i then i
+    else
+      let 
+	 val m : Int32.int = 2147483647  (* 2^31 - 1 *)
+	 val R = (Int32.fromInt j) - (Int32.fromInt i)
+	 val cvt = Word.toIntX o Word.fromLargeInt o Int32.toLarge
+      in
+	 if R = m
+	 then Word.toIntX s
+	 else i + cvt (((Int32.fromLarge o Word.toLargeInt) s) mod (R+1))
+      end
+handle Overflow => random_int_range (i, j) (valOf (MLton.Random.useed ()));
+*)
+
+(* Random rational number between (0.0,1.0) *)
+fun random_rat seed =
+   let 
+     val m : Int32.int = 2147483647  (* 2^31 - 1 *)
+   in rat_normal (Word.toLargeInt seed, Int32.toLarge m)
+   end

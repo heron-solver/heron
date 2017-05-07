@@ -1,16 +1,12 @@
-(* To easily read the code, you can remove the following string but warnings will appear:
- | _ => raise UnexpectedMatch
+(* To easily read the code, you can remove the following string but
+   warnings will appear:
+   | _ => raise UnexpectedMatch
 *)
 exception UnexpectedMatch
-exception Assert_failure;
-datatype clock = Clk of string;
-type instant_index = int;
+datatype clock = Clk of string
+type instant_index = int
 
 exception UnsupportedParsedTerm
-
-fun assert b =
-  if b then b else raise Assert_failure
-
 
 datatype tag =
     Unit
@@ -19,11 +15,27 @@ datatype tag =
   | Schematic of clock * instant_index
   | Add of tag * tag
 
+datatype constr =
+    Timestamp of clock * instant_index * tag
+  | Ticks     of clock * instant_index
+  | NotTicks  of clock * instant_index
+  | Affine    of tag * tag * tag * tag
+
+type system = constr list
+
+fun clocks_of_system (G: system) =
+  uniq (List.concat (List.map (fn
+    Timestamp (c, _, _) => [c]
+  | Ticks (c, _)        => [c]
+  | NotTicks (c, _)     => [c]
+  | _ => []
+  ) G))
+
 fun is_tag_constant (t: tag) = case t of
     Unit  => true
   | Int _ => true
   | Rat _ => true
-  | _ => true
+  | _ => false
 
 datatype tag_t =
     Unit_t
@@ -50,14 +62,6 @@ fun type_of_tags (clk: clock) (tlist: tag list) =
     | t :: tlist' => if (type_of_tag t) = type_of_tags clk tlist'
 			then type_of_tag t
 			else raise TagTypeInconsistency (clk, type_of_tag t, type_of_tags clk tlist')
-
-datatype constr =
-    Timestamp of clock * instant_index * tag
-  | Ticks     of clock * instant_index
-  | NotTicks  of clock * instant_index
-  | Affine    of tag * tag * tag * tag
-
-type system = constr list
 
 datatype TESL_atomic =
   True
@@ -99,6 +103,7 @@ datatype TESL_atomic =
   | DirRun
   | DirSelect                      of int
   | DirDrivingClock                of clock list
+  | DirEventConcretize             of int option
   | DirOutputVCD
   | DirPrint
   | DirExit
@@ -173,6 +178,7 @@ fun SelfModifyingSubs f = List.filter (fn f' => case f' of
   | Await _                           => true
   | _                                 => false) f
 
+(* Type-checker *)
 fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref) : unit =
   clock_types :=
   uniq ((case stmt of
@@ -201,7 +207,8 @@ fun clk_type_lookup clock_types (clk: clock): tag_t =
 
 exception UnsupportedTESLOperator
 exception UnitTagRelationFault
-(* Rephrase TESL formulae with syntactic sugar *)
+
+(* Eliminate TESL syntactic sugar *)
 fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
   List.concat (List.map (fn
 	      Sporadics (master, tags)             => (List.map (fn t => Sporadic (master, t)) tags)
@@ -225,6 +232,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | DirRun                => []
 	    | DirRunStep            => []
 	    | DirDrivingClock _     => []
+	    | DirEventConcretize _  => []
 	    | DirSelect _           => []
 	    | DirPrint              => []
 	    | DirExit               => []
@@ -247,7 +255,7 @@ fun op ::<= (tag, tag') = case (tag, tag') of
   | (Rat x1, Rat x2) => <=/ (x1, x2)
   | _                => raise Assert_failure
 
-(* Decides if two lists contain the same elements exactly *)
+(* Decides if two lists are set-interpreted equivalent *)
 fun op @== (l1, l2) =
            List.all (fn e1 => List.exists (fn e2 => e1 = e2) l2) l1
   andalso List.all (fn e2 => List.exists (fn e1 => e1 = e2) l1) l2
@@ -291,44 +299,6 @@ fun string_of_tag_type ty = case ty of
   | Int_t =>  "int"
   | Rat_t =>  "rational"
 
-fun string_of_expr e = case e of
-    TypeDecl (c, ty)                                        => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c)
-  | Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
-  | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
-  | TypeDeclSporadics (ty, c, tags)                         => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
-  | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
-  | TagRelation (c1, a, c2, b)                              => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
-  | TagRelationRefl (c1, c2)                                => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk c2)
-  | TimeDelayedBy (master, t, measuring, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
-  | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)
-  | ImmediatelyDelayedBy (master, n, counting, slave)       => (string_of_clk master) ^ " immediately delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)
-  | FilteredBy (master, s, k, rs, rk, slave)                => (string_of_clk master) ^ " filtered by " ^ (string_of_int s) ^ ", " ^ (string_of_int k) ^ " (" ^ (string_of_int rs) ^ ", " ^ (string_of_int rk) ^ ")* implies " ^ (string_of_clk slave)
-  | SustainedFrom (master, beginclk, endclk, slave)            => (string_of_clk master) ^ " sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
-  | SustainedFromImmediately (master, beginclk, endclk, slave) => (string_of_clk master) ^ " sustained immediately from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " implies " ^ (string_of_clk slave)
-  | SustainedFromWeakly (master, beginclk, endclk, slave)      => (string_of_clk master) ^ " sustained from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " weakly implies " ^ (string_of_clk slave)
-  | SustainedFromImmediatelyWeakly (master, beginclk, endclk, slave) => (string_of_clk master) ^ " sustained immediately from " ^ (string_of_clk beginclk) ^ " to " ^ (string_of_clk endclk) ^ " weakly implies " ^ (string_of_clk slave)
-  | Await (masters, _, _, slave)                            => "await " ^ (List.foldr (fn (clk, s) => (string_of_clk clk) ^ " " ^ s) "" masters) ^ "implies " ^ (string_of_clk slave)
-  | WhenClock (m1, m2, slave)                               => (string_of_clk m1) ^ " when " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
-  | WhenNotClock (m1, m2, slave)                            => (string_of_clk m1) ^ " when not " ^ (string_of_clk m2) ^ " implies " ^ (string_of_clk slave)
-  | EveryImplies (master, n_every, n_start, slave)          => (string_of_clk master) ^ " every " ^ (string_of_int n_every) ^ " starting at " ^ (string_of_int n_start) ^  " implies " ^ (string_of_clk slave)
-  | NextTo (c, next_c, slave)                               => (string_of_clk c) ^ " next to " ^ (string_of_clk next_c) ^ " implies " ^ (string_of_clk slave)
-  | Periodic (c, per, offset)                               => (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
-  | TypeDeclPeriodic (ty, c, per, offset)                   => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
-  | DirMinstep _	                                       => "<parameter>"
-  | DirMaxstep _						    => "<parameter>"
-  | DirHeuristic _						    => "<parameter>"
-  | DirDumpres						    => "<parameter>"
-  | DirScenario _                      			    => "<parameter>"
-  | DirDrivingClock _				           => "<parameter>"
-  | DirRun							    => "<directive>"
-  | DirRunStep						    => "<directive>"
-  | DirSelect _						    => "<directive>"
-  | DirOutputVCD						    => "<directive>"
-  | DirExit							    => "<directive>"
-  | DirPrint							    => "<directive>"
-  | DirHelp							    => "<directive>"
-  | _                                                       => "<unknown>"
-
 fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   uniq (List.concat (List.map (fn
     TypeDecl (c, _)                           => [c]
@@ -357,16 +327,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | DirScenario (_, _, tclks)                 => List.map (fn (clk, _) => clk) tclks
   | DirDrivingClock clks                      => clks
   | _ => []
-  ) f))
-
-fun clocks_of_system (G: system) =
-  uniq (List.concat (List.map (fn
-    Timestamp (c, _, _) => [c]
-  | Ticks (c, _)        => [c]
-  | NotTicks (c, _)     => [c]
-  | _ => []
-  ) G))
-  
+  ) f))  
 
 fun has_no_floating_ticks (f : TESL_formula) =
   (* Stop condition 1. No pending sporadics *)

@@ -1,3 +1,6 @@
+(* Update this value for every code changes *)
+val RELEASE_VERSION = "0.40.0-alpha+20170507"
+
 open OS.Process
 
 (* Structures used for lexing/parsing *)
@@ -18,58 +21,6 @@ fun invoke lexstream =
 		    "Error, line " ^ (Int.toString i) ^ ", " ^ s ^ "\n")
      in CalcParser.parse(0,lexstream,print_error,())
     end
-
-fun print_help () = (
-print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
-print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
-print "\n";
-print "Copyright (c) 2017, Hai Nguyen Van\n";
-print "              Universit\195\169 Paris-Sud / CNRS\n";
-(*
-print "Please cite:";
-print "\n";
-*)
-print "\n";
-print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
-print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG]+\n"; 
-print "  [CLOCK] \u001B[1mperiodic\u001B[0m [TAG] (\u001B[1moffset\u001B[0m [TAG])\n"; 
-print "  [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "  \u001B[1mtag relation\u001B[0m [CLOCK] = [TAG] * [CLOCK] + [TAG]\n"; 
-print "  [CLOCK] \u001B[1mtime delayed by\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "  [CLOCK] \u001B[1mdelayed by\u001B[0m [INT] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "  [CLOCK] \u001B[1mfiltered by\u001B[0m [INT], [INT] ([INT], [INT])* \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "  [CLOCK] \u001B[1mevery\u001B[0m [INT] \u001B[1mimplies\u001B[0m [CLOCK]\n";
-print "  [CLOCK] \u001B[1msustained\u001B[0m (\u001B[1mimmediately\u001B[0m) \u001B[1mfrom\u001B[0m [CLOCK] \u001B[1mto\u001B[0m [CLOCK] (\u001B[1mweakly\u001B[0m) \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "  [CLOCK] \u001B[1mnext to\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "  \u001B[1mawait\u001B[0m [CLOCK]+ \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "  [CLOCK] \u001B[1mwhen\u001B[0m (\u001B[1mnot\u001B[0m) [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
-print "\n"; 
-print "  For more information about the TESL language:\n"; 
-print "  http://wwwdi.supelec.fr/software/TESL\n"; 
-print "\n"; 
-print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
-print "  @minstep [INT]                    define the number of minimum run steps\n"; 
-print "  @maxstep [INT]                    define the number of maximum run steps\n"; 
-print "  @policy [NAME]                    load a simulation policy among:\n";
-print "                                      \u001B[1masap\u001B[0m\n"; 
-print "                                      \u001B[1mminimize_ticks\u001B[0m\n";
-print "                                      \u001B[1mspeedup_event_occ\u001B[0m\n";
-print "                                      \u001B[1mminimize_floating_ticks\u001B[0m\n";
-print "                                      \u001B[1mminimize_unsolved_affine\u001B[0m\n";
-print "                                      \u001B[1mno_empty_instants\u001B[0m\n";
-print "                                      \u001B[1mmaximize_reactiveness\u001B[0m\n";
-print "  @dumpres                          option to display the results after @run\n"; 
-print "  @scenario (strict) [INT] [CLOCK]+ refine snapshots with instantaneous scenario\n"; 
-print "  @scenario (strict) next [CLOCK]+  refine snapshots of next simulation step\n"; 
-print "  @select [INT]                     select by keeping only one simulation state\n"; 
-print "\n"; 
-print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
-print "  @exit                          exit Heron\n"; 
-print "  @run                           run the specification until model found\n"; 
-print "  @step                          run the specification for one step\n"; 
-print "  @print                         display the current snapshots\n"; 
-print "  @output vcd                    export to VCD file\n"; 
-print "  @help                          display the list of commands\n")
 
 val maxstep                          = ref ~1
 val minstep                          = ref ~1
@@ -116,6 +67,7 @@ fun action (stmt: TESL_atomic) =
     in ()
     end
   | DirDrivingClock c     => declared_driving_clocks <>>> c
+  | DirEventConcretize index => snapshots := event_concretize (!declared_driving_clocks) (!clock_types) index (!snapshots)
   | DirRun		     =>
       snapshots := exec
 			  (!snapshots)
@@ -134,7 +86,7 @@ fun action (stmt: TESL_atomic) =
 	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)
       | [s] => 
 	 (print ("## Writing vcd output to " ^ (OS.FileSys.getDir ()) ^ "/output.vcd\n");
-	  writeFile "output.vcd" (VCD_toString (!current_step - 1) (!declared_clocks) s))
+	  writeFile "output.vcd" (VCD_toString RELEASE_VERSION (!current_step - 1) (!declared_clocks) s))
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
   | DirSelect n           =>
     (print ("## Selecting " ^ (Int.toString n) ^ "th simulation state\n");
