@@ -1,5 +1,5 @@
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.40.0-alpha+20170507"
+val RELEASE_VERSION = "0.41.0-alpha+20170507"
 
 open OS.Process
 
@@ -22,6 +22,7 @@ fun invoke lexstream =
      in CalcParser.parse(0,lexstream,print_error,())
     end
 
+(* Solver context variables *)
 val maxstep                          = ref ~1
 val minstep                          = ref ~1
 val heuristics: TESL_atomic list ref = ref []
@@ -134,9 +135,43 @@ fun toplevel () =
      in loop lexer
   end
 
+(* Reading from file *)
+fun run_from_file s = 
+  let
+    val dev = TextIO.openIn s
+    val lexer = CalcParser.makeLexer (fn i => TextIO.inputN (dev, i))
+    val dummyEOF = CalcLrVals.Tokens.EOF(0,0)
+    val dummySEMI = CalcLrVals.Tokens.SEMI(0,0)
+    fun loop lexer =
+    let
+	 val (result,lexer) = invoke lexer
+	 val (nextToken,lexer) = CalcParser.Stream.get lexer
+	 val _ = case result
+		   of SOME stmt =>
+		      let val _ = action stmt in
+			TextIO.output(TextIO.stdOut, "val it = " ^ (string_of_expr stmt) ^ "\n") end
+		     | NONE => ()
+	in if CalcParser.sameToken(nextToken,dummyEOF) then quit()
+	  else loop lexer
+      end
+     in loop lexer
+	 before TextIO.closeIn dev
+  end
+
 (* Entry-point *)
 val _ = (
   print ("Heron " ^ RELEASE_VERSION ^" Release\n");
-  print "Type @help for assistance.\n";
-  toplevel()
+  case CommandLine.arguments() of
+      [] =>
+      (print "Type @help for assistance.\n" ;
+	toplevel())
+    | "-h" :: _ => print_help ()
+    | "--help" :: _ => print_help ()
+    | "--use" :: filename :: _ =>
+      (print ("Opening " ^ filename ^ "\n") ;
+	run_from_file filename)
+    | x :: _ =>
+      (print ("Unknown option '" ^ x ^ "'.\n") ;
+	print_help ())
 )
+

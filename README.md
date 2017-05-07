@@ -17,7 +17,7 @@ Getting started
 ### Binary distribution
 The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems). Several examples are provided in [`examples`](examples). To solve one of them, you can simply type
 ```bash
-./heron < examples/basic/FirstExample.tesl
+./heron --use examples/basic/FirstExample.tesl
 ```
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")

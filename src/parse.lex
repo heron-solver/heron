@@ -93,6 +93,7 @@ ws = [\ \t];
 {optsign}        "."{digit}+ => (Tokens.DECNUM (valOf (rat_of_string yytext), !pos, !pos));
 {optsign}{digit}+            => (Tokens.NUM (valOf (Int.fromString yytext), !pos, !pos));
 "//"[^ \n]*                  => (lex());
+"/*"[^ ]*"*/"                => (lex());
 .                            => (error ("ignoring bad character " ^ yytext,!pos,!pos);
              lex());
 

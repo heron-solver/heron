@@ -1,6 +1,7 @@
 fun print_help () = (
 print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
+print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl]");
 print "\n";
 print "Copyright (c) 2017, Hai Nguyen Van\n";
 print "              Universit\195\169 Paris-Sud / CNRS\n";
