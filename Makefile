@@ -1,13 +1,11 @@
 CC=mlton
 
-all: heron
-
-heron:
+all:
 	cd src && mllex parse.lex
 	cd src && mlyacc parse.grm
 	${CC} -verbose 1 -output heron src/heron.mlb
 
-release-archive: heron
+release-archive: all
 	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-$(shell uname -m)-$(shell uname | tr A-Z a-z).tar.gz \
 		heron \
 		examples/HandWatch* \

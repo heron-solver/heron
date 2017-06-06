@@ -1,9 +1,7 @@
-Heron
+Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
 ===================
 
-> Simulation Solver for Timed Causality Models expressed in TESL
-
-[![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
+![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
 
 **Heron** is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [1]. This prototype provides:
 
@@ -15,12 +13,10 @@ Heron
 Getting started
 -------------------
 ### Binary distribution
-The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems). Several examples are provided in [`examples`](examples). To solve one of them, you can simply type
+The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems). To solve an example, you can simply type
 ```bash
 ./heron --use examples/basic/FirstExample.tesl
 ```
-
-![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
 
 ### From sources
 ```bash
