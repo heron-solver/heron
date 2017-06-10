@@ -3,7 +3,7 @@ Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=maste
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
 
-**Heron** is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [1]. This prototype provides:
+**Heron** [1] is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [2]. This prototype provides:
 
  1. Definition of TESL specifications for causality and time scale between events.
  2. Simulation by exhaustive or partial generation of execution traces.
@@ -31,11 +31,13 @@ make
 References
 -------------------
 
- 1. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
- 2. The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer.
+ 1. [A Symbolic Operational Semantics for TESL with an Application to Heterogeneous System Testing](), Formal Modeling and Analysis of Timed Systems (FORMATS), 14th International Conference, Berlin, Germany, Sept 5-7, 2017
+ 2. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
 
 People
 -------------------
+
+The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. Made with love by
 
  - Hai Nguyen Van
  - Thibaut Balabonski
