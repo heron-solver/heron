@@ -47,7 +47,7 @@ fun ARS_rule_timedelayed_elim_1
 (* 7. Time delayed elimination when premise is true (introduces when-ticking) *)
 fun ARS_rule_timedelayed_elim_2
   (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, dt, c2, c3)) =
-    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun @ [WhenTickingOn (c2, Add (Schematic (c2, n), dt), c3)], finst @- [fsubst])
+    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [WhenTickingOn (c2, Add (Schematic (c2, n), dt), c3)])
   | ARS_rule_timedelayed_elim_2 _ _ = raise Assert_failure;
 
 (* 8. When ticking elimination with merge *)

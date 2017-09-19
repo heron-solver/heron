@@ -10,19 +10,19 @@ before_install:
 install:
   - make
 script:
-  - ./heron < examples/basic/FirstExample.tesl
-  - ./heron < examples/basic/Implications.tesl
-  - ./heron < examples/basic/ImplicationsTimeScales.tesl
-  - ./heron < examples/basic/FilteredImplication.tesl
-  - ./heron < examples/basic/DelayedImplication.tesl
-  - ./heron < examples/basic/SustainedImplication.tesl
-  - ./heron < examples/basic/WhenImplication.tesl
-  - ./heron < examples/basic/AwaitImplication.tesl
-  - ./heron < examples/basic/TimeDelayed.tesl
-  - ./heron < examples/gallery/ConcurrentComputations.tesl
-  - ./heron < examples/gallery/LightSwitch.tesl
-  - ./heron < examples/gallery/LeapYears.tesl
-  - ./heron < examples/gallery/Engine.tesl
+  - ./heron --use examples/basic/FirstExample.tesl
+  - ./heron --use examples/basic/Implications.tesl
+  - ./heron --use examples/basic/ImplicationsTimeScales.tesl
+  - ./heron --use examples/basic/FilteredImplication.tesl
+  - ./heron --use examples/basic/DelayedImplication.tesl
+  - ./heron --use examples/basic/SustainedImplication.tesl
+  - ./heron --use examples/basic/WhenImplication.tesl
+  - ./heron --use examples/basic/AwaitImplication.tesl
+  - ./heron --use examples/basic/TimeDelayed.tesl
+  - ./heron --use examples/gallery/ConcurrentComputations.tesl
+  - ./heron --use examples/gallery/LightSwitch.tesl
+  - ./heron --use examples/gallery/LeapYears.tesl
+  - ./heron --use examples/gallery/Engine.tesl
   
 notifications:
   email: false

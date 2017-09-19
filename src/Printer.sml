@@ -2,13 +2,10 @@ fun print_help () = (
 print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
 print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl]");
-print "\n";
-print "Copyright (c) 2017, Hai Nguyen Van\n";
-print "              Universit\195\169 Paris-Sud / CNRS\n";
-(*
-print "Please cite:";
-print "\n";
-*)
+print "\n\n";
+print "Copyright (c) 2017, Universit\195\169 Paris-Sud / CNRS\n";
+print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
+print "             Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334.\n";
 print "\n";
 print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG]+\n"; 
