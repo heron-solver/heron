@@ -1,3 +1,14 @@
+(**
+   Module Engine
+
+   Author : Hai Nguyen Van
+            LRI, Université Paris-Sud/CNRS
+   
+   The copyright to this code is held by Laboratoire de Recherche en
+   Informatique, Université Paris-Sud/CNRS. All rights reserved. This
+   file is distributed under the MIT License.
+*)
+
 (** Rules used for reduction *)
 (* 1. New instant introduction *)
 fun ARS_rule_instant_intro
@@ -650,7 +661,7 @@ fun exec
     val () = writeln "Solving simulation..."
     val () = writeln ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
     val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
-    val () = writeln ("Heuristic: " ^ (case heuristics of [] => "none (full counterfactual exploration)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch) "" heuristics))
+    val () = writeln ("Policy: " ^ (case heuristics of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch) "" heuristics))
     (* MAIN SIMULATION LOOP *)
     fun loop cfs =
       let

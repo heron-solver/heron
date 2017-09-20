@@ -1,3 +1,14 @@
+(**
+   Module Policy
+
+   Author : Hai Nguyen Van
+            LRI, Université Paris-Sud/CNRS
+   
+   The copyright to this code is held by Laboratoire de Recherche en
+   Informatique, Université Paris-Sud/CNRS. All rights reserved. This
+   file is distributed under the MIT License.
+*)
+
 (** Policies are supposed to restrict the universe by choosing configurations that are relevant for simulation.
     They allow to focus on execution of models, and become handy to test your specifications.
 *)

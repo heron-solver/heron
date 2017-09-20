@@ -1,3 +1,14 @@
+(**
+   Module Basics
+
+   Author : Hai Nguyen Van
+            LRI, Université Paris-Sud/CNRS
+   
+   The copyright to this code is held by Laboratoire de Recherche en
+   Informatique, Université Paris-Sud/CNRS. All rights reserved. This
+   file is distributed under the MIT License.
+*)
+
 (* WARNING *)
 (* COMMENT THE FOLLOWING LINE IF YOU WISH TO USE Isabelle/jEdit IDE *)
 fun writeln s = print (s ^ "\n")

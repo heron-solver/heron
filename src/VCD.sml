@@ -1,3 +1,14 @@
+(**
+   Module VCD
+
+   Author : Hai Nguyen Van
+            LRI, Université Paris-Sud/CNRS
+   
+   The copyright to this code is held by Laboratoire de Recherche en
+   Informatique, Université Paris-Sud/CNRS. All rights reserved. This
+   file is distributed under the MIT License.
+*)
+
 fun writeFile filename content =
     let val fd = TextIO.openOut filename
         val _ = TextIO.output (fd, content) handle e => (TextIO.closeOut fd; raise e)

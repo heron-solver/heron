@@ -1,3 +1,14 @@
+(**
+   Module Printer
+
+   Author : Hai Nguyen Van
+            LRI, Université Paris-Sud/CNRS
+   
+   The copyright to this code is held by Laboratoire de Recherche en
+   Informatique, Université Paris-Sud/CNRS. All rights reserved. This
+   file is distributed under the MIT License.
+*)
+
 fun print_help () = (
 print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 

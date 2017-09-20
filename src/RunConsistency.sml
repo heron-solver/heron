@@ -1,3 +1,14 @@
+(**
+   Module RunConsistency
+
+   Author : Hai Nguyen Van
+            LRI, Université Paris-Sud/CNRS
+   
+   The copyright to this code is held by Laboratoire de Recherche en
+   Informatique, Université Paris-Sud/CNRS. All rights reserved. This
+   file is distributed under the MIT License.
+*)
+
 (* Constraint solver for the ARS used in reducing TESL *)
 (* The logic structure contains
    1. Booleans fixed-predicates [C \<Up>\<^sub>\<sigma>] and [C \<not>\<Up>\<^sub>\<sigma>]
@@ -10,7 +21,7 @@
 *)
 
 
-(* Returns HAA-constrains for a given specific step *)
+(* Returns primitives for a given specific step *)
 fun haa_constrs_at_step (G: system) (step: int) =
   List.filter (fn
       Timestamp (_, step', _) => step = step'

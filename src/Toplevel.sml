@@ -1,5 +1,16 @@
+(**
+   Module Toplevel
+
+   Author : Hai Nguyen Van
+            LRI, Université Paris-Sud/CNRS
+   
+   The copyright to this code is held by Laboratoire de Recherche en
+   Informatique, Université Paris-Sud/CNRS. All rights reserved. This
+   file is distributed under the MIT License.
+*)
+
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.42.0-alpha+20170919"
+val RELEASE_VERSION = "0.42.1-alpha+20170920"
 
 open OS.Process
 
