@@ -1,4 +1,4 @@
-Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/EmptyStackExn/heron)
+Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/heron-solver/heron)
 ===================
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")

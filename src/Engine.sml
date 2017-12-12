@@ -365,21 +365,109 @@ fun ARS_rule_immediately_delayed_elim_2
     (G @ [Ticks (c1, n)], n, frun, (finst @- [fsubst]) @ [TimesImpliesOn (c2, dp, c3)])
   | ARS_rule_immediately_delayed_elim_2 _ _ = raise Assert_failure;
 
+(*
+fun ARS_rule_precedes_split_1_idle
+  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
+    (G @ [NotTicks (c1, n)], n, frun, (finst @- [fsubst]))
+  | ARS_rule_precedes_split_1_idle _ _ = raise Assert_failure;
+
+fun ARS_rule_precedes_split_1_react
+  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
+    (G @ [Ticks (c1, n)], n, frun, (finst @- [fsubst]))
+  | ARS_rule_precedes_split_1_react _ _ = raise Assert_failure;
+
+fun ARS_rule_precedes_split_2_idle
+  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
+    (G @ [NotTicks (c2, n)], n, frun, (finst @- [fsubst]))
+  | ARS_rule_precedes_split_2_idle _ _ = raise Assert_failure;
+
+fun ARS_rule_precedes_split_2_react
+  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
+    (G @ [Ticks (c2, n)], n, frun, (finst @- [fsubst]))
+  | ARS_rule_precedes_split_2_react _ _ = raise Assert_failure;
+*)
+
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
    the least fixed-point.
 *)
 fun lawyer_e
-  ((_, _, _, finst) : TESL_ARS_conf)
-  : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
-    if finst = []
-    then []
-    else (* Case where we need to do some paperwork *)
-      let
-	 (* Major tweak. Due to the orthogonality property of instantaneous solve reduction rules, the order of application of
+  ((G, _, _, f_present) : TESL_ARS_conf)
+    : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
+  case f_present of
+      []        => []
+    (* Case where we need to do some paperwork *)
+    (* Major tweak. Due to the orthogonality property of instantaneous solve reduction rules, the order of application of
 	    elimination rules does not matter. Hence, we can arbitrarily choose the first atomic psi-formula to reduce, instead of
 	    generating useless elim-reduction sequence permutations *)
+    | fatom :: _ => (case fatom of
+			   Sporadic _ =>
+			     [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)]
+			 | WhenTickingOn _ =>
+			     [(fatom, ARS_rule_whentickingon_1), (fatom, ARS_rule_whentickingon_2)]
+			 | TagRelation _ =>
+			     [(fatom, ARS_rule_tagrel_elim)]
+			 | Implies _ =>
+			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
+			 | TimeDelayedBy _ =>
+			     [(fatom, ARS_rule_timedelayed_elim_1), (fatom, ARS_rule_timedelayed_elim_2)]
+			 | FilteredBy (_, s, k, _, _, _) =>
+			     if s > 0 andalso k >= 1
+			     then [(fatom, ARS_rule_filtered_false), (fatom, ARS_rule_filtered_update_1)]
+			     else if s = 0 andalso k > 1
+			          then [(fatom, ARS_rule_filtered_false), (fatom, ARS_rule_filtered_update_2)]
+			          else if s = 0 andalso k = 1
+			               then [(fatom, ARS_rule_filtered_false), (fatom, ARS_rule_filtered_update_3)]
+			               else raise Assert_failure
+			 | DelayedBy _ =>
+			     [(fatom, ARS_rule_delayed_elim_1), (fatom, ARS_rule_delayed_elim_2)]
+			 | TimesImpliesOn (_, dp, _) =>
+			     if dp > 1
+			     then [(fatom, ARS_rule_timesticking_false), (fatom, ARS_rule_timesticking_update)]
+			     else if dp = 1
+			          then [(fatom, ARS_rule_timesticking_false), (fatom, ARS_rule_timesticking_elim)]
+			          else raise Assert_failure
+			 | ImmediatelyDelayedBy _ =>
+			     [(fatom, ARS_rule_immediately_delayed_elim_1), (fatom, ARS_rule_immediately_delayed_elim_2)]
+			 | SustainedFrom _ =>
+			     [(fatom, ARS_rule_sustained_elim_1), (fatom, ARS_rule_sustained_elim_2)]
+			 | UntilRestart _ =>
+			     [(fatom, ARS_rule_untilrestart_elim_1), (fatom, ARS_rule_untilrestart_elim_2),
+			      (fatom, ARS_rule_untilrestart_restarts_elim_1), (fatom, ARS_rule_untilrestart_restarts_elim_2)]
+			 | SustainedFromImmediately _ =>
+			     [(fatom, ARS_rule_sustained_immediately_elim_1), (fatom, ARS_rule_sustained_immediately_elim_2)]
+			 | UntilRestartImmediately _ =>
+			     [(fatom, ARS_rule_untilrestart_immediately_elim_1), (fatom, ARS_rule_untilrestart_immediately_elim_2),
+			      (fatom, ARS_rule_untilrestart_immediately_restarts_elim_1), (fatom, ARS_rule_untilrestart_immediately_restarts_elim_2)]
+			 | SustainedFromWeakly _ =>
+			     [(fatom, ARS_rule_sustained_weakly_elim_1), (fatom, ARS_rule_sustained_weakly_elim_2)]
+			 | UntilRestartWeakly _ =>
+			     [(fatom, ARS_rule_untilrestart_weakly_elim_1), (fatom, ARS_rule_untilrestart_weakly_elim_2),
+			      (fatom, ARS_rule_untilrestart_weakly_restarts_elim)]
+			 | SustainedFromImmediatelyWeakly _ =>
+			     [(fatom, ARS_rule_sustained_immediately_weakly_elim_1), (fatom, ARS_rule_sustained_immediately_weakly_elim_2)]
+			 | UntilRestartImmediatelyWeakly _ =>
+			     [(fatom, ARS_rule_untilrestart_immediately_weakly_elim_1), (fatom, ARS_rule_untilrestart_immediately_weakly_elim_2),
+			      (fatom, ARS_rule_untilrestart_immediately_weakly_restarts_elim)]
+			 | Await (_, Hrem, Hinst, _) =>
+			     if is_empty Hrem andalso is_empty Hinst
+			     then [(fatom, ARS_rule_await_fire)]
+			     else if not (is_empty Hrem) andalso is_empty Hinst
+			          then [(fatom, ARS_rule_await_next_instant)]
+			          else if not (is_empty Hrem) andalso not (is_empty Hinst)
+			               then [(fatom, ARS_rule_await_instant_sigcaught), (fatom, ARS_rule_await_instant_sigabsent)]
+			               else raise Assert_failure
+			 | WhenClock _ =>
+			     [(fatom, ARS_rule_whenclock_implies_1), (fatom, ARS_rule_whenclock_implies_2), (fatom, ARS_rule_whenclock_implies_3)]
+			 | WhenNotClock _ =>
+			     [(fatom, ARS_rule_whennotclock_implies_1), (fatom, ARS_rule_whennotclock_implies_2), (fatom, ARS_rule_whennotclock_implies_3)]
+			 | _ => [] (* TODO: Exception here *)
+		      )
+      
+(*
+      let
+
         val finst = [List.nth (finst, 0)]
 
         val spors = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) finst)
@@ -420,6 +508,12 @@ fun lawyer_e
 
         val red_whenclock = (List.filter (fn fatom => case fatom of WhenClock _ => true | _ => false) finst)
         val red_whennotclock = (List.filter (fn fatom => case fatom of WhenNotClock _ => true | _ => false) finst)
+
+        val red_precedes = (List.filter (fn fatom => case fatom of Precedes _ => true | _ => false) finst)
+        val red_weaklyprecedes = (List.filter (fn fatom => case fatom of WeaklyPrecedes _ => true | _ => false) finst)
+
+	 fun tick_count G n clk = raise Assert_failure
+	 fun idle_count G n clk = raise Assert_failure
 
       in   (List.map (fn fatom => (fatom, ARS_rule_sporadic_1)) spors)
          @ (List.map (fn fatom => (fatom, ARS_rule_sporadic_2)) spors)
@@ -487,7 +581,8 @@ fun lawyer_e
          @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_1)) red_whennotclock)
          @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_2)) red_whennotclock)
          @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_3)) red_whennotclock)
-      end;
+      end
+*) ;
 
 fun new_instant_init (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   List.map (ARS_rule_instant_intro) cfs

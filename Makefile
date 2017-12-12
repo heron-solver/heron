@@ -5,7 +5,7 @@ all:
 	cd src && mlyacc parse.grm
 	${CC} -verbose 1 -output heron src/heron.mlb
 
-release-archive: all
+binary-release: all
 	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-$(shell uname -m)-$(shell uname | tr A-Z a-z).tar.gz \
 		heron \
 		examples/HandWatch* \
