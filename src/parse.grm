@@ -40,6 +40,8 @@
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
       | DIR_SELECT 
       | ARROW
+      | PRECEDES
+      | EXCLUDES
 
 %nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list 
 
@@ -113,6 +115,9 @@
 												      | Rat _ => TypeDeclPeriodic (TYPEDECL, CLK, TAG, Rat rat_zero)
 												      | _     => raise UnsupportedParsedTerm)
       | CLK NEXT TO CLK IMPLIES CLK                                            (NextTo (CLK1, CLK2, CLK3))
+      | CLK PRECEDES CLK                                                       (Precedes (CLK1, CLK2, false))
+      | CLK WEAKLY PRECEDES CLK                                                (Precedes (CLK1, CLK2, true))
+      | CLK EXCLUDES CLK                                                       (Excludes (CLK1, CLK2))
 
       | DIR_MAXSTEP NUM                                                        (DirMaxstep (NUM))
       | DIR_MINSTEP NUM                                                        (DirMinstep (NUM))

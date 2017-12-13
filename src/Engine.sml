@@ -365,38 +365,36 @@ fun ARS_rule_immediately_delayed_elim_2
     (G @ [Ticks (c1, n)], n, frun, (finst @- [fsubst]) @ [TimesImpliesOn (c2, dp, c3)])
   | ARS_rule_immediately_delayed_elim_2 _ _ = raise Assert_failure;
 
-(*
-fun ARS_rule_precedes_split_1_idle
-  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
-    (G @ [NotTicks (c1, n)], n, frun, (finst @- [fsubst]))
-  | ARS_rule_precedes_split_1_idle _ _ = raise Assert_failure;
+(* 52. Exclusion elimination when both clocks are idle *)
+fun ARS_rule_excludes_1
+  (G, n, frun, finst) (fsubst as Excludes (c1, c2)) =
+    (G @ [NotTicks (c1, n), NotTicks (c2, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_excludes_1 _ _ = raise Assert_failure;
 
-fun ARS_rule_precedes_split_1_react
-  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
-    (G @ [Ticks (c1, n)], n, frun, (finst @- [fsubst]))
-  | ARS_rule_precedes_split_1_react _ _ = raise Assert_failure;
+(* 53. Exclusion elimination when c1 is reacting *)
+fun ARS_rule_excludes_2
+  (G, n, frun, finst) (fsubst as Excludes (c1, c2)) =
+    (G @ [Ticks (c1, n), NotTicks (c2, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_excludes_2 _ _ = raise Assert_failure;
 
-fun ARS_rule_precedes_split_2_idle
-  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
-    (G @ [NotTicks (c2, n)], n, frun, (finst @- [fsubst]))
-  | ARS_rule_precedes_split_2_idle _ _ = raise Assert_failure;
-
-fun ARS_rule_precedes_split_2_react
-  (G, n, frun, finst) (fsubst as Precedes (c1, c2)) =
-    (G @ [Ticks (c2, n)], n, frun, (finst @- [fsubst]))
-  | ARS_rule_precedes_split_2_react _ _ = raise Assert_failure;
-*)
+(* 53. Exclusion elimination when c2 is reacting *)
+fun ARS_rule_excludes_3
+  (G, n, frun, finst) (fsubst as Excludes (c1, c2)) =
+    (G @ [NotTicks (c1, n), Ticks (c2, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_excludes_3 _ _ = raise Assert_failure;
 
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
    the least fixed-point.
 *)
+exception UnexpectedBehavior of string;
+
 fun lawyer_e
-  ((G, _, _, f_present) : TESL_ARS_conf)
+  ((G, n, _, f_present) : TESL_ARS_conf)
     : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
-  case f_present of
-      []        => []
+    case f_present of
+      []        => [(True, fn c => fn _ => c)]
     (* Case where we need to do some paperwork *)
     (* Major tweak. Due to the orthogonality property of instantaneous solve reduction rules, the order of application of
 	    elimination rules does not matter. Hence, we can arbitrarily choose the first atomic psi-formula to reduce, instead of
@@ -462,127 +460,92 @@ fun lawyer_e
 			     [(fatom, ARS_rule_whenclock_implies_1), (fatom, ARS_rule_whenclock_implies_2), (fatom, ARS_rule_whenclock_implies_3)]
 			 | WhenNotClock _ =>
 			     [(fatom, ARS_rule_whennotclock_implies_1), (fatom, ARS_rule_whennotclock_implies_2), (fatom, ARS_rule_whennotclock_implies_3)]
-			 | _ => [] (* TODO: Exception here *)
-		      )
-      
-(*
-      let
-
-        val finst = [List.nth (finst, 0)]
-
-        val spors = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) finst)
-        val whentickings = (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) finst)
-        val red_tagrelations = (List.filter (fn fatom => case fatom of TagRelation _ => true | _ => false) finst)
-        val red_implies = (List.filter (fn fatom => case fatom of Implies _ => true | _ => false) finst)
-        val red_timedelayeds = (List.filter (fn fatom => case fatom of TimeDelayedBy _ => true | _ => false) finst)
-
-        val red_filtereds = (List.filter (fn fatom => case fatom of FilteredBy _ => true | _ => false) finst)
-        val red_filtereds_nonneg_s_k = (List.filter (fn fatom => case fatom of FilteredBy (_, s, k, _, _, _) => s > 0 andalso k >= 1 | _ => false) red_filtereds)
-        val red_filtereds_noskip = (List.filter (fn fatom => case fatom of FilteredBy (_, s, k, _, _, _) => s = 0 andalso k > 1  | _ => false) red_filtereds)
-        val red_filtereds_noskip_nokeep = (List.filter (fn fatom => case fatom of FilteredBy (_, s, k, _, _, _) => s = 0 andalso k = 1 | _ => false) red_filtereds)
-
-        val red_delayeds = (List.filter (fn fatom => case fatom of DelayedBy _ => true | _ => false) finst)
-
-        val red_timesimplies = (List.filter (fn fatom => case fatom of TimesImpliesOn _ => true | _ => false) finst)
-        val red_timesimplies_nonneg = (List.filter (fn fatom => case fatom of TimesImpliesOn (_, dp, _) => dp > 1 | _ => false) red_timesimplies)
-        val red_timesimplies_now = (List.filter (fn fatom => case fatom of TimesImpliesOn (_, dp, _) => dp = 1 | _ => false) red_timesimplies)
-
-        val red_immediately_delayeds = (List.filter (fn fatom => case fatom of ImmediatelyDelayedBy _ => true | _ => false) finst)
-
-        val red_sustainedfrom = (List.filter (fn fatom => case fatom of SustainedFrom _ => true | _ => false) finst)
-        val red_untilrestart = (List.filter (fn fatom => case fatom of UntilRestart _ => true | _ => false) finst)
-
-        val red_sustainedfrom_immediately = (List.filter (fn fatom => case fatom of SustainedFromImmediately _ => true | _ => false) finst)
-        val red_untilrestart_immediately = (List.filter (fn fatom => case fatom of UntilRestartImmediately _ => true | _ => false) finst)
-
-        val red_sustainedfrom_weakly = (List.filter (fn fatom => case fatom of SustainedFromWeakly _ => true | _ => false) finst)
-        val red_untilrestart_weakly = (List.filter (fn fatom => case fatom of UntilRestartWeakly _ => true | _ => false) finst)
-
-        val red_sustainedfrom_immediately_weakly = (List.filter (fn fatom => case fatom of SustainedFromImmediatelyWeakly _ => true | _ => false) finst)
-        val red_untilrestart_immediately_weakly = (List.filter (fn fatom => case fatom of UntilRestartImmediatelyWeakly _ => true | _ => false) finst)
-
-        val red_await = (List.filter (fn fatom => case fatom of Await _ => true | _ => false) finst)
-        val red_await_norem_noinst = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => is_empty Hrem andalso is_empty Hinst | _ => false) red_await)
-        val red_await_rem_noinst   = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => not (is_empty Hrem) andalso is_empty Hinst | _ => false) red_await)
-        val red_await_rem_inst     = (List.filter (fn fatom => case fatom of Await (_, Hrem, Hinst, _) => not (is_empty Hrem) andalso not (is_empty Hinst) | _ => false) red_await)
-
-        val red_whenclock = (List.filter (fn fatom => case fatom of WhenClock _ => true | _ => false) finst)
-        val red_whennotclock = (List.filter (fn fatom => case fatom of WhenNotClock _ => true | _ => false) finst)
-
-        val red_precedes = (List.filter (fn fatom => case fatom of Precedes _ => true | _ => false) finst)
-        val red_weaklyprecedes = (List.filter (fn fatom => case fatom of WeaklyPrecedes _ => true | _ => false) finst)
-
-	 fun tick_count G n clk = raise Assert_failure
-	 fun idle_count G n clk = raise Assert_failure
-
-      in   (List.map (fn fatom => (fatom, ARS_rule_sporadic_1)) spors)
-         @ (List.map (fn fatom => (fatom, ARS_rule_sporadic_2)) spors)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_implies_1)) red_implies)
-         @ (List.map (fn fatom => (fatom, ARS_rule_implies_2)) red_implies)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_tagrel_elim)) red_tagrelations)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_timedelayed_elim_1)) red_timedelayeds)
-         @ (List.map (fn fatom => (fatom, ARS_rule_timedelayed_elim_2)) red_timedelayeds)
-         @ (List.map (fn fatom => (fatom, ARS_rule_whentickingon_1)) whentickings)
-         @ (List.map (fn fatom => (fatom, ARS_rule_whentickingon_2)) whentickings)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_filtered_false)) red_filtereds)
-         @ (List.map (fn fatom => (fatom, ARS_rule_filtered_update_1)) red_filtereds_nonneg_s_k)
-         @ (List.map (fn fatom => (fatom, ARS_rule_filtered_update_2)) red_filtereds_noskip)
-         @ (List.map (fn fatom => (fatom, ARS_rule_filtered_update_3)) red_filtereds_noskip_nokeep)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_delayed_elim_1)) red_delayeds)
-         @ (List.map (fn fatom => (fatom, ARS_rule_delayed_elim_2)) red_delayeds)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_immediately_delayed_elim_1)) red_immediately_delayeds)
-         @ (List.map (fn fatom => (fatom, ARS_rule_immediately_delayed_elim_2)) red_immediately_delayeds)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_timesticking_false)) red_timesimplies)
-         @ (List.map (fn fatom => (fatom, ARS_rule_timesticking_update)) red_timesimplies_nonneg)
-         @ (List.map (fn fatom => (fatom, ARS_rule_timesticking_elim)) red_timesimplies_now)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_elim_1)) red_sustainedfrom)
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_elim_2)) red_sustainedfrom)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_elim_1)) red_untilrestart)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_elim_2)) red_untilrestart)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_restarts_elim_1)) red_untilrestart)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_restarts_elim_2)) red_untilrestart)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_elim_1)) red_sustainedfrom_immediately)
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_elim_2)) red_sustainedfrom_immediately)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_elim_1)) red_untilrestart_immediately)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_elim_2)) red_untilrestart_immediately)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_restarts_elim_1)) red_untilrestart_immediately)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_restarts_elim_2)) red_untilrestart_immediately)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_weakly_elim_1)) red_sustainedfrom_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_weakly_elim_2)) red_sustainedfrom_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_weakly_elim_1)) red_untilrestart_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_weakly_elim_2)) red_untilrestart_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_weakly_restarts_elim)) red_untilrestart_weakly)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_weakly_elim_1)) red_sustainedfrom_immediately_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_sustained_immediately_weakly_elim_2)) red_sustainedfrom_immediately_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_weakly_elim_1)) red_untilrestart_immediately_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_weakly_elim_2)) red_untilrestart_immediately_weakly)
-         @ (List.map (fn fatom => (fatom, ARS_rule_untilrestart_immediately_weakly_restarts_elim)) red_untilrestart_immediately_weakly)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_await_instant_sigcaught)) red_await_rem_inst)
-         @ (List.map (fn fatom => (fatom, ARS_rule_await_instant_sigabsent)) red_await_rem_inst)
-         @ (List.map (fn fatom => (fatom, ARS_rule_await_next_instant)) red_await_rem_noinst)
-         @ (List.map (fn fatom => (fatom, ARS_rule_await_fire)) red_await_norem_noinst)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_whenclock_implies_1)) red_whenclock)
-         @ (List.map (fn fatom => (fatom, ARS_rule_whenclock_implies_2)) red_whenclock)
-         @ (List.map (fn fatom => (fatom, ARS_rule_whenclock_implies_3)) red_whenclock)
-
-         @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_1)) red_whennotclock)
-         @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_2)) red_whennotclock)
-         @ (List.map (fn fatom => (fatom, ARS_rule_whennotclock_implies_3)) red_whennotclock)
-      end
-*) ;
+			 | Precedes (c1, c2, weakly_b) =>
+			   if not (SAT G)
+			   then (* (print "*** cntxt courant: nonsat!\n"; *) [] (* ) *)
+			   else
+			     (* (print "*** cntxt courant: sat!\n";  *)
+			     let
+				fun card_ticks clk n =
+				  if n < 1
+				  then (0, 0)
+				  else
+				    let
+				      fun aux (a, b) n =
+					 if n = 0
+					 then (a, b)
+					 else
+					   if (List.exists (fn Ticks (clk', n') => clk = clk' andalso n = n' | _ => false) G)
+					   then aux (a + 1, b + 1) (n - 1)
+					   else if (List.exists (fn NotTicks (clk', n') => clk = clk' andalso n = n' | _ => false) G)
+					        then aux (a, b) (n - 1)
+					        else aux (a, b + 1) (n - 1)
+				    in aux (0, 0) n
+				    end
+				fun range_min (a, _) = a
+				fun range_max (_, b) = b
+				fun combinatorial_unfolding clk indx =
+				  [(fatom, fn (G, n, frun, finst) => fn fsubst => (G @ [Ticks (clk, indx)], n, frun, finst)),
+				   (fatom, fn (G, n, frun, finst) => fn fsubst => (G @ [NotTicks (clk, indx)], n, frun, finst))]
+				fun is_hamlet_primitive_defined clk indx =
+				  contains (Ticks (clk, indx)) G orelse contains (NotTicks (clk, indx)) G
+				fun smallest_index_hamlet_primitive_undefined clk indx1 indx2 =
+				  if indx1 > indx2
+				  then NONE
+				  else
+				    if not (is_hamlet_primitive_defined clk indx1)
+				    then SOME indx1
+				    else smallest_index_hamlet_primitive_undefined clk (indx1 + 1) indx2
+			     in
+				case weakly_b of
+				  false =>
+				  if (range_max (card_ticks c1 (n - 1))) < range_min (card_ticks c2 n)         (* UNSAT *)
+				     orelse (range_min (card_ticks c1 (n - 1))) >= range_max (card_ticks c2 n) (* SAT *)
+				  then
+				    (* (print "--> comparable: cas SAT/UNSAT\n"; *)
+				    (if (range_max (card_ticks c1 (n - 1))) < range_min (card_ticks c2 n)
+				     then (* (print "--> conf UNSAT\n"; *) [] (* ) *)
+				     else (* (print "--> conf SAT\n"; *) [(fatom, fn (G, n, frun, finst) => fn fsubst => (G, n, frun, (finst @- [fsubst])))] (* ) *)
+				    ) (* ) *)
+				  else
+				    (* (print "--> non comparable: decoupage combinatoire\n"; *)
+				    (* If c2 ticking primitive is undefined *)
+				    if not (is_hamlet_primitive_defined c2 n)
+				    then (* (print "--> decoupage combinatoire: sur c2 maintenant\n"; *) combinatorial_unfolding c2 n (* ) *)
+				    else
+				      (case smallest_index_hamlet_primitive_undefined c1 1 n of
+					   SOME indx =>
+					   (* let val _ = if is_hamlet_primitive_defined c1 indx then print "@@> c1 defini\n" else print "@@> c1 non defini\n"
+					     (* val _ = print_system n [Clk "h1", Clk "h2"] G *)
+					 in *) (* (print ("--> decoupage combinatoire: sur c1 en index " ^ (Int.toString indx) ^ "\n"); *) combinatorial_unfolding c1 indx(* ) end *)
+					 | NONE => (case smallest_index_hamlet_primitive_undefined c2 1 n of
+							  SOME indx => (* (print ("--> decoupage combinatoire: sur c2 en index " ^ (Int.toString indx) ^ "\n"); *)combinatorial_unfolding c2 indx (* ) *)
+							| NONE => raise UnexpectedBehavior "Precedence combinatorial unfolding can't be done anymore..."
+						    ))
+							 (* ) *)
+				| true =>
+				  if (range_max (card_ticks c1 n)) < range_min (card_ticks c2 n)         (* UNSAT *)
+				     orelse (range_min (card_ticks c1 n)) >= range_max (card_ticks c2 n) (* SAT *)
+				  then
+				    (if (range_max (card_ticks c1 n)) < range_min (card_ticks c2 n)
+				     then []
+				     else [(fatom, fn (G, n, frun, finst) => fn fsubst => (G, n, frun, (finst @- [fsubst])))]
+				    )
+				  else
+				    if not (is_hamlet_primitive_defined c2 n)
+				    then combinatorial_unfolding c2 n
+				    else
+				      (case smallest_index_hamlet_primitive_undefined c1 1 n of
+					   SOME indx =>
+					   combinatorial_unfolding c1 indx
+					 | NONE => (case smallest_index_hamlet_primitive_undefined c2 1 n of
+							  SOME indx => combinatorial_unfolding c2 indx
+							| NONE => raise UnexpectedBehavior "Precedence combinatorial unfolding can't be done anymore..."
+						    ))
+			     end
+			 | Excludes (c1, c2) => [(fatom, ARS_rule_excludes_1), (fatom, ARS_rule_excludes_2), (fatom, ARS_rule_excludes_3)]
+			 | _ => raise UnexpectedBehavior "Unspecified elimination rules"
+		      );
 
 fun new_instant_init (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   List.map (ARS_rule_instant_intro) cfs
@@ -591,14 +554,14 @@ fun new_instant_init (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
 fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
   let val choices = lawyer_e c in
   case choices of
-      [] => [c]
+      [] => [] (* [c] *)
     | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
   end
 *)
 fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
   let val choices = lawyer_e c in
       case choices of
-	   [] => [c]
+	   [] => [] (* Removing [c] breaks empty specification simulation *)
 	 | _  => List.foldl
 		      (fn ((focus, redrule), l) =>
 			   let val cf = redrule c focus
@@ -609,6 +572,7 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
 			   end
 		      ) [] choices
   end
+
 
 fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list): TESL_ARS_conf list =
   case pending of

@@ -33,7 +33,11 @@ print "  \u001B[1mawait\u001B[0m [CLOCK]+ \u001B[1mimplies\u001B[0m [CLOCK]\n";
 print "  [CLOCK] \u001B[1mwhen\u001B[0m (\u001B[1mnot\u001B[0m) [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
 print "\n"; 
 print "  For more information about the TESL language:\n"; 
-print "  http://wwwdi.supelec.fr/software/TESL\n"; 
+print "  http://wdi.supelec.fr/software/TESL/\n"; 
+print "\n";
+print (BOLD_COLOR ^ "Additional unofficially supported expressions:\n" ^ RESET_COLOR); 
+print "  [CLOCK] \u001B[1m(weakly) precedes\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mexcludes\u001B[0m [CLOCK]\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [INT]                    define the number of minimum run steps\n"; 
@@ -255,6 +259,8 @@ fun string_of_expr e = case e of
   | NextTo (c, next_c, slave)                               => (string_of_clk c) ^ " next to " ^ (string_of_clk next_c) ^ " implies " ^ (string_of_clk slave)
   | Periodic (c, per, offset)                               => (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
   | TypeDeclPeriodic (ty, c, per, offset)                   => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
+  | Precedes (master, slave, weakly_b)                      => (string_of_clk master) ^ " " ^ (if weakly_b then "weakly " else "") ^ "precedes " ^ (string_of_clk slave)
+  | Excludes (c1, c2)                                       => (string_of_clk c1) ^ " excludes " ^ (string_of_clk c2)
   | DirMinstep _	                                       => "<parameter>"
   | DirMaxstep _						    => "<parameter>"
   | DirHeuristic _						    => "<parameter>"

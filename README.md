@@ -6,7 +6,7 @@ Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=maste
 **Heron** [1] is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [2]. This prototype provides:
 
  1. Definition of TESL specifications for causality and time scale between events.
- 2. Simulation by exhaustive or partial generation of execution traces.
+ 2. Simulation by [sound and complete](https://github.com/heron-solver/hygge) generation of execution traces.
  3. Scenario testing.
 
 
@@ -32,7 +32,7 @@ References
 -------------------
 
  1. [A Symbolic Operational Semantics for TESL with an Application to Heterogeneous System Testing](https://hal-centralesupelec.archives-ouvertes.fr/hal-01583815v1), Formal Modeling and Analysis of Timed Systems (FORMATS), 14th International Conference, Berlin, Germany, Sept 5-7, 2017
- 2. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://ieeexplore.ieee.org/document/6961849), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
+ 2. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://tel.archives-ouvertes.fr/SUP_E3S/hal-01100179v1), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
 
 People
 -------------------

@@ -104,6 +104,8 @@ datatype TESL_atomic =
   | NextTo                         of clock * clock * clock     (* Syntactic sugar *)
   | Periodic                       of clock * tag * tag         (* Syntactic sugar *)
   | TypeDeclPeriodic               of tag_t * clock * tag * tag (* Syntactic sugar *)
+  | Precedes                       of clock * clock * bool (* weakly*)
+  | Excludes                       of clock * clock
   | DirMaxstep                     of int
   | DirMinstep                     of int
   | DirHeuristic                   of string
@@ -125,10 +127,12 @@ type TESL_formula = TESL_atomic list
 type TESL_ARS_conf = system * instant_index * TESL_formula * TESL_formula
 
 fun ConstantlySubs f = List.filter (fn f' => case f' of
-    Implies _      => true
-  | TagRelation _  => true
-  | WhenClock _    => true
-  | WhenNotClock _ => true
+    Implies _        => true
+  | TagRelation _    => true
+  | WhenClock _      => true
+  | WhenNotClock _   => true
+  | Precedes _       => true
+  | Excludes _       => true
   | _             => false) f
 fun ConsumingSubs f = List.filter (fn f' => case f' of
 (*  Sporadic _       => true *) (* Removed as handled seperately in SporadicSubs *)
@@ -335,6 +339,8 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | NextTo (c1, c2, c3)                       => [c1, c2, c3]
   | Periodic (c, _, _)                        => [c]
   | TypeDeclPeriodic (_, c, _, _)             => [c]
+  | Precedes (c1, c2, _)                      => [c1, c2]
+  | Excludes (c1, c2)                      => [c1, c2]
   | DirScenario (_, _, tclks)                 => List.map (fn (clk, _) => clk) tclks
   | DirDrivingClock clks                      => clks
   | _ => []
