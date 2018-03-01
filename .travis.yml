@@ -19,10 +19,13 @@ script:
   - ./heron --use examples/basic/WhenImplication.tesl
   - ./heron --use examples/basic/AwaitImplication.tesl
   - ./heron --use examples/basic/TimeDelayed.tesl
-  - ./heron --use examples/gallery/ConcurrentComputations.tesl
-  - ./heron --use examples/gallery/LightSwitch.tesl
-  - ./heron --use examples/gallery/LeapYears.tesl
-  - ./heron --use examples/gallery/Engine.tesl
+  - ./heron --use examples/reference-gallery/ConcurrentComputations.tesl
+  - ./heron --use examples/reference-gallery/LightSwitch.tesl
+  - ./heron --use examples/reference-gallery/LeapYears.tesl
+  - ./heron --use examples/HandWatch.tesl
+  - ./heron --use examples/HandWatch-minimal.tesl
+  - ./heron --use examples/HandWatch-monitoring.tesl
+  - ./heron --use examples/AirplaneTakeoff.tesl
   
 notifications:
   email: false
