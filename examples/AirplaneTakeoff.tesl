@@ -13,40 +13,41 @@
 
 // Assuming uniform acceleration:
 //   a = (270 km.h^-1) / (40 s)
-//     = 1.875 m.s^-1
+//     = 1.875 m.s^-2
 
-rational-clock time_SI   // in [s]
-rational-clock speed_SI  // in [m.s^-1]
-rational-clock speed_KT  // in [kt]
+rational-clock time-SI   // in [s]
+rational-clock speed-SI  // in [m.s^-1]
+rational-clock speed-KT  // in [kt]
 
 // Uniform acceleration
-tag relation speed_SI = 1.875 * time_SI
+tag relation speed-SI = 1.875 * time-SI
 
 // Unit conversion between [m.s^-1] and [kt]
-tag relation speed_SI = 1.944 * speed_KT
+tag relation speed-SI = 1.944 * speed-KT
 
 // Speed thresholds
-V1_reach precedes VR_reach
-V1_reach sporadic 110. on speed_KT
-VR_reach sporadic 135. on speed_KT
+V1-reach precedes VR-reach
+V1-reach sporadic 110. on speed-KT
+VR-reach sporadic 135. on speed-KT
 
 // Takeoff abortion is forbidden after reaching V1
-V1_reach kills emergencystop
+V1-reach kills emergencystop
 
 // Aborting takeoff prevents from reaching takeoff speeds
-emergencystop kills V1_reach
+emergencystop kills V1-reach
 
 // Liftoff occurs 3s after reaching VR
-VR_reach time delayed by 3. on time_SI implies liftoff
+VR-reach time delayed by 3. on time-SI implies liftoff
 
 // Human excitement measured in some unit
-int-clock human_excitement
+int-clock human-excitement
 
 // ALTERNATIVE SITUATION:
-// Before reaching V1 (<= 114.04 sec), engage emergency stop procedure
-// emergencystop sporadic 90. on time_SI
+// Before reaching V1 (time ≤ 114.04 sec), engage emergency stop
+procedure
+// emergencystop sporadic 90. on time-SI
 
-@scenario 1 (time_SI -> 0.0)
+@scenario 1 (time-SI -> 0.0)
 @policy asap
 @maxstep 10
 @run
