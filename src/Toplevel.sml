@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.44.0-alpha+20171213"
+val RELEASE_VERSION = "0.45.0-alpha+20180301"
 
 open OS.Process
 
@@ -109,10 +109,13 @@ fun action (stmt: TESL_atomic) =
   | DirExit               => quit()
   | DirHelp               => print_help()
   | Precedes (c1, c2, _)  =>
-    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Precedence relation not officially supported.\n" ^ RESET_COLOR) ;
+    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Only for testing purposes.\n" ^ RESET_COLOR) ;
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots))
   | Excludes (c1, c2)  =>
-    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Exclusion relation not officially supported.\n" ^ RESET_COLOR) ;
+    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Only for testing purposes.\n" ^ RESET_COLOR) ;
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots))
+  | Kills (c1, c2)  =>
+    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Only for testing purposes.\n" ^ RESET_COLOR) ;
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots))
   | _                     =>
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
@@ -177,13 +180,13 @@ fun run_from_file s =
 
 (* Entry-point *)
 val _ = (
-  print ("Heron " ^ RELEASE_VERSION ^" Release\n");
+  print ("\u001B[1mHeron " ^ RELEASE_VERSION ^" Release\u001B[0m\n");
   case CommandLine.arguments() of
       [] =>
-      (print "Type @help for assistance.\n" ;
-	print "Copyright (c) 2017, Universit\195\169 Paris-Sud / CNRS\n";
-	print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
-	print "             Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334.\n";
+      ( print "Copyright (c) 2018, Universit\195\169 Paris-Sud / CNRS\n";
+	print "Type @help for assistance. Please cite:\n" ;
+	print "  H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
+	print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";
 	toplevel())
     | "-h" :: _ => print_help ()
     | "--help" :: _ => print_help ()

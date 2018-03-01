@@ -70,6 +70,7 @@ ws = [\ \t];
 "reset"                      => (Tokens.RESET(!pos,!pos));
 "precedes"                   => (Tokens.PRECEDES(!pos,!pos));
 "excludes"                   => (Tokens.EXCLUDES(!pos,!pos));
+"kills"                      => (Tokens.KILLS(!pos,!pos));
 "->"                         => (Tokens.ARROW(!pos,!pos));
 "="                          => (Tokens.EQ(!pos,!pos));
 "+"                          => (Tokens.PLUS(!pos,!pos));

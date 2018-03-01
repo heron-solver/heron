@@ -30,6 +30,8 @@ datatype constr =
     Timestamp of clock * instant_index * tag
   | Ticks     of clock * instant_index
   | NotTicks  of clock * instant_index
+  | NotTicksUntil of clock * instant_index
+  | NotTicksFrom  of clock * instant_index
   | Affine    of tag * tag * tag * tag
 
 type system = constr list
@@ -39,6 +41,8 @@ fun clocks_of_system (G: system) =
     Timestamp (c, _, _) => [c]
   | Ticks (c, _)        => [c]
   | NotTicks (c, _)     => [c]
+  | NotTicksUntil (c, _) => [c]
+  | NotTicksFrom (c, _) => [c]
   | _ => []
   ) G))
 
@@ -83,8 +87,9 @@ datatype TESL_atomic =
   | TagRelation                    of clock * tag * clock * tag
   | TagRelationRefl                of clock * clock                 (* Syntactic sugar *)
   | Implies                        of clock * clock
+  | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * clock
-  | WhenTickingOn                  of clock * tag * clock           (* Intermediate Form *)
+  | WhenTickingOn                  of clock * tag * clock
   | DelayedBy                      of clock * int * clock * clock
   | TimesImpliesOn                 of clock * int * clock           (* Intermediate Form *)
   | ImmediatelyDelayedBy           of clock * int * clock * clock
@@ -106,6 +111,7 @@ datatype TESL_atomic =
   | TypeDeclPeriodic               of tag_t * clock * tag * tag (* Syntactic sugar *)
   | Precedes                       of clock * clock * bool (* weakly*)
   | Excludes                       of clock * clock
+  | Kills                          of clock * clock
   | DirMaxstep                     of int
   | DirMinstep                     of int
   | DirHeuristic                   of string
@@ -128,11 +134,13 @@ type TESL_ARS_conf = system * instant_index * TESL_formula * TESL_formula
 
 fun ConstantlySubs f = List.filter (fn f' => case f' of
     Implies _        => true
+  | ImpliesNot _     => true
   | TagRelation _    => true
   | WhenClock _      => true
   | WhenNotClock _   => true
   | Precedes _       => true
   | Excludes _       => true
+  | Kills _       => true
   | _             => false) f
 fun ConsumingSubs f = List.filter (fn f' => case f' of
 (*  Sporadic _       => true *) (* Removed as handled seperately in SporadicSubs *)
@@ -324,6 +332,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | TagRelation (c1, _, c2, _)                => [c1, c2]
   | TagRelationRefl (c1, c2)                  => [c1, c2]
   | Implies (c1, c2)                          => [c1, c2]
+  | ImpliesNot (c1, c2)                       => [c1, c2]
   | TimeDelayedBy (c1, _, c2, c3)             => [c1, c2, c3]
   | DelayedBy (c1, _, c2, c3)                 => [c1, c2, c3]
   | ImmediatelyDelayedBy (c1, _, c2, c3)      => [c1, c2, c3]
@@ -340,7 +349,8 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | Periodic (c, _, _)                        => [c]
   | TypeDeclPeriodic (_, c, _, _)             => [c]
   | Precedes (c1, c2, _)                      => [c1, c2]
-  | Excludes (c1, c2)                      => [c1, c2]
+  | Excludes (c1, c2)                         => [c1, c2]
+  | Kills (c1, c2)                            => [c1, c2]
   | DirScenario (_, _, tclks)                 => List.map (fn (clk, _) => clk) tclks
   | DirDrivingClock clks                      => clks
   | _ => []

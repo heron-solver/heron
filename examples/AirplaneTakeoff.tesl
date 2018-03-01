@@ -1,0 +1,53 @@
+// Airplane takeoff
+
+// Physical assumptions:
+//   Boeing 737-800
+//   Wet runway
+//   Maximum takeoff thrust
+//   Average weight (75 tons = 150e3 lbs)
+//   Flaps 1
+
+// Estimated takeoff speeds:
+//   V1 = 110 kt
+//   VR = 135 kt
+
+// Assuming uniform acceleration:
+//   a = (270 km.h^-1) / (40 s)
+//     = 1.875 m.s^-1
+
+rational-clock time_SI   // in [s]
+rational-clock speed_SI  // in [m.s^-1]
+rational-clock speed_KT  // in [kt]
+
+// Uniform acceleration
+tag relation speed_SI = 1.875 * time_SI
+
+// Unit conversion between [m.s^-1] and [kt]
+tag relation speed_SI = 1.944 * speed_KT
+
+// Speed thresholds
+V1_reach precedes VR_reach
+V1_reach sporadic 110. on speed_KT
+VR_reach sporadic 135. on speed_KT
+
+// Takeoff abortion is forbidden after reaching V1
+V1_reach kills emergencystop
+
+// Aborting takeoff prevents from reaching takeoff speeds
+emergencystop kills V1_reach
+
+// Liftoff occurs 3s after reaching VR
+VR_reach time delayed by 3. on time_SI implies liftoff
+
+// Human excitement measured in some unit
+int-clock human_excitement
+
+// ALTERNATIVE SITUATION:
+// Before reaching V1 (<= 114.04 sec), engage emergency stop procedure
+// emergencystop sporadic 90. on time_SI
+
+@scenario 1 (time_SI -> 0.0)
+@policy asap
+@maxstep 10
+@run
+@print

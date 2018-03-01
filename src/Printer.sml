@@ -14,14 +14,15 @@ print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR);
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
 print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl]");
 print "\n\n";
-print "Copyright (c) 2017, Universit\195\169 Paris-Sud / CNRS\n";
+print "Copyright (c) 2018, Universit\195\169 Paris-Sud / CNRS\n";
 print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
 print "             Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334.\n";
 print "\n";
 print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG]+\n"; 
+print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mperiodic\u001B[0m [TAG] (\u001B[1moffset\u001B[0m [TAG])\n"; 
-print "  [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mimplies (not)\u001B[0m [CLOCK]\n"; 
 print "  \u001B[1mtag relation\u001B[0m [CLOCK] = [TAG] * [CLOCK] + [TAG]\n"; 
 print "  [CLOCK] \u001B[1mtime delayed by\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mdelayed by\u001B[0m [INT] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
@@ -38,6 +39,7 @@ print "\n";
 print (BOLD_COLOR ^ "Additional unofficially supported expressions:\n" ^ RESET_COLOR); 
 print "  [CLOCK] \u001B[1m(weakly) precedes\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mexcludes\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] \u001B[1mkills\u001B[0m [CLOCK]\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [INT]                    define the number of minimum run steps\n"; 
@@ -157,12 +159,22 @@ fun string_of_affine_constr c =
 (* Print HAA-system *)
 fun print_system (step_index: int) (clocks: clock list) (G : system) =
   let
+    fun contain_notticksuntil g = List.exists (fn NotTicksUntil _ => true | _ => false) g
+    fun contain_notticksfrom g = List.exists (fn NotTicksFrom _ => true | _ => false) g
+    (* In SML, Unicode code points must be expressed as decimal UTF-8 *)
     (* Old tick symbol: \226\135\145 to get ⇑ *)
-    val TICK_SYM = "\226\134\145"       (* ↑ *)
-    val FORBIDDEN_SYM = "\226\138\152"  (* ⊘ *)
+    val TICK_SYM         = "\226\134\145" (* ↑ *) (* ⚡ *)
+    val FORBIDDEN_SYM    = "\226\138\152" (* ⊘ *) (* ⛔ *)
+    val DEATH_SYM        = "\226\152\160" (* ☠ *) (* \240\159\146\128 to get 💀 *)
+    val NONEXISTENCE_SYM = "\226\136\132" (* ∄ *) (* ⛔ *)
     val G = lfp (reduce) G
     fun constrs_of_clk_instindex c n =
-      List.filter (fn Ticks (c', n') => c = c' andalso n = n' | NotTicks (c', n') => c = c' andalso n = n' | Timestamp (c', n', _) => c = c' andalso n = n' | _ => false) G
+      List.filter (fn Ticks (c', n') => c = c' andalso n = n'
+      		      | NotTicks (c', n') => c = c' andalso n = n'
+      		      | NotTicksUntil (c', n') => c = c' andalso n < n'
+      		      | NotTicksFrom  (c', n') => c = c' andalso n >= n'
+		      | Timestamp (c', n', _) => c = c' andalso n = n'
+		      | _ => false) G
     fun string_of_constrs_at_clk_instindex clk n g =
       let
         val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Unit => true | Int _ => true | Rat _ => true | _ => false) | _ => false) g
@@ -170,9 +182,15 @@ fun print_system (step_index: int) (clocks: clock list) (G : system) =
 	   if contains (Ticks (clk, n)) g
 	   then TICK_SYM
 	   else
-	     if contains (NotTicks (clk, n)) g
-	     then FORBIDDEN_SYM
-	     else ""
+	     if contain_notticksuntil g 
+	     then NONEXISTENCE_SYM 
+	     else
+	       if contain_notticksfrom g
+	       then DEATH_SYM
+	       else
+	       	 if contains (NotTicks (clk, n)) g
+	         then FORBIDDEN_SYM
+	         else "" (* Decide whether using empty string or '?' to show unconstrained spot *)
 	 val tag_string =
 	     case List.find (fn Timestamp (_, _, _) => true | _ => false) timestamps of
 		  NONE                         => " "
@@ -240,8 +258,10 @@ fun string_of_expr e = case e of
     TypeDecl (c, ty)                                        => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c)
   | Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
   | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
+  | WhenTickingOn (ctick, t, cmeas)                         => (string_of_clk ctick) ^ " sporadic " ^ (string_of_tag t) ^ " on " ^ (string_of_clk cmeas)
   | TypeDeclSporadics (ty, c, tags)                         => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
+  | ImpliesNot (master, slave)                              => (string_of_clk master) ^ " implies not " ^ (string_of_clk slave)
   | TagRelation (c1, a, c2, b)                              => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
   | TagRelationRefl (c1, c2)                                => "tag relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk c2)
   | TimeDelayedBy (master, t, measuring, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
@@ -261,6 +281,7 @@ fun string_of_expr e = case e of
   | TypeDeclPeriodic (ty, c, per, offset)                   => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " periodic " ^ (string_of_tag per) ^ " offset " ^ (string_of_tag offset)
   | Precedes (master, slave, weakly_b)                      => (string_of_clk master) ^ " " ^ (if weakly_b then "weakly " else "") ^ "precedes " ^ (string_of_clk slave)
   | Excludes (c1, c2)                                       => (string_of_clk c1) ^ " excludes " ^ (string_of_clk c2)
+  | Kills (c1, c2) => (string_of_clk c1) ^ " kills " ^ (string_of_clk c2)
   | DirMinstep _	                                       => "<parameter>"
   | DirMaxstep _						    => "<parameter>"
   | DirHeuristic _						    => "<parameter>"

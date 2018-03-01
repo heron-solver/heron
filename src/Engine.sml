@@ -377,11 +377,36 @@ fun ARS_rule_excludes_2
     (G @ [Ticks (c1, n), NotTicks (c2, n)], n, frun, finst @- [fsubst])
   | ARS_rule_excludes_2 _ _ = raise Assert_failure;
 
-(* 53. Exclusion elimination when c2 is reacting *)
+(* 54. Exclusion elimination when c2 is reacting *)
 fun ARS_rule_excludes_3
   (G, n, frun, finst) (fsubst as Excludes (c1, c2)) =
     (G @ [NotTicks (c1, n), Ticks (c2, n)], n, frun, finst @- [fsubst])
   | ARS_rule_excludes_3 _ _ = raise Assert_failure;
+
+(* 55. Implies not elimination when premise is false *)
+fun ARS_rule_implies_not_1
+  (G, n, frun, finst) (fsubst as ImpliesNot (c1, _)) =
+    (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_implies_not_1 _ _ = raise Assert_failure;
+
+(* 56. Implies not elimination when premise is true *)
+fun ARS_rule_implies_not_2
+  (G, n, frun, finst) (fsubst as ImpliesNot (c1, c2)) =
+    (G @ [Ticks (c1, n), NotTicks (c2, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_implies_not_2 _ _ = raise Assert_failure;
+
+(* 57. Kills elimination when premise is false *)
+fun ARS_rule_kills_1
+  (G, n, frun, finst) (fsubst as Kills (c1, _)) =
+    (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_kills_1 _ _ = raise Assert_failure;
+
+(* 58. Kills elimination when premise is true *)
+fun ARS_rule_kills_2
+  (G, n, frun, finst) (fsubst as Kills (c1, c2)) =
+    (G @ [Ticks (c1, n), NotTicksFrom (c2, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_kills_2 _ _ = raise Assert_failure;
+
 
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
@@ -408,6 +433,8 @@ fun lawyer_e
 			     [(fatom, ARS_rule_tagrel_elim)]
 			 | Implies _ =>
 			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
+			 | ImpliesNot _ =>
+			     [(fatom, ARS_rule_implies_not_1), (fatom, ARS_rule_implies_not_2)]
 			 | TimeDelayedBy _ =>
 			     [(fatom, ARS_rule_timedelayed_elim_1), (fatom, ARS_rule_timedelayed_elim_2)]
 			 | FilteredBy (_, s, k, _, _, _) =>
@@ -544,6 +571,7 @@ fun lawyer_e
 						    ))
 			     end
 			 | Excludes (c1, c2) => [(fatom, ARS_rule_excludes_1), (fatom, ARS_rule_excludes_2), (fatom, ARS_rule_excludes_3)]
+			 | Kills (c1, c2) => [(fatom, ARS_rule_kills_1), (fatom, ARS_rule_kills_2)]
 			 | _ => raise UnexpectedBehavior "Unspecified elimination rules"
 		      );
 

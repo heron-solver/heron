@@ -29,19 +29,25 @@ fun haa_constrs_at_step (G: system) (step: int) =
     | NotTicks (_, step')     => step = step'
     | Affine _                => false
 ) G
+exception UnexpectedMatch2
 
 (* Whenever there's a ticking predicate, there shouln't be a refutation. Same way for non-ticking predicate. *)
 fun check_non_contradictory_ticks (G: system) =
   let
     val ticks      = (List.filter (fn cstr => case cstr of Ticks _ => true | _ => false) G)
     val notticks   = (List.filter (fn cstr => case cstr of NotTicks _ => true | _ => false) G)
+    val notticksuntil = (List.filter (fn cstr => case cstr of NotTicksUntil _ => true | _ => false) G)
+    val notticksfrom  = (List.filter (fn cstr => case cstr of NotTicksFrom _ => true | _ => false) G)
   in
     List.all
-      (fn Ticks (clk, i) => not (List.exists (fn NotTicks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch) notticks) | _ => raise UnexpectedMatch)
+      (fn Ticks (clk, i) => not (List.exists (fn NotTicks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch2) notticks)
+      	  	      	    andalso (not (List.exists (fn NotTicksUntil (clk', i') => clk = clk' andalso i < i' | _ => raise UnexpectedMatch2) notticksuntil))
+      	  	      	    andalso (not (List.exists (fn NotTicksFrom  (clk', i') => clk = clk' andalso i >= i' | _ => raise UnexpectedMatch2) notticksfrom))
+      	  | _ => raise UnexpectedMatch2)
       ticks
   andalso
     List.all
-      (fn NotTicks (clk, i) => not (List.exists (fn Ticks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch) ticks) | _ => raise UnexpectedMatch)
+      (fn NotTicks (clk, i) => not (List.exists (fn Ticks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch2) ticks) | _ => raise UnexpectedMatch2)
       notticks
   end;
 

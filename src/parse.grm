@@ -42,6 +42,7 @@
       | ARROW
       | PRECEDES
       | EXCLUDES
+      | KILLS
 
 %nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list 
 
@@ -78,11 +79,13 @@
       | LET RATIONAL ID EQ TAG							  (raise UnsupportedParsedTerm) 
       | LET FLOAT ID EQ TAG								  (raise UnsupportedParsedTerm) 
       | CLK SPORADIC TAGS                                                      (Sporadics (CLK, TAGS))
+      | CLK SPORADIC TAG ON CLK                                                (WhenTickingOn (CLK2, TAG, CLK1))
       | TYPEDECL CLK SPORADIC TAGS                                             (TypeDeclSporadics (TYPEDECL, CLK, TAGS))
       | TYPEDECL CLK SPORADIC                                                  (case TYPEDECL of
 												Unit_t => TypeDeclSporadics (TYPEDECL, CLK, [Unit])
 											     | _ => raise UnsupportedParsedTerm)
       | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
+      | CLK IMPLIES NOT CLK						       (ImpliesNot (CLK1, CLK2))
       | TAGREL CLK EQ TAG TIMES CLK PLUS TAG                                   (TagRelation (CLK1, TAG1, CLK2, TAG2))
       | TAGREL CLK EQ TAG TIMES CLK                                            (case TAG of Int _ => TagRelation (CLK1, TAG, CLK2, Int (0))
 												      | Rat _ => TagRelation (CLK1, TAG, CLK2, Rat (rat_zero))
@@ -118,6 +121,7 @@
       | CLK PRECEDES CLK                                                       (Precedes (CLK1, CLK2, false))
       | CLK WEAKLY PRECEDES CLK                                                (Precedes (CLK1, CLK2, true))
       | CLK EXCLUDES CLK                                                       (Excludes (CLK1, CLK2))
+      | CLK KILLS CLK							       (Kills (CLK1, CLK2))
 
       | DIR_MAXSTEP NUM                                                        (DirMaxstep (NUM))
       | DIR_MINSTEP NUM                                                        (DirMinstep (NUM))
