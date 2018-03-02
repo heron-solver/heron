@@ -1,0 +1,21 @@
+// Radiotherapy machine
+
+Q-clock hr
+Q-clock gy
+Q-clock start sporadic 0.0
+Q-clock stop
+Q-clock emstop
+
+tag relation gy = 1.5 * hr
+tag relation gy = start
+tag relation start = stop
+tag relation stop = emstop
+
+emstop implies stop
+
+start time delayed by 2.0 on gy implies stop
+start time delayed by 0.5 on hr implies boredom
+
+@policy asap
+@run
+@print

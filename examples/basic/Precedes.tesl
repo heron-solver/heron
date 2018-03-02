@@ -1,0 +1,4 @@
+h1 precedes h2
+@minstep 2
+@run
+@print

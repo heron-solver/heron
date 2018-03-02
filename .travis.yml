@@ -17,15 +17,17 @@ script:
   - ./heron --use examples/basic/DelayedImplication.tesl
   - ./heron --use examples/basic/SustainedImplication.tesl
   - ./heron --use examples/basic/WhenImplication.tesl
-  - ./heron --use examples/basic/AwaitImplication.tesl
-  - ./heron --use examples/basic/TimeDelayed.tesl
+  - ./heron --use examples/basic/Precedes.tesl
+  - ./heron --use examples/basic/WeaklyPrecedes.tesl
   - ./heron --use examples/reference-gallery/ConcurrentComputations.tesl
   - ./heron --use examples/reference-gallery/LightSwitch.tesl
   - ./heron --use examples/reference-gallery/LeapYears.tesl
   - ./heron --use examples/HandWatch.tesl
   - ./heron --use examples/HandWatch-minimal.tesl
   - ./heron --use examples/HandWatch-monitoring.tesl
+  - ./heron --use examples/Radiotherapy.tesl
   - ./heron --use examples/AirplaneTakeoff.tesl
+  - ./heron --use examples/AirplaneTakeoff-emergencystop.tesl
   
 notifications:
   email: false

@@ -9,7 +9,8 @@ binary-release: all
 	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-$(shell uname -m)-$(shell uname | tr A-Z a-z).tar.gz \
 		heron \
 		examples/HandWatch* \
-		examples/AirplaneTakeoff.tesl \
+		examples/Radiotherapy.tesl \
+		examples/AirplaneTakeoff*.tesl \
 		examples/basic \
 		examples/reference-gallery
 

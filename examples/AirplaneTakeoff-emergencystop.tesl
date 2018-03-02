@@ -42,7 +42,11 @@ VR-reach time delayed by 3. on time-SI implies liftoff
 // Human excitement measured in some unit
 int-clock human-excitement
 
+// Before reaching V1 (time ≤ 114.04 sec), engage stop procedure
+emergencystop sporadic 90. on time-SI
+
 @scenario 1 (time-SI -> 0.0)
 @policy asap
+@maxstep 8
 @run
 @print
