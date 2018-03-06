@@ -23,7 +23,7 @@
 %term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t
       | SEMI | EOF | EQ | PLUS | TIMES | DIV | TAGREL | TIME | ON | DELAYED
       | FILTERED | LPAR | RPAR | LDIP | RDIP | COMMA
-      | SUSTAINED | IMMEDIATELY | TO | WEAKLY 
+      | SUSTAINED | IMMEDIATELY | TO | WEAKLY | STRICTLY
       | AWAIT | WEAK | STRONG
       | WHEN | NOT
       | EVERY | STARTING | AT
@@ -118,7 +118,7 @@
 												      | Rat _ => TypeDeclPeriodic (TYPEDECL, CLK, TAG, Rat rat_zero)
 												      | _     => raise UnsupportedParsedTerm)
       | CLK NEXT TO CLK IMPLIES CLK                                            (NextTo (CLK1, CLK2, CLK3))
-      | CLK PRECEDES CLK                                                       (Precedes (CLK1, CLK2, false))
+      | CLK STRICTLY PRECEDES CLK                                              (Precedes (CLK1, CLK2, false))
       | CLK WEAKLY PRECEDES CLK                                                (Precedes (CLK1, CLK2, true))
       | CLK EXCLUDES CLK                                                       (Excludes (CLK1, CLK2))
       | CLK KILLS CLK							       (Kills (CLK1, CLK2))

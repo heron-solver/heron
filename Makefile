@@ -10,7 +10,7 @@ binary-release: all
 		heron \
 		examples/HandWatch* \
 		examples/Radiotherapy.tesl \
-		examples/AirplaneTakeoff*.tesl \
+		examples/AirplaneTakeoff.tesl \
 		examples/basic \
 		examples/reference-gallery
 

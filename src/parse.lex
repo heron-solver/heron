@@ -56,6 +56,7 @@ ws = [\ \t];
 "sustained"                  => (Tokens.SUSTAINED(!pos,!pos));
 "immediately"                => (Tokens.IMMEDIATELY(!pos,!pos));
 "weakly"                     => (Tokens.WEAKLY(!pos,!pos));
+"strictly"                   => (Tokens.STRICTLY(!pos,!pos));
 "to"                         => (Tokens.TO(!pos,!pos));
 "await"                      => (Tokens.AWAIT(!pos,!pos));
 "when"                       => (Tokens.WHEN(!pos,!pos));
