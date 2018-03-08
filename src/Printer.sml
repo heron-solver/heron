@@ -245,14 +245,23 @@ fun print_floating_ticks (clocks: clock list) (f: TESL_formula) : unit =
 fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
     [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
-  | _ => List.foldl (fn ((G, step, phi, _), _) =>
-    let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
-    (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result:") ;
-     print_system step declared_clocks G ;
-     print RESET_COLOR ;
-     print_affine_constrs G ;
-     print_floating_ticks declared_clocks phi ;
-     writeln "## End") end) () cfs
+  | _ =>
+  let
+    val number_of_snaps_str = string_of_int (List.length cfs)
+    val snap_indx = ref 0
+    fun snap_indx_now_str () =
+      if (List.length cfs) = 1
+      then ""
+      else " [" ^ string_of_int ((snap_indx := !snap_indx + 1) ; (!snap_indx)) ^ "/" ^ number_of_snaps_str ^ "]"
+    in List.foldl (fn ((G, step, phi, _), _) =>
+      let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
+      (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result" ^ snap_indx_now_str() ^ ":") ;
+       print_system step declared_clocks G ;
+       print RESET_COLOR ;
+       print_affine_constrs G ;
+       print_floating_ticks declared_clocks phi ;
+       writeln "## End") end) () cfs
+  end
 
 fun string_of_expr e = case e of
     TypeDecl (c, ty)                                        => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c)
