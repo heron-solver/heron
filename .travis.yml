@@ -17,7 +17,7 @@ script:
   - ./heron --use examples/basic/DelayedImplication.tesl
   - ./heron --use examples/basic/SustainedImplication.tesl
   - ./heron --use examples/basic/WhenImplication.tesl
-  - ./heron --use examples/basic/Precedes.tesl
+  - ./heron --use examples/basic/StrictlyPrecedes.tesl
   - ./heron --use examples/basic/WeaklyPrecedes.tesl
   - ./heron --use examples/reference-gallery/ConcurrentComputations.tesl
   - ./heron --use examples/reference-gallery/LightSwitch.tesl

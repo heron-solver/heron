@@ -78,6 +78,7 @@
       | LET DECIMAL ID EQ TAG							  (raise UnsupportedParsedTerm) 
       | LET RATIONAL ID EQ TAG							  (raise UnsupportedParsedTerm) 
       | LET FLOAT ID EQ TAG								  (raise UnsupportedParsedTerm) 
+      | CLK SPORADIC                                                           (Sporadics (CLK, [Unit]))
       | CLK SPORADIC TAGS                                                      (Sporadics (CLK, TAGS))
       | CLK SPORADIC TAG ON CLK                                                (WhenTickingOn (CLK2, TAG, CLK1))
       | TYPEDECL CLK SPORADIC TAGS                                             (TypeDeclSporadics (TYPEDECL, CLK, TAGS))
