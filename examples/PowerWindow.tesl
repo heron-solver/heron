@@ -1,0 +1,48 @@
+// Power window
+// http://wdi.supelec.fr/software/ModHelX/PowerWindow
+
+unit-clock btn_up       // the button is pulled up
+unit-clock btn_neutral  // the button is released
+unit-clock up           // the TFSM receives an up event
+unit-clock stop         // the TFSM receives a stop event
+unit-clock power        // the TFSM produces a power event
+unit-clock update_power // the SDF model receives a new power command
+unit-clock react        // the SDF model reacts to its inputs
+rational-clock realtime // real-time in seconds
+rational-clock bus      // time scale of the CAN bus
+
+// The transmission delay on the CAN bus is 2 ms
+tag relation realtime = 0.002 * bus
+btn_up time delayed by 1.0 on bus implies up
+btn_neutral time delayed by 1.0 on bus implies stop
+
+// When the TFSM receives an input, it updates its output instantaneously
+up implies power
+stop implies power
+
+// The transmission delay on the CAN bus is 2 ms
+power time delayed by 1.0 on bus implies update_power
+
+// The window must react every 50ms
+react time delayed by 0.05 on realtime implies react
+
+// Scenario
+rational-clock react_scenario sporadic 0.0
+tag relation react_scenario = 0.001 * realtime
+react_scenario implies react
+
+rational-clock up_scenario sporadic 5.0
+tag relation up_scenario = 1000.0 * realtime
+up_scenario implies btn_up
+
+rational-clock neutral_scenario sporadic 320.0
+tag relation neutral_scenario = 1000.0 * realtime
+neutral_scenario implies btn_neutral
+
+// Output options
+// @tagref realtime
+@dumpres
+@maxstep 14
+@policy asap
+@run
+// @output tikz standalone xscale 20 select btn_up, btn_neutral, up, stop, power, update_power, react

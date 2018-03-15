@@ -27,6 +27,7 @@ script:
   - ./heron --use examples/HandWatch-monitoring.tesl
   - ./heron --use examples/Radiotherapy.tesl
   - ./heron --use examples/AirplaneTakeoff.tesl
+  - ./heron --use examples/PowerWindow.tesl
   
 notifications:
   email: false

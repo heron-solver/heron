@@ -11,6 +11,7 @@ binary-release: all
 		examples/HandWatch* \
 		examples/Radiotherapy.tesl \
 		examples/AirplaneTakeoff.tesl \
+		examples/PowerWindow.tesl \
 		examples/basic \
 		examples/reference-gallery
 
