@@ -46,6 +46,7 @@ ws = [\ \t];
 "float"			 => (Tokens.FLOAT(!pos,!pos)); 
 "sporadic"                   => (Tokens.SPORADIC(!pos,!pos));
 "implies"                    => (Tokens.IMPLIES(!pos,!pos));
+"time relation"               => (Tokens.TAGREL(!pos,!pos));
 "tag relation"               => (Tokens.TAGREL(!pos,!pos));
 "by"                         => (Tokens.BY(!pos,!pos));
 "time"                       => (Tokens.TIME(!pos,!pos));
