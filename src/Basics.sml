@@ -13,6 +13,12 @@
 (* COMMENT THE FOLLOWING LINE IF YOU WISH TO USE Isabelle/jEdit IDE *)
 fun writeln s = print (s ^ "\n")
 fun string_of_int n = Int.toString n
+
+fun minus_instead_of_tild (str: string): string =
+  String.implode (List.map (fn chr => if chr = #"~" then #"-" else chr) (String.explode str))
+fun string_of_int_minus n =
+  minus_instead_of_tild (Int.toString n)
+
 (* **************************************************************** *)
 
 (* Some colors *)
@@ -90,3 +96,15 @@ fun random_int_range (i: int, j: int) (s: word): int =
 	 else i + cvt (((Int32.fromLarge o Word.toLargeInt) s) mod (R+1))
       end
 handle Overflow => random_int_range (i, j) (valOf (MLton.Random.useed ()));
+
+fun assoc l x = case (List.find (fn (k, v) => k = x) l) of
+  SOME (_, V) => V
+
+exception Empty
+
+fun max (a, b) = if a > b then a else b
+
+fun largest [] = raise Empty 
+ | largest [x] = x
+ | largest (x::xs) = max(x, largest xs)
+ 

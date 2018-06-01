@@ -19,6 +19,7 @@ in
  RunConsistency.sml
  Printer.sml
  VCD.sml
+ TEX.sml
  Policy.sml
  Engine.sml
  Toplevel.sml

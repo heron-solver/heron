@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.45.6-alpha+20180424"
+val RELEASE_VERSION = "0.46.0-alpha+20180601"
 
 open OS.Process
 
@@ -99,6 +99,13 @@ fun action (stmt: TESL_atomic) =
       | [s] => 
 	 (print ("## Writing vcd output to " ^ (OS.FileSys.getDir ()) ^ "/output.vcd\n");
 	  writeFile "output.vcd" (VCD_toString RELEASE_VERSION (!current_step - 1) (!declared_clocks) s))
+      | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
+  | DirOutputTEX stdal    =>
+    (case !snapshots of
+	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)
+      | [s] => 
+	 (print ("## Writing tex output to " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n");
+	  writeFile "output.tex" (TEX_toString stdal RELEASE_VERSION (!current_step - 1) (!declared_clocks) s))
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
   | DirSelect n           =>
     (print ("## Selecting " ^ (Int.toString n) ^ "th simulation state\n");

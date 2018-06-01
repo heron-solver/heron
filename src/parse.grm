@@ -36,7 +36,7 @@
       | FROM
       | LET | INT | DECIMAL | RATIONAL | FLOAT
       | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
-      | DIR_OUTPUT | VCD | SVG 
+      | DIR_OUTPUT | VCD | SVG | TEX | TIKZ
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
       | DIR_SELECT 
       | ARROW
@@ -138,6 +138,8 @@
       | DIR_EXIT                                                               (DirExit)
       | DIR_HELP                                                               (DirHelp)
       | DIR_OUTPUT VCD                                                         (DirOutputVCD)
+      | DIR_OUTPUT TIKZ                                                        (DirOutputTEX (false))
+      | DIR_OUTPUT TEX                                                         (DirOutputTEX (true))
       | DIR_OUTPUT SVG                                                         (raise UnsupportedParsedTerm)
       | DIR_SELECT NUM                                                         (DirSelect (NUM))
       | DIR_DRIVINGDECL CLKS                                                   (DirDrivingClock (CLKS))

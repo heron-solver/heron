@@ -64,7 +64,7 @@ print "  @run                           run the specification until model found\
 print "  @step                          run the specification for one step\n"; 
 print "  @event-concretize              concretize ticks/tags of driving clocks\n"; 
 print "  @print                         display the current snapshots\n"; 
-print "  @output vcd                    export to VCD file\n"; 
+print "  @output vcd/tex                export to VCD or LaTeX/TikZ file\n"; 
 print "  @help                          display the list of commands\n")
 
 fun superscript_of_char (c : char) =
@@ -302,6 +302,7 @@ fun string_of_expr e = case e of
   | DirSelect _						    => "<directive>"
   | DirEventConcretize _					    => "<directive>"
   | DirOutputVCD						    => "<directive>"
+  | DirOutputTEX _	   				    => "<directive>"
   | DirExit							    => "<directive>"
   | DirPrint							    => "<directive>"
   | DirHelp							    => "<directive>"

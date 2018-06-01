@@ -1,0 +1,47 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+
+\begin{document}
+\definecolor{instantcolor}{RGB}{37, 116, 169}
+\definecolor{tickcolor}{RGB}{239, 72, 54}
+\definecolor{datecolor}{RGB}{30, 130, 76}
+\tikzset{%
+  tick/.style={%
+    rectangle, fill=tickcolor,
+    inner sep = 0pt,
+    minimum width = 1mm,
+    minimum height=4mm,
+    anchor = south,
+    above right=0mm and 1mm,
+  }
+}
+\tikzset{%
+  vline/.style={%
+    dashed
+  }
+}
+\tikzset{%
+  date/.style={%
+   above right=0mm and 2mm, text=datecolor, font=\scriptsize
+  }
+}
+\tikzset{%
+  instant/.style={%
+    rectangle, draw=instantcolor, dashed, above right=-1.8mm and -0.6mm,
+    inner sep = 0pt, minimum width=0.8\xlength, minimum height=6\ylength
+  }
+}
+\tikzset{%
+  instantlab/.style={%
+    below=1.5mm, text=instantcolor, font=\rmfamily
+  }
+}
+\definecolor{edward}{RGB}{171, 183, 183}
+\newlength{\xlength}
+\newlength{\ylength}
+\setlength{\xlength}{12.5mm}%
+\setlength{\ylength}{0.87cm}%
+
+\input{output.tex}
+\end{document}
