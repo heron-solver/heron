@@ -66,7 +66,7 @@ fun primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
 fun instants_labels (n: int) (clk_numbers: int) =
   "    \\foreach \\i/\\x in {" ^ (String.concatWith "," (List.map (fn k => ((string_of_int (k - 1)) ^ "/" ^ (string_of_int k))) (range n))) ^ "} {\n"
 (* ^ "      \\node[instant] (I\\i) at (\\x,-" ^ (string_of_int clk_numbers) ^ ".5) {} ; \n" *)
-^ "      \\node (I\\i) at (\\x,-" ^ (string_of_int (clk_numbers - 1)) ^ ".5) {} ; \n"
+^ "      \\node (I\\i) at (\\x+0.1, -" ^ (string_of_int (clk_numbers - 1)) ^ ") {} ; \n"
 ^ "      \\node[instantlab] at (I\\i.south) {\\textsf{\\i}} ;\n"
 ^ "    }\n"
 
@@ -75,7 +75,7 @@ fun TEX_toString (standalone: bool) (RELEASE_VERSION: string) (step_index: int) 
   ""
   ^ "\\begin{tikzpicture}[>=stealth,x=\\xlength,y=\\ylength]\n"
   ^ "    \\foreach \\i in {1,...," ^ (string_of_int step_index) ^ "} {\n"
-  ^ "      \\draw[edward, vline] (\\i+.1,-" ^ (string_of_int ((List.length clocks) - 1)) ^ ") -- +(0+.1, " ^ (string_of_int ((List.length clocks) - 1)) ^ ".7) ;\n"
+  ^ "      \\draw[edward, vline] (\\i+.1,-" ^ (string_of_int ((List.length clocks) - 1)) ^ ") -- +(0, " ^ (string_of_int ((List.length clocks) - 1)) ^ ".7) ;\n"
   ^ "    }\n"
   ^ (clocks_toString 0 step_index clocks (List.length clocks))
   ^ (let val x = ref 1 in primitives_toString (List.map (fn Clk cname => (cname, (x := (!x) - 1; !x))) clocks) G end)
