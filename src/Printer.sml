@@ -267,7 +267,7 @@ fun string_of_expr e = case e of
     TypeDecl (c, ty)                                        => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c)
   | Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
   | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
-  | WhenTickingOn (ctick, t, cmeas)                         => (string_of_clk ctick) ^ " sporadic " ^ (string_of_tag t) ^ " on " ^ (string_of_clk cmeas)
+  | WhenTickingOn (cmeas, t, ctick)                         => (string_of_clk ctick) ^ " sporadic " ^ (string_of_tag t) ^ " on " ^ (string_of_clk cmeas)
   | TypeDeclSporadics (ty, c, tags)                         => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
   | ImpliesNot (master, slave)                              => (string_of_clk master) ^ " implies not " ^ (string_of_clk slave)
