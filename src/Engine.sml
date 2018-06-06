@@ -15,7 +15,7 @@ fun ARS_rule_instant_intro
   (G, n, f, []) =
     (G,
      n + 1,
-     f @- (SelfModifyingSubs f) @- (ConsumingSubs f) @- (SporadicNowSubs f),
+     ((f @- (SelfModifyingSubs f)) @- (ConsumingSubs f)) @- (SporadicNowSubs f),
      (ConsumingSubs f) @ (SporadicNowSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
   | ARS_rule_instant_intro _ = raise Assert_failure;
 
@@ -178,7 +178,7 @@ fun ARS_rule_await_instant_sigcaught
      (G @ [Ticks (hlisten, n)],
       n,
       frun,
-      finst @- [fsubst] @ [Await (Hawait, Hremains @- [hlisten], Hinst @- [hlisten], himp)]) end
+      (finst @- [fsubst]) @ [Await (Hawait, Hremains @- [hlisten], Hinst @- [hlisten], himp)]) end
   | ARS_rule_await_instant_sigcaught _ _ = raise Assert_failure;
 
 (* 25. Await-remaining instant update when no signal on clock [hlisten] *)
@@ -191,7 +191,7 @@ fun ARS_rule_await_instant_sigabsent
      (G @ [NotTicks (hlisten, n)],
       n,
       frun,
-      finst @- [fsubst] @ [Await (Hawait, Hremains, Hinst @- [hlisten], himp)]) end
+      (finst @- [fsubst]) @ [Await (Hawait, Hremains, Hinst @- [hlisten], himp)]) end
   | ARS_rule_await_instant_sigabsent _ _ = raise Assert_failure;
 
 (* 26. Await-remaining instant update when no signal triggered on clock [hlisten] *)
