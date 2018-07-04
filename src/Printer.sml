@@ -12,7 +12,7 @@
 fun print_help () = (
 print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
-print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl]");
+print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl] [--runtime-print]");
 print "\n\n";
 print "Copyright (c) 2018, Universit\195\169 Paris-Sud / CNRS\n";
 print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
@@ -157,7 +157,11 @@ fun string_of_affine_constr c =
     | _ => raise UnexpectedMatch
 
 (* Print HAA-system *)
-fun print_system (step_index: int) (clocks: clock list) (G : system) =
+
+fun print_clocks clocks =
+  writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
+      
+fun print_system_step (step_index: int) (clocks: clock list) (G : system) =
   let
     fun contain_notticksuntil g = List.exists (fn NotTicksUntil _ => true | _ => false) g
     fun contain_notticksfrom g = List.exists (fn NotTicksFrom _ => true | _ => false) g
@@ -167,7 +171,6 @@ fun print_system (step_index: int) (clocks: clock list) (G : system) =
     val FORBIDDEN_SYM    = "\226\138\152" (* ⊘ *) (* ⛔ *)
     val DEATH_SYM        = "\226\152\160" (* ☠ *) (* \240\159\146\128 to get 💀 *)
     val NONEXISTENCE_SYM = "\226\136\132" (* ∄ *) (* ⛔ *)
-    val G = lfp (reduce) G
     fun constrs_of_clk_instindex c n =
       List.filter (fn Ticks (c', n') => c = c' andalso n = n'
       		      | NotTicks (c', n') => c = c' andalso n = n'
@@ -198,16 +201,19 @@ fun print_system (step_index: int) (clocks: clock list) (G : system) =
 		| _ => raise UnexpectedMatch
       in tick_string ^ " " ^ tag_string
     end
-    fun print_clocks () =
-      writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
     fun print_instant n =
       writeln ("[" ^ string_of_int n ^ "]"
 		 ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_constrs_at_clk_instindex c n (constrs_of_clk_instindex c n)) "" clocks)
+  in (print_instant step_index)
+end
+
+fun print_system (step_index: int) (clocks: clock list) (G : system) =
+  let
     fun print_run k =
       if k > step_index
       then ()
-      else (print_instant k ; print_run (k + 1))
-  in print_clocks (); print_run 1
+      else (print_system_step k clocks G ; print_run (k + 1))
+  in print_clocks clocks; print_run 1
 end
 
 fun print_affine_constrs (G : system) : unit =
@@ -242,6 +248,18 @@ fun print_floating_ticks (clocks: clock list) (f: TESL_formula) : unit =
   end
 
 (* Output snapshots *)
+fun print_step_runtime (declared_clocks : clock list) (cfs: TESL_ARS_conf list) (current_step: int) =
+  let val () = if current_step = 0
+               then ((writeln ("## Runtime diagram:")) ; (print_clocks declared_clocks))
+	       else ()
+  in case cfs of
+    [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
+		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
+  | _ => case List.hd cfs of
+      (G, step, phi, _) =>
+      (print_system_step current_step declared_clocks G)
+  end
+
 fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
     [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))

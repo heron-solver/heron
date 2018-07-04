@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.47.0-alpha+20180704"
+val RELEASE_VERSION = "0.48.0-alpha+20180704"
 
 open OS.Process
 
@@ -38,6 +38,8 @@ val maxstep                          = ref ~1
 val minstep                          = ref ~1
 val heuristics: TESL_atomic list ref = ref []
 val dumpres                          = ref false
+val rtprint                          = ref false
+val file_to_open                     = ref ""
 
 val scenario: system ref = ref []
 
@@ -85,13 +87,13 @@ fun action (stmt: TESL_atomic) =
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
-			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics)
+			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
   | DirRunStep	     =>
       snapshots := exec_step
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
-			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics)
+			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
   | DirPrint              => print_dumpres (!declared_clocks) (!snapshots)
   | DirOutputVCD          =>
     (case !snapshots of
@@ -163,7 +165,7 @@ fun toplevel () =
   end
 
 (* Reading from file *)
-fun run_from_file s = 
+fun run_from_file s =
   let
     val dev = TextIO.openIn s
     val lexer = CalcParser.makeLexer (fn i => TextIO.inputN (dev, i))
@@ -188,20 +190,27 @@ fun run_from_file s =
 (* Entry-point *)
 val _ = (
   print ("\u001B[1mHeron " ^ RELEASE_VERSION ^" Release\u001B[0m\n");
-  case CommandLine.arguments() of
-      [] =>
-      ( print "Copyright (c) 2018, Universit\195\169 Paris-Sud / CNRS\n";
-	print "Type @help for assistance. Please cite:\n" ;
-	print "  H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
-	print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";
-	toplevel())
-    | "-h" :: _ => print_help ()
-    | "--help" :: _ => print_help ()
-    | "--use" :: filename :: _ =>
-      (print ("Opening " ^ filename ^ "\n") ;
-	run_from_file filename)
-    | x :: _ =>
-      (print ("Unknown option '" ^ x ^ "'.\n") ;
-	print_help ())
+  let fun arg_loop args =
+    case args of
+        [] =>
+     if (!file_to_open) = ""
+     then
+       (print "Copyright (c) 2018, Universit\195\169 Paris-Sud / CNRS\n";
+	    print "Type @help for assistance. Please cite:\n" ;
+	    print "  H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
+	    print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";
+	    toplevel())
+     else
+       (print ("Opening " ^ (!file_to_open) ^ "\n") ;
+        run_from_file (!file_to_open))
+      | "-h" :: _ => print_help ()
+      | "--help" :: _ => print_help ()
+      | "--runtime-print" :: args' => (rtprint := true; arg_loop args')
+      | "--use" :: filename :: args' => (file_to_open := filename; arg_loop args')
+      | x :: _ =>
+        (print ("Unknown option '" ^ x ^ "'.\n") ;
+	  print_help ())
+    in arg_loop (CommandLine.arguments ())
+    end
 )
 
