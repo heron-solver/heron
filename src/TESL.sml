@@ -88,8 +88,9 @@ datatype TESL_atomic =
   | TagRelationRefl                of clock * clock                 (* Syntactic sugar *)
   | Implies                        of clock * clock
   | ImpliesNot                     of clock * clock
-  | TimeDelayedBy                  of clock * tag * clock * clock
+  | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock
   | WhenTickingOn                  of clock * tag * clock
+  | WhenTickingOnWithReset         of clock * tag * clock * clock   (* Intermediate Form *)
   | DelayedBy                      of clock * int * clock * clock
   | TimesImpliesOn                 of clock * int * clock           (* Intermediate Form *)
   | ImmediatelyDelayedBy           of clock * int * clock * clock
@@ -211,7 +212,7 @@ fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref)
      | Sporadics (clk, tlist)            => [(clk, type_of_tags clk tlist)]
      | TypeDeclSporadics (ty, clk, tags) => (clk, ty) :: (List.map (fn t => (clk, type_of_tag t)) tags)
      | TagRelation (c1, t1, c2, t2)      => [(c1, type_of_tags c1 [t1, t2]), (c2, type_of_tags c2 [t1, t2])]
-     | TimeDelayedBy (_, t, clk, _)      => [(clk, type_of_tag t)]
+     | TimeDelayedBy (_, t, clk, _, _)      => [(clk, type_of_tag t)]
      | Periodic (c, t1, t2)              => [(c, type_of_tags c [t1, t2])]
      | TypeDeclPeriodic (ty, c, t1, t2)  => (c, ty) :: [(c, type_of_tags c [t1, t2])]
      | _                                 => []
@@ -246,7 +247,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | EveryImplies (master, n, x, slave)   => [FilteredBy (master, x, 1, n - 1, 1, slave)]
 	    | NextTo (master, master_next, slave)  => [SustainedFromImmediately (master, master_next, master, slave)]
 	    | Periodic (clk, period, offset)       => [Sporadic (clk, offset),
-							    TimeDelayedBy (clk, period, clk, clk)]
+							    TimeDelayedBy (clk, period, clk, NONE, clk)]
 	    | TypeDeclPeriodic (ty, clk, period, offset) => unsugar clock_types [Periodic (clk, period, offset)]
 	    | DirMinstep _          => []
 	    | DirMaxstep _          => []
@@ -335,7 +336,8 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | TagRelationRefl (c1, c2)                  => [c1, c2]
   | Implies (c1, c2)                          => [c1, c2]
   | ImpliesNot (c1, c2)                       => [c1, c2]
-  | TimeDelayedBy (c1, _, c2, c3)             => [c1, c2, c3]
+  | TimeDelayedBy (c1, _, c2, NONE, c3)       => [c1, c2, c3]
+  | TimeDelayedBy (c1, _, c2, SOME (rc), c3)  => [c1, c2, rc, c3]
   | DelayedBy (c1, _, c2, c3)                 => [c1, c2, c3]
   | ImmediatelyDelayedBy (c1, _, c2, c3)      => [c1, c2, c3]
   | FilteredBy (c1, _, _, _, _, c2)           => [c1, c2]

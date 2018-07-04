@@ -51,14 +51,17 @@ fun ARS_rule_tagrel_elim
 
 (* 6. Time delayed elimination when premise is false *)
 fun ARS_rule_timedelayed_elim_1
-  (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, _, _, _)) =
+  (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, _, _, _, _)) =
     (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
   | ARS_rule_timedelayed_elim_1 _ _ = raise Assert_failure;
 
 (* 7. Time delayed elimination when premise is true (introduces when-ticking) *)
 fun ARS_rule_timedelayed_elim_2
-  (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, dt, c2, c3)) =
+  (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, dt, c2, NONE, c3)) =
     (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [WhenTickingOn (c2, Add (Schematic (c2, n), dt), c3)])
+ | ARS_rule_timedelayed_elim_2
+  (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, dt, c2, SOME rc, c3)) =
+    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [WhenTickingOnWithReset (c2, Add (Schematic (c2, n), dt), c3, rc)])
   | ARS_rule_timedelayed_elim_2 _ _ = raise Assert_failure;
 
 (* 8. When ticking elimination with merge *)
@@ -406,8 +409,25 @@ fun ARS_rule_kills_2
   (G, n, frun, finst) (fsubst as Kills (c1, c2)) =
     (G @ [Ticks (c1, n), NotTicksFrom (c2, n)], n, frun, finst @- [fsubst])
   | ARS_rule_kills_2 _ _ = raise Assert_failure;
+ 
+(* 59. When ticking elimination when deciding to trigger tick sporadicaly *)
+fun ARS_rule_whentickingon_with_reset_on_1
+ (G, n, frun, finst) (fsubst as WhenTickingOnWithReset (c1, tag, c2, rclock)) =
+    (G @ [Ticks (c2, n), Timestamp (c1, n, tag)], n, frun, finst @- [fsubst])
+  | ARS_rule_whentickingon_with_reset_on_1 _ _ = raise Assert_failure;
 
+(* 60. When ticking elimination when deciding to postpone it and is not reset *)
+fun ARS_rule_whentickingon_with_reset_on_2
+  (G, n, frun, finst) (fsubst as WhenTickingOnWithReset (c1, tag, c2, rclock)) =
+    (G @ [NotTicks (rclock, n)], n, frun @ [fsubst], finst @- [fsubst])
+  | ARS_rule_whentickingon_with_reset_on_2 _ _ = raise Assert_failure;
 
+(* 61. When ticking elimination when the reset clock ticks *)
+fun ARS_rule_whentickingon_with_reset_on_3
+  (G, n, frun, finst) (fsubst as WhenTickingOnWithReset (c1, tag, c2, rclock)) =
+    (G @ [Ticks (rclock, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_whentickingon_with_reset_on_3 _ _ = raise Assert_failure;
+ 
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
@@ -429,6 +449,10 @@ fun lawyer_e
 			     [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)]
 			 | WhenTickingOn _ =>
 			     [(fatom, ARS_rule_whentickingon_1), (fatom, ARS_rule_whentickingon_2)]
+             | WhenTickingOnWithReset _ =>
+                 [(fatom, ARS_rule_whentickingon_with_reset_on_1),
+                  (fatom, ARS_rule_whentickingon_with_reset_on_2),
+                  (fatom, ARS_rule_whentickingon_with_reset_on_3)]
 			 | TagRelation _ =>
 			     [(fatom, ARS_rule_tagrel_elim)]
 			 | Implies _ =>

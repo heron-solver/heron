@@ -1,0 +1,69 @@
+unit-clock allEvents
+decimal-clock chronometer
+ 
+//**** States ****/
+// State Ready
+unit-clock in_Ready
+unit-clock enter_Ready
+unit-clock leave_Ready
+allEvents sustained from enter_Ready to leave_Ready implies in_Ready
+ 
+// State Waiting
+unit-clock in_Waiting
+unit-clock enter_Waiting
+unit-clock leave_Waiting
+allEvents sustained from enter_Waiting to leave_Waiting implies in_Waiting
+ 
+//**** Transitions ****/
+// Transition: Ready -> Waiting when request produces reply
+event_request when in_Ready implies enter_Waiting
+event_request when in_Ready implies leave_Ready
+event_request when in_Ready implies action_reply
+ 
+// Transition: Waiting -> Ready when ack produces None
+event_ack when in_Waiting implies enter_Ready
+event_ack when in_Waiting implies leave_Waiting
+ 
+// Transition: Waiting -> Ready when 10.0 produces reset
+timeout_Waiting_to_Ready when in_Waiting implies enter_Ready
+timeout_Waiting_to_Ready when in_Waiting implies leave_Waiting
+timeout_Waiting_to_Ready when in_Waiting implies action_reset
+ 
+/**** Actions ****/
+// Output action: reset
+unit-clock action_reset
+ 
+// Output action: reply
+unit-clock action_reply
+ 
+//**** Events ****/
+// Input event: ack
+unit-clock event_ack
+event_ack implies allEvents
+ 
+// Input event: request
+unit-clock event_request
+event_request implies allEvents
+ 
+// Event: delay 10.0 after entering Waiting
+// the "with reset" avoid the production of spurious events when
+// the Waiting state is leaved before the expiration of the delay
+unit-clock timeout_Waiting_to_Ready
+enter_Waiting time delayed by 10.0 on chronometer with reset on leave_Waiting implies timeout_Waiting_to_Ready
+timeout_Waiting_to_Ready implies allEvents
+ 
+// Initial state
+decimal-clock start sporadic 0.0
+tag relation start = chronometer
+start implies allEvents
+start implies enter_Ready
+ 
+//**** Scenario ****/
+start time delayed by 5.0 on chronometer implies event_request
+start time delayed by 13.0 on chronometer implies event_ack
+start time delayed by 19.0 on chronometer implies event_request
+
+@policy asap
+@minstep 5
+@run
+@print
