@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.48.0-alpha+20180704"
+val RELEASE_VERSION = "0.48.1-alpha+20180704"
 
 open OS.Process
 
@@ -155,8 +155,9 @@ fun toplevel () =
 	 val (nextToken,lexer) = CalcParser.Stream.get lexer
 	 val _ = case result
 		   of SOME stmt =>
-		      let val _ = action stmt in
-			TextIO.output(TextIO.stdOut, "val it = " ^ (string_of_expr stmt) ^ "\n") end
+		      let val _ = action stmt
+              in TextIO.output(TextIO.stdOut, "val it = " ^ (string_of_expr stmt) ^ "\n")
+              end
 		     | NONE => ()
 	in if CalcParser.sameToken(nextToken,dummyEOF) then quit()
 	  else loop lexer
@@ -177,8 +178,9 @@ fun run_from_file s =
 	 val (nextToken,lexer) = CalcParser.Stream.get lexer
 	 val _ = case result
 		   of SOME stmt =>
-		      let val _ = action stmt in
-			TextIO.output(TextIO.stdOut, "val it = " ^ (string_of_expr stmt) ^ "\n") end
+		      let val _ = action stmt
+              in ()
+              end
 		     | NONE => ()
 	in if CalcParser.sameToken(nextToken,dummyEOF) then quit()
 	  else loop lexer
@@ -201,7 +203,7 @@ val _ = (
 	    print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";
 	    toplevel())
      else
-       (print ("Opening " ^ (!file_to_open) ^ "\n") ;
+       (print ("## Opening " ^ (!file_to_open) ^ "\n") ;
         run_from_file (!file_to_open))
       | "-h" :: _ => print_help ()
       | "--help" :: _ => print_help ()
