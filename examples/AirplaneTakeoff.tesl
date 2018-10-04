@@ -23,7 +23,7 @@ rational-clock speed-KT  // in [kt]
 tag relation speed-SI = 1.875 * time-SI
 
 // Unit conversion between [m.s^-1] and [kt]
-tag relation speed-SI = 1.944 * speed-KT
+tag relation speed-KT = 1.944 * speed-SI
 
 // Speed thresholds
 V1-reach strictly precedes VR-reach
@@ -42,8 +42,8 @@ VR-reach time delayed by 3. on time-SI implies liftoff
 // Human excitement measured in some unit
 int-clock human-excitement
 
-// Before reaching V1 (time ≤ 114.04 sec), engage stop procedure
-// stop sporadic 90. on time-SI
+// Before reaching V1, engage stop procedure
+// stop sporadic 25. on time-SI
 // @maxstep 8
 
 @scenario 1 (time-SI -> 0.0)
