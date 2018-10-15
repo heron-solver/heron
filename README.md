@@ -20,13 +20,15 @@ The easiest way to start with Heron is to get the [latest binary release](https:
 
 ### From sources
 ```bash
-sudo apt install mlton  #If Ubuntu
+sudo apt install mlton      #If Ubuntu
 brew install mlton          #If macOS
 
 git clone https://github.com/heron-solver/heron.git
 cd heron
 make
 ```
+
+For more information, please refer to the [Heron Reference Manual](docs/README.md).
 
 References
 -------------------

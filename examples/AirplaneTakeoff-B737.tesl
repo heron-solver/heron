@@ -1,7 +1,6 @@
-// Airplane takeoff
+// Airplane takeoff of a Boeing 737-800
 
 // Physical assumptions:
-//   Boeing 737-800
 //   Wet runway
 //   Maximum takeoff thrust
 //   Average weight (75 tons = 150e3 lbs)
@@ -30,20 +29,17 @@ V1-reach strictly precedes VR-reach
 V1-reach sporadic 110. on speed-KT
 VR-reach sporadic 135. on speed-KT
 
-// Takeoff abortion is forbidden after reaching V1
-V1-reach kills stop
+// Takeoff rejection (RTO) is forbidden after reaching V1
+V1-reach kills RTO
 
-// Aborting takeoff prevents from reaching takeoff speeds
-stop kills V1-reach
+// Rejecting takeoff prevents from reaching takeoff speeds
+RTO kills V1-reach
 
 // Liftoff occurs 3s after reaching VR
 VR-reach time delayed by 3. on time-SI implies liftoff
 
-// Human excitement measured in some unit
-int-clock human-excitement
-
-// Before reaching V1, engage stop procedure
-// stop sporadic 25. on time-SI
+// Before reaching V1, engage No Go procedure
+// RTO sporadic 25. on time-SI
 // @maxstep 8
 
 @scenario 1 (time-SI -> 0.0)

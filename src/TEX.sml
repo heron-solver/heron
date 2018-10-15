@@ -64,7 +64,7 @@ fun primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
 
 
 fun instants_labels (n: int) (clk_numbers: int) =
-  "    \\foreach \\i/\\x in {" ^ (String.concatWith "," (List.map (fn k => ((string_of_int (k - 1)) ^ "/" ^ (string_of_int k))) (range n))) ^ "} {\n"
+  "    \\foreach \\i/\\x in {" ^ (String.concatWith "," (List.map (fn k => ((string_of_int k) ^ "/" ^ (string_of_int k))) (range n))) ^ "} {\n"
 (* ^ "      \\node[instant] (I\\i) at (\\x,-" ^ (string_of_int clk_numbers) ^ ".5) {} ; \n" *)
 ^ "      \\node (I\\i) at (\\x+0.1, -" ^ (string_of_int (clk_numbers - 1)) ^ ") {} ; \n"
 ^ "      \\node[instantlab] at (I\\i.south) {\\textsf{\\i}} ;\n"

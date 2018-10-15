@@ -1,0 +1,67 @@
+// Airplane takeoff of a Cessna 172
+
+// Physical assumptions:
+//   Full open throttle
+//   Average weight (2000 lbs)
+//   Flaps retracted 0°
+//   Altitude set to local QFE
+
+// Performance speeds (IAS):
+//   VSO = 40 kt
+//   VSI = 48 kt
+//   VR = 55 kt
+//   VNE = 163 kt
+//   VFE = 85 kt (full flaps)
+
+// Assuming uniform acceleration:
+//   a = ?
+
+// --- DECLARING QUANTITY AND UNITS ---
+rational-clock time-SEC       // in [s]
+rational-clock time-MIN       // in [min]
+rational-clock speed-MPSEC    // in [m.s^-1]
+rational-clock speed-KT       // in [kt]
+//rational-clock vspeed-FTPMIN  // in [ft.min^-1]
+rational-clock altitude-FT    // in [ft]
+
+// --- UNIT CONVERSIONS ---
+// Between [s] and [min]
+tag relation time-SEC = 60. * time-MIN
+// Between [m.s^-1] and [kt]
+tag relation speed-KT = 1.944 * speed-MPSEC
+
+// --- PHYSICAL PROFILE ---
+// Uniform acceleration
+tag relation speed-MPSEC = 1.5 * time-SEC
+// Rate climb
+tag relation altitude-FT = 500. * time-MIN
+
+// Speed thresholds
+VR-reach  sporadic 55.  on speed-KT
+VNE-reach sporadic 163. on speed-KT
+VR-reach strictly precedes VNE-reach
+
+// Takeoff rejection (RTO) is forbidden after rotation
+// Rejecting takeoff prevents from rotation
+VR-reach kills RTO
+RTO kills VR-reach
+
+// Liftoff occurs 1s after reaching VR (???)
+VR-reach time delayed by 1. on time-SEC implies liftoff
+
+// Takeoff phase ends when the lowest safe altitude (LSALT) is reached
+LSALT-reach sporadic 500. on altitude-FT
+
+// If speed exceeds VNE, the overspeed alarm triggers
+VNE-reach implies overspeed-alarm
+
+// --- ALTERNATIVE SCENARIO ---
+// Before reaching VR, pilot-in-command rejects takeoff
+// RTO sporadic 5. on time-SEC
+// @maxstep 8
+
+@scenario 1 (time-SEC -> 0.0)
+@policy asap
+@run
+@print
+@output tex
