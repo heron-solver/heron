@@ -28,7 +28,7 @@ cd heron
 make
 ```
 
-For more information, please refer to the [Heron Reference Manual](docs/README.md).
+For more information, please refer to the [Heron Reference Manual](doc/README.md).
 
 References
 -------------------
