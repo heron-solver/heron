@@ -22,7 +22,7 @@ rational-clock speed-KT  // in [kt]
 tag relation speed-SI = 1.875 * time-SI
 
 // Unit conversion between [m.s^-1] and [kt]
-tag relation speed-KT = 1.944 * speed-SI
+tag relation speed-KT = <3600/1852> * speed-SI
 
 // Speed thresholds
 V1-reach strictly precedes VR-reach

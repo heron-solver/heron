@@ -1,0 +1,42 @@
+// UNIT CONVERSIONS
+
+// --- Time between [s], [min] and [h] ---
+Q-clock time-SEC       // in [s]
+Q-clock time-MIN       // in [min]
+Q-clock time-H         // in [h]
+tag relation time-SEC = 60. * time-MIN
+tag relation time-MIN = 60. * time-HR
+
+// --- Speeds ---
+Q-clock speed-KMPH     // in [km.h^-1]
+Q-clock speed-MPSEC    // in [m.s^-1]
+Q-clock speed-KT       // in [kt]
+Q-clock vspeed-FTPMIN  // in [ft.min^-1]
+// Between [km/h] and [kt]
+tag relation speed-KMPH = 1.852 * speed-KT
+// Between [kt] and [m/s]
+tag relation speed-KT = <3600/1852> * speed-MPSEC
+// Between [m/s] and [ft/min]
+tag relation speed-MPSEC = 0.00508 * vspeed-FTPMIN
+
+// --- Distances and altitudes ---
+Q-clock altitude-FT    // in [ft]
+Q-clock distance-M     // in [m]
+Q-clock distance-NM    // in [m]
+// Between [m] and [ft]
+tag relation distance-M = 0.3048 * altitude-FT
+// Between [m] and [NM]
+tag relation distance-M = 1852.0 * distance-NM
+
+// --- Temperature ---
+Q-clock temperature-K    // in [K]
+Q-clock temperature-C    // in [°C]
+Q-clock temperature-F    // in [°F]
+tag relation temperature-K = 1.0 * temperature-C + 273.15
+tag relation temperature-F = <9/5> * temperature-C + 32.0
+
+// Specify your quantities here...
+// e.g., altitude-FT sporadic 100.0
+
+@run
+@print

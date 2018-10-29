@@ -10,10 +10,10 @@ binary-release: all
 		heron \
 		examples/HandWatch* \
 		examples/Radiotherapy.tesl \
-		examples/AirplaneTakeoff*.tesl \
 		examples/PowerWindow.tesl \
 		examples/basic \
-		examples/reference-gallery
+		examples/reference-gallery \
+		examples/takeoff-procedures
 
 clean:
 	rm -f heron src/parse.grm.desc src/parse.grm.sig src/parse.grm.sml src/parse.lex.sml
