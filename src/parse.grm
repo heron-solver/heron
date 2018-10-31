@@ -8,6 +8,12 @@
    Informatique, Université Paris-Sud/CNRS. All rights reserved. This
    file is distributed under the MIT License.
 *)
+fun opposite_tag t = case t of
+    Unit   => Unit
+  | Int n  => Int (~n)
+  | Rat pq => Rat (~/ pq)
+  | _      => t
+
 %%
 
 %eop EOF SEMI
@@ -21,7 +27,7 @@
 %left IMPLIES
 
 %term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t
-      | SEMI | EOF | EQ | PLUS | TIMES | DIV | TAGREL | TIME | ON | DELAYED
+      | SEMI | EOF | EQ | PLUS | MINUS | TIMES | DIV | TAGREL | TIME | ON | DELAYED
       | FILTERED | LPAR | RPAR | LDIP | RDIP | COMMA
       | SUSTAINED | IMMEDIATELY | TO | WEAKLY | STRICTLY
       | AWAIT | WEAK | STRONG
@@ -89,6 +95,7 @@
       | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
       | CLK IMPLIES NOT CLK						       (ImpliesNot (CLK1, CLK2))
       | TAGREL CLK EQ TAG TIMES CLK PLUS TAG                                   (TagRelation (CLK1, TAG1, CLK2, TAG2))
+      | TAGREL CLK EQ TAG TIMES CLK MINUS TAG                                  (TagRelation (CLK1, TAG1, CLK2, opposite_tag TAG2))
       | TAGREL CLK EQ TAG TIMES CLK                                            (case TAG of Int _ => TagRelation (CLK1, TAG, CLK2, Int (0))
 												      | Rat _ => TagRelation (CLK1, TAG, CLK2, Rat (rat_zero))
 												      | _     => raise UnsupportedParsedTerm)

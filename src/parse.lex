@@ -76,6 +76,7 @@ ws = [\ \t];
 "->"                         => (Tokens.ARROW(!pos,!pos));
 "="                          => (Tokens.EQ(!pos,!pos));
 "+"                          => (Tokens.PLUS(!pos,!pos));
+"-"                          => (Tokens.MINUS(!pos,!pos));
 "*"                          => (Tokens.TIMES(!pos,!pos));
 "/"                          => (Tokens.DIV(!pos,!pos));
 "()"                         => (Tokens.UNIT_VAL(!pos,!pos));
