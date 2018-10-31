@@ -14,7 +14,7 @@ print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR);
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
 print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl] [--runtime-print]");
 print "\n\n";
-print "Copyright (c) 2018, Universit\195\169 Paris-Sud / CNRS\n";
+print "Copyright (c) 2018, A\195\169ropyr\195\169n\195\169es Flight Center, Universit\195\169 Paris-Sud / CNRS\n";
 print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
 print "             Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334.\n";
 print "\n";
@@ -36,7 +36,7 @@ print "\n";
 print "  For more information about the TESL language:\n"; 
 print "  http://wdi.supelec.fr/software/TESL/\n"; 
 print "\n";
-print (BOLD_COLOR ^ "Additional unofficially supported expressions:\n" ^ RESET_COLOR); 
+print (BOLD_COLOR ^ "Extensions in CCSL-style:\n" ^ RESET_COLOR); 
 print "  [CLOCK] \u001B[1m[strictly | weakly] precedes\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mexcludes\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mkills\u001B[0m [CLOCK]\n"; 
@@ -64,7 +64,7 @@ print "  @run                           run the specification until model found\
 print "  @step                          run the specification for one step\n"; 
 print "  @event-concretize              concretize ticks/tags of driving clocks\n"; 
 print "  @print                         display the current snapshots\n"; 
-print "  @output vcd/tex                export to VCD or LaTeX/TikZ file\n"; 
+print "  @output vcd/tex [CLOCK]*       export to VCD or LaTeX/TikZ file with clock selection\n"; 
 print "  @help                          display the list of commands\n")
 
 fun superscript_of_char (c : char) =

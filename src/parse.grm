@@ -39,6 +39,7 @@
       | DIR_OUTPUT | VCD | SVG | TEX | TIKZ
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
       | DIR_SELECT 
+      | SELECT 
       | ARROW
       | PRECEDES
       | EXCLUDES
@@ -138,8 +139,10 @@
       | DIR_EXIT                                                               (DirExit)
       | DIR_HELP                                                               (DirHelp)
       | DIR_OUTPUT VCD                                                         (DirOutputVCD)
-      | DIR_OUTPUT TIKZ                                                        (DirOutputTEX (false))
-      | DIR_OUTPUT TEX                                                         (DirOutputTEX (true))
+      | DIR_OUTPUT TIKZ SELECT CLKS                                            (DirOutputTEX (false, CLKS))
+      | DIR_OUTPUT TEX  SELECT CLKS                                            (DirOutputTEX (true, CLKS))
+      | DIR_OUTPUT TIKZ                                                        (DirOutputTEX (false, []))
+      | DIR_OUTPUT TEX                                                         (DirOutputTEX (true, []))
       | DIR_OUTPUT SVG                                                         (raise UnsupportedParsedTerm)
       | DIR_SELECT NUM                                                         (DirSelect (NUM))
       | DIR_DRIVINGDECL CLKS                                                   (DirDrivingClock (CLKS))

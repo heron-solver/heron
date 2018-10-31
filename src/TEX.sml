@@ -59,7 +59,9 @@ fun primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
       "" (* TODO *)
   in case G of
      []        => ""
-     | g :: G' => (primitive_toString g) ^ (primitives_toString clk_pos_assoc G')
+     (* Raising Match means the clock of the primitive was not selected for output *)
+     | g :: G' => (primitive_toString g) ^
+     	     	    ((primitives_toString clk_pos_assoc G') handle Match => "")
   end
 
 

@@ -125,7 +125,7 @@ datatype TESL_atomic =
   | DirDrivingClock                of clock list
   | DirEventConcretize             of int option
   | DirOutputVCD
-  | DirOutputTEX                   of bool
+  | DirOutputTEX                   of bool * (clock list)
   | DirPrint
   | DirExit
   | DirHelp

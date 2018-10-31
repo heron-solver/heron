@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.48.2-alpha+20181015"
+val RELEASE_VERSION = "0.49.0-alpha+20181031"
 
 open OS.Process
 
@@ -102,12 +102,18 @@ fun action (stmt: TESL_atomic) =
 	 (print ("## Writing vcd output to " ^ (OS.FileSys.getDir ()) ^ "/output.vcd\n");
 	  writeFile "output.vcd" (VCD_toString RELEASE_VERSION (!current_step - 1) (!declared_clocks) s))
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
-  | DirOutputTEX stdal    =>
+  | DirOutputTEX (stdal, sel_clks)    =>
     (case !snapshots of
 	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)
-      | [s] => 
-	 (print ("## Writing tex output to " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n");
-	  writeFile "output.tex" (TEX_toString stdal RELEASE_VERSION (!current_step - 1) (!declared_clocks) s))
+      | [s] =>
+        let
+	   val output_clks = if sel_clks = []
+	   	     	then !declared_clocks
+			else sel_clks
+	 in
+	  (print ("## Writing tex output to " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n") ;
+	   writeFile "output.tex" (TEX_toString stdal RELEASE_VERSION (!current_step - 1) (output_clks) s))
+ 	 end
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
   | DirSelect n           =>
     (print ("## Selecting " ^ (Int.toString n) ^ "th simulation state\n");
@@ -118,14 +124,11 @@ fun action (stmt: TESL_atomic) =
   | DirExit               => quit()
   | DirHelp               => print_help()
   | Precedes (c1, c2, _)  =>
-    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Only for testing purposes.\n" ^ RESET_COLOR) ;
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots))
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   | Excludes (c1, c2)  =>
-    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Only for testing purposes.\n" ^ RESET_COLOR) ;
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots))
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   | Kills (c1, c2)  =>
-    (print (BOLD_COLOR ^ YELLOW_COLOR ^ "## WARNING: Only for testing purposes.\n" ^ RESET_COLOR) ;
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots))
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   | _                     =>
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   end
@@ -197,7 +200,7 @@ val _ = (
         [] =>
      if (!file_to_open) = ""
      then
-       (print "Copyright (c) 2018, Universit\195\169 Paris-Sud / CNRS\n";
+       (print "Copyright (c) 2018, A\195\169ropyr\195\169n\195\169es Flight Center, Universit\195\169 Paris-Sud / CNRS\n";
 	    print "Type @help for assistance. Please cite:\n" ;
 	    print "  H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
 	    print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";
@@ -211,7 +214,8 @@ val _ = (
       | "--use" :: filename :: args' => (file_to_open := filename; arg_loop args')
       | x :: _ =>
         (print ("Unknown option '" ^ x ^ "'.\n") ;
-	  print_help ())
+	  print_help () ;
+	  OS.Process.exit OS.Process.failure)
     in arg_loop (CommandLine.arguments ())
     end
 )

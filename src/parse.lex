@@ -105,6 +105,7 @@ ws = [\ \t];
 "tex"				 => (Tokens.TEX(!pos,!pos));
 "svg"				 => (Tokens.SVG(!pos,!pos));
 "@select"                    => (Tokens.DIR_SELECT(!pos,!pos));
+"select"                     => (Tokens.SELECT(!pos,!pos));
 {alpha}({alpha}|{digit}|"_"|"-"|"'")* => (Tokens.ID(yytext,!pos,!pos));
 {optsign}{digit}+"."{digit}+ => (Tokens.DECNUM (valOf (rat_of_string yytext), !pos, !pos));
 {optsign}{digit}+"."         => (Tokens.DECNUM (valOf (rat_of_string yytext), !pos, !pos));
