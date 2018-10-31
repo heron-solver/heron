@@ -1,64 +1,83 @@
 // Airplane takeoff of an Airbus A320
+// Data extracted from Airbus Flight Crew Performance Course
+// A318/A319/A320/A321 Performance Training Manual
+
+// The following specification describes a takeoff scenario of the
+// transport-categeory aircraft Airbus A320. The default scenario
+// describes a normal takeoff with no engine failure. Several
+// scenarios are proposed to simulate a takeoff rejection with respect
+// to several speed thresholds.  It illustrates the purpose of mixing
+// event-driven and time-driven behaviors.
 
 // Physical assumptions:
-//   Wet runway
+//   Paris Orly (ORY/LFPO)
+//   T/O RWY 08
+//   DRY conditions
+//   TAILWIND -10 kt
+//   WEIGHT 55.8 tons
+//   Flaps 1 (CONF 1+F)
 //   Maximum takeoff thrust
-//   Average weight (75 tons = 150e3 lbs)
-//   Flaps 1
 
-// Takeoff speeds
-// Extracted from the A320 Flight Crew Operating Manual:
-//   V1 = 110 kt
-//   VR = 135 kt
+// Performance speeds (IAS):
+//   V1 = 118 kt
+//   VR = 126 kt
 
 rational-clock time-S     // in [s]
 rational-clock speed-MPS  // in [m.s^-1]
 rational-clock speed-KT   // in [kt]
 
-// Unit conversion between [m.s^-1] and [kt]
+// Unit conversion between [kt] and [m.s^-1]
 tag relation speed-KT = <3600/1852> * speed-MPS
 
-// Assuming uniform acceleration:
+// Uniform acceleration:
 //   a = (270 [km.h^-1]) / (40 [s])
 //     = 1.875 [m.s^-2]
 tag relation speed-MPS = 1.875 * time-S
 
 // Speed thresholds
 V1-reach strictly precedes VR-reach
-V1-reach sporadic 110. on speed-KT
-VR-reach sporadic 135. on speed-KT
+V1-reach sporadic 118.0 on speed-KT
+VR-reach sporadic 126.0 on speed-KT
 
 // Liftoff occurs 3s after reaching VR
 VR-reach time delayed by 3. on time-S implies liftoff
 
-ABRK-active sporadic 72.0 on speed-KT
-ABRK-on  strictly precedes ABRK-active
-SPLR-arm strictly precedes ABRK-active
+// Autobreak is activated whenever:
+// - Ground spoilers were previously armed
+// - Autobreak was previously armed
+// - Speed reaches 72 kt
+SPLR-arm strictly precedes AUTOBRK-on
+AUTOBRK-arm strictly precedes AUTOBRK-on
+AUTOBRK-on sporadic 72.0 on speed-KT
 
-RTO sustained from ABRK-active to ABRK-off implies brakes-apply
-ABRK-active strictly precedes brakes-apply
+// In the event of takeoff rejection (RTO), the system applies brakes
+// as long as autobrakes were in active state
+RTO sustained from AUTOBRK-on to AUTOBRK-off implies BRK-apply
 
-// Takeoff rejection (RTO) is forbidden after reaching V1
-// Rejecting takeoff prevents from reaching takeoff speeds
+// RTO is forbidden after reaching V1
+// Conversely, applying brakes prevents from reaching takeoff speeds
 V1-reach kills RTO
-brakes-apply kills V1-reach
+BRK-apply kills V1-reach
 
 // --- SCENARIO OPTIONS ---
-// (a) Explicit events when 0.0s
-@scenario 1 (time-S -> 0.0)
+// Uncomment specification lines to observe the simulation
 
-// (b) Before reaching V1, engage No Go procedure
+// (1) Before reaching V1, engage No Go procedure
+//   (a) RTO before 72 kt, when AUTOBRK not yet active
+// RTO sporadic 15. on time-S
+//   (b) RTO after 72 kt, when AUTOBRK is active
 // RTO sporadic 25. on time-S
 
-// (c) Input observation, brakes not applied at instant 3
+// (2) Input observation, brakes not applied at instant 3
 // @scenario strict 3 RTO
 
-// (d) Execute a chonometer in parallel
+// (3) Execute a chonometer in parallel
 // chronometer periodic 1.0
 // tag relation chronometer = time-S
 
+@scenario 1 (time-S -> 0.0)
 @maxstep 5
 @policy asap
 @run
 @print
-@output tex select RTO liftoff
+@output tex select time-S speed-MPS speed-KT V1-reach VR-reach SPLR-arm AUTOBRK-arm AUTOBRK-on AUTOBRK-off RTO BRK-apply liftoff
