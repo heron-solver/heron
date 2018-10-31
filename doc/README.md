@@ -8,6 +8,17 @@ This manual highlights specific features of the Heron solver that are undocument
 ./heron --help
 ```
 
+Emacs mode
+-------------------
+A simple syntax highlighting mode is provided for Emacs in `lib/tesl-mode.el`. To use it, add the following lines to your `~/.emacs`:
+
+```
+(setq load-path
+      (append load-path
+		'("[YOUR PATH TO THE CLONED REPOSITORY]/heron/lib")))
+(require 'tesl-mode)
+```
+
 Run diagrams
 -------------------
 

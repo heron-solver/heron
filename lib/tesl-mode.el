@@ -1,0 +1,98 @@
+;;; -*- Mode: Emacs-Lisp ; Coding: utf-8 -*-
+
+;;; tesl-mode.el -- TESL specifications for Emacs
+
+(require 'generic-x)
+
+;; (set-face-foreground 'font-lock-string-face "purple")
+;; (set-face-foreground 'font-lock-comment-face "dark green")
+
+(define-generic-mode 
+    'tesl-mode                         ;; name of the mode to create
+  '("//")                           ;; comments start with '!!'
+  '(
+    "unit-clock"
+    "U-clock"
+    "int-clock"
+    "Z-clock"
+    "decimal-clock"
+    "D-clock"
+    "rational-clock"
+    "Q-clock"
+    "let"
+    "int"
+    "decimal"
+    "rational"
+    "float"
+    "sporadic"
+    "implies"
+    "timerelation"
+    "tag relation"
+    "by"
+    "time"
+    "delayed"
+    "on"
+    "filtered"
+    "from"
+    "sustained"
+    "immediately"
+    "weakly"
+    "strictly"
+    "to"
+    "await"
+    "when"
+    "not"
+    "every"
+    "at"
+    "starting"
+    "periodic"
+    "offset"
+    "next"
+    "with"
+    "reset"
+    "precedes"
+    "excludes"
+    "kills"
+    "->"
+    "="
+    "+"
+    "*"
+    "/"
+    "()"
+    "("
+    ")"
+    "<"
+    ">"
+    ","
+    "@"
+    "maxstep"
+    "minstep"
+    "policy"
+    "dumpres"
+    "trict"
+    "scenario"
+    "exit"
+    "run"
+    "step"
+    "print"
+    "help"
+    "tagref"
+    "output"
+    "driving-clock"
+    "event-concretize"
+    "event-solve"
+    "vcd"
+    "tikz"
+    "tex"
+    "svg"
+    "select"
+    )                     ;; some keywords
+  '(;;("=" . 'font-lock-operator)     ;; '=' is an operator
+    ;;("/" . 'font-lock-builtin))     ;; ';' is a built-in 
+    nil)
+  '("\\.tesl$")                      ;; files for which to activate this mode 
+  nil                              ;; other functions to call
+  "Major mode for TESL specifications (Heron)."            ;; doc string for this mode
+  )
+
+(provide 'tesl-mode)

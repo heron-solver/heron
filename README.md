@@ -3,7 +3,7 @@ Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=maste
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
 
-**Heron** [1, 2] is a solver for the [Tagged Events Specification Language (TESL)](http://wwwdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [3]. This prototype provides:
+**Heron** [1, 2] is a solver for the [Tagged Events Specification Language (TESL)](http://wdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [3]. This prototype provides:
 
  1. Definition of TESL specifications for causality and time scale between events.
  2. Simulation by [sound and complete](https://github.com/heron-solver/hygge) generation of execution traces.
