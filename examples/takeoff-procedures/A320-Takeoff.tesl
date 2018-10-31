@@ -3,7 +3,7 @@
 // A318/A319/A320/A321 Performance Training Manual
 
 // The following specification describes a takeoff scenario of the
-// transport-categeory aircraft Airbus A320. The default scenario
+// transport-category aircraft Airbus A320. The default scenario
 // describes a normal takeoff with no engine failure. Several
 // scenarios are proposed to simulate a takeoff rejection with respect
 // to several speed thresholds.  It illustrates the purpose of mixing

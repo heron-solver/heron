@@ -26,9 +26,12 @@ fun writeFile filename content =
     in () end
 
 fun string_space_complete (len: int) (str: string): string =
-  if (String.size str) >= len
-  then str
-  else string_space_complete len (str ^ "~")
+  let fun str_complete len_to_complete =
+    if len_to_complete = 0
+    then ""
+    else "\\phantom{" ^ (String.concat (List.map (fn _ => "h") (range len_to_complete))) ^ "}"
+  in str ^ (str_complete (len - (String.size str)))
+  end
 
 fun clocks_toString (cnt: int) (step_index: int) (clocks: clock list) (clk_number: int) = case clocks of
     [] => ""
@@ -36,7 +39,7 @@ fun clocks_toString (cnt: int) (step_index: int) (clocks: clock list) (clk_numbe
     let
       val maxlength = largest (List.map (fn Clk cname => (String.size cname)) clocks)
       val str =
-        "    \\node at (0.2," ^ (string_of_int cnt) ^ ") (" ^ clk_name ^ ") {\\texttt{" ^ (string_no_subscript (string_space_complete maxlength clk_name)) ^ "}} ;\n"
+        "    \\node at (-0.2," ^ (string_of_int cnt) ^ ") (" ^ clk_name ^ ") {\\texttt{" ^ (string_no_subscript (string_space_complete maxlength clk_name)) ^ "}} ;\n"
       ^ "    \\draw[->] (" ^ clk_name ^ ".east) -- +(" ^ (string_of_int step_index) ^ ".5,0) ;\n"
     in str ^ (clocks_toString (cnt - 1) step_index (clocks') clk_number)
     end
