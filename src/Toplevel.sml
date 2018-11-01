@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.49.2-alpha+20181101"
+val RELEASE_VERSION = "0.49.3-alpha+20181101"
 
 open OS.Process
 
@@ -102,7 +102,7 @@ fun action (stmt: TESL_atomic) =
 	 (print ("## Writing vcd output to " ^ (OS.FileSys.getDir ()) ^ "/output.vcd\n");
 	  writeFile "output.vcd" (VCD_toString RELEASE_VERSION (!current_step - 1) (!declared_clocks) s))
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
-  | DirOutputTEX (stdal, sel_clks)    =>
+  | DirOutputTEX (stdal, pdf, sel_clks)    =>
     (case !snapshots of
 	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)
       | [s] =>
@@ -112,7 +112,19 @@ fun action (stmt: TESL_atomic) =
 			else sel_clks
 	 in
 	  (print ("## Writing tex output to " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n") ;
-	   writeFile "output.tex" (TEX_toString stdal RELEASE_VERSION (!current_step - 1) (output_clks) s))
+	   writeFile "output.tex" (TEX_toString stdal RELEASE_VERSION (!current_step - 1) (output_clks) s) ;
+	   if pdf
+	   then (
+	     print ("## Calling pdflatex on " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n") ;
+	     let val return_st = OS.Process.system ("TEXINPUTS=$TEXINPUTS:\"./lib\" pdflatex -interaction=nonstopmode " ^ (OS.FileSys.getDir ()) ^ "/output.tex >/dev/null")
+	     in if isSuccess return_st
+		 then ()
+		 else (print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Failed at generating PDF output.\n          Check for pdflatex or TESL style file in ./lib/\n          > TEXINPUTS=$TEXINPUTS:\"./lib\" pdflatex " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n" ^ RESET_COLOR) ;
+			OS.Process.exit OS.Process.failure)
+	     end
+	   )
+	   else ()
+	  )
  	 end
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
   | DirSelect n           =>

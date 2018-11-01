@@ -29,10 +29,8 @@ rational-clock speed-KT   // in [kt]
 // Unit conversion between [kt] and [m.s^-1]
 tag relation speed-KT = <3600/1852> * speed-MPS
 
-// Uniform acceleration:
-//   a = (270 [km.h^-1]) / (40 [s])
-//     = 1.875 [m.s^-2]
-tag relation speed-MPS = 1.875 * time-S
+// Uniform acceleration of 4.5 kt/s
+tag relation speed-KT = 4.5 * time-S
 
 // Speed thresholds
 V1-reach strictly precedes VR-reach
@@ -80,4 +78,4 @@ BRK-apply kills V1-reach
 @policy asap
 @run
 @print
-@output tex select time-S speed-MPS speed-KT V1-reach VR-reach SPLR-arm AUTOBRK-arm AUTOBRK-on AUTOBRK-off RTO BRK-apply liftoff
+@output pdf select time-S speed-MPS speed-KT V1-reach VR-reach SPLR-arm AUTOBRK-arm AUTOBRK-on AUTOBRK-off RTO BRK-apply liftoff

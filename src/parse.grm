@@ -42,7 +42,7 @@ fun opposite_tag t = case t of
       | FROM
       | LET | INT | DECIMAL | RATIONAL | FLOAT
       | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
-      | DIR_OUTPUT | VCD | SVG | TEX | TIKZ
+      | DIR_OUTPUT | VCD | SVG | TEX | TIKZ | PDF
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
       | DIR_SELECT 
       | SELECT 
@@ -75,6 +75,7 @@ fun opposite_tag t = case t of
        | LDIP NUM DIV NUM RDIP                                                 (Rat (rat_normal (LargeInt.fromInt NUM1, LargeInt.fromInt NUM2)))
   TAGS : TAG                                                                   ([TAG])
        | TAG COMMA TAGS                                                        (TAG :: TAGS)
+       | TAG TAGS                                                              (TAG :: TAGS)
   TCLKS : ID                                                                   ([(Clk ID, NONE)])
         | ID TCLKS                                                             ((Clk ID, NONE) :: TCLKS)
 	 | LPAR ID ARROW TAG RPAR                                               ([(Clk ID, SOME TAG)])
@@ -146,10 +147,12 @@ fun opposite_tag t = case t of
       | DIR_EXIT                                                               (DirExit)
       | DIR_HELP                                                               (DirHelp)
       | DIR_OUTPUT VCD                                                         (DirOutputVCD)
-      | DIR_OUTPUT TIKZ SELECT CLKS                                            (DirOutputTEX (false, CLKS))
-      | DIR_OUTPUT TEX  SELECT CLKS                                            (DirOutputTEX (true, CLKS))
-      | DIR_OUTPUT TIKZ                                                        (DirOutputTEX (false, []))
-      | DIR_OUTPUT TEX                                                         (DirOutputTEX (true, []))
+      | DIR_OUTPUT TIKZ SELECT CLKS                                            (DirOutputTEX (false, false, CLKS))
+      | DIR_OUTPUT TEX  SELECT CLKS                                            (DirOutputTEX (true, false, CLKS))
+      | DIR_OUTPUT PDF  SELECT CLKS                                            (DirOutputTEX (true, true, CLKS))
+      | DIR_OUTPUT TIKZ                                                        (DirOutputTEX (false, false, []))
+      | DIR_OUTPUT TEX                                                         (DirOutputTEX (true, false, []))
+      | DIR_OUTPUT PDF                                                         (DirOutputTEX (true, true, []))
       | DIR_OUTPUT SVG                                                         (raise UnsupportedParsedTerm)
       | DIR_SELECT NUM                                                         (DirSelect (NUM))
       | DIR_DRIVINGDECL CLKS                                                   (DirDrivingClock (CLKS))

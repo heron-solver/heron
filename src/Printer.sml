@@ -59,13 +59,13 @@ print "  @select [INT]                     select by keeping only one simulation
 print "  @driving-clock [CLOCK]+           declare driving clocks\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
-print "  @exit                          exit Heron\n"; 
-print "  @run                           run the specification until model found\n"; 
-print "  @step                          run the specification for one step\n"; 
-print "  @event-concretize              concretize ticks/tags of driving clocks\n"; 
-print "  @print                         display the current snapshots\n"; 
-print "  @output vcd/tex [CLOCK]*       export to VCD or LaTeX/TikZ file with clock selection\n"; 
-print "  @help                          display the list of commands\n")
+print "  @exit                             exit Heron\n"; 
+print "  @run                              run the specification until model found\n"; 
+print "  @step                             run the specification for one step\n"; 
+print "  @event-concretize                 concretize ticks/tags of driving clocks\n"; 
+print "  @print                            display the current snapshots\n"; 
+print "  @output vcd/tikz/tex/pdf [CLOCK]* export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
+print "  @help                             display the list of commands\n")
 
 fun superscript_of_char (c : char) =
   case c of

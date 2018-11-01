@@ -1,0 +1,85 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{TESL}
+
+\RequirePackage{tikz}
+\usetikzlibrary{positioning}
+\RequirePackage{skull}
+\RequirePackage{listings}
+
+%%% *****************************************
+%%% Style for generated execution traces
+%%% *****************************************
+\definecolor{instantcolor}{RGB}{37, 116, 169}
+\definecolor{tickcolor}{RGB}{239, 72, 54}
+\definecolor{datecolor}{RGB}{30, 130, 76}
+
+% To hide non-ticking primitives, just set to 1.0
+\definecolor{nontickcolor}{gray}{0.8}
+
+\tikzset{%
+  tick/.style={%
+    rectangle, fill=tickcolor,
+    inner sep = 0pt,
+    minimum width = 1mm,
+    minimum height=4mm,
+    anchor = south,
+    above right=0mm and 1mm,
+  }
+}
+\tikzset{%
+  vline/.style={%
+    dashed
+  }
+}
+\tikzset{%
+  date/.style={%
+   above right=0mm and 2mm, text=datecolor, font=\scriptsize
+  }
+}
+\tikzset{%
+  instant/.style={%
+    rectangle, draw=instantcolor, dashed, above right=-1.8mm and -0.6mm,
+    inner sep = 0pt, minimum width=0.8\xlength, minimum height=6\ylength
+  }
+}
+\tikzset{%
+  instantlab/.style={%
+    below=1.5mm, text=instantcolor, font=\rmfamily
+  }
+}
+\definecolor{edward}{RGB}{171, 183, 183}
+\newlength{\xlength}
+\newlength{\ylength}
+\setlength{\xlength}{12.5mm}%
+\setlength{\ylength}{0.87cm}%
+
+\newcommand{\Cross}{$\mathbin{\tikz [x=1.4ex,y=1.4ex,line width=.2ex, nontickcolor] \draw (0,0) -- (1,1) (0,1) -- (1,0);}$}%
+\newcommand{\Skull}{${\color{nontickcolor}$\skull$}$}
+
+%%% *****************************************
+%%% Style for TESL specification listings
+%%% *****************************************
+\definecolor{wisteria}{HTML}{8e44ad}
+\definecolor{darkmountain}{HTML}{10ac84}
+\definecolor{tesllangcol}{named}{purple}
+\lstdefinelanguage{TESL}{%
+  alsoletter=@-,
+  keepspaces=true,
+  morekeywords={nongreedy, clock, periodic, offset, sporadic, rational, float, int, unit, decimal, implies, filtered, by, immediately, delayed, sustained, from, to, {time delayed}, on, let, when, next, strictly, tag, relation, before, await, with, reset, kills, precedes, weakly, ignites,
+  @scenario, @maxstep, @run, strict, @print, @step, @driving-clock, @event-solve,
+  {N-clock}, {int-clock}, {Q-clock}, {rational-clock}, {U-clock}, {unit-clock}},%
+  sensitive,%
+  morecomment=[l]{//},%
+  morecomment=[s]{/*}{*/},%
+  basicstyle=\ttfamily\small,%
+  keywordstyle=\color{wisteria}\ttfamily,%
+  commentstyle=\itshape\color{purple}\ttfamily,%
+}[keywords]%
+
+% Police pour les listings
+\lstset{
+    basicstyle=\fontfamily{pcr}\fontsize{9}{10pt}\selectfont,
+    tabsize=4
+}
+
+\lstset{language=TESL}

@@ -84,6 +84,7 @@
     "vcd"
     "tikz"
     "tex"
+    "pdf"
     "svg"
     "select"
     )                     ;; some keywords

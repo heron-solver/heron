@@ -33,17 +33,37 @@ fun string_space_complete (len: int) (str: string): string =
   in str ^ (str_complete (len - (String.size str)))
   end
 
-fun clocks_toString (cnt: int) (step_index: int) (clocks: clock list) (clk_number: int) = case clocks of
+fun clocks_toString (cnt: int) (step_index: int) (clocks: clock list) (clk_number: int) (max_cname_length: int) = case clocks of
     [] => ""
   | Clk (clk_name) :: clocks' =>
     let
-      val maxlength = largest (List.map (fn Clk cname => (String.size cname)) clocks)
       val str =
-        "    \\node at (-0.2," ^ (string_of_int cnt) ^ ") (" ^ clk_name ^ ") {\\texttt{" ^ (string_no_subscript (string_space_complete maxlength clk_name)) ^ "}} ;\n"
+        "    \\node at (-0.2," ^ (string_of_int cnt) ^ ") (" ^ clk_name ^ ") {\\texttt{" ^ (string_no_subscript (string_space_complete max_cname_length clk_name)) ^ "}} ;\n"
       ^ "    \\draw[->] (" ^ clk_name ^ ".east) -- +(" ^ (string_of_int step_index) ^ ".5,0) ;\n"
-    in str ^ (clocks_toString (cnt - 1) step_index (clocks') clk_number)
+    in str ^ (clocks_toString (cnt - 1) step_index (clocks') clk_number max_cname_length)
     end
 
+(* Non-ticking primitives *)
+fun not_primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
+  let fun pos_of_clk (cname: string) : int =
+    (assoc clk_pos_assoc cname)
+  and primitive_toString g = case g of 
+      NotTicks (Clk (clk_name), indx)       =>
+      "    \\node       at (" ^ (string_of_int indx) ^ "+0.1, " ^ (string_of_int (pos_of_clk clk_name)) ^ "+0.1)  {\\Cross} ;\n"
+    | NotTicksUntil (Clk (clk_name), indx)  =>
+      "" (* TODO *)
+    | NotTicksFrom (Clk (clk_name), indx)   =>
+      "    \\node       at (" ^ (string_of_int indx) ^ "+0.1, " ^ (string_of_int (pos_of_clk clk_name)) ^ "+0.25)  {$\\Skull$} ;\n"
+    | _                                     =>
+      ""
+  in case G of
+     []        => ""
+     (* Raising Match means the clock of the primitive was not selected for output *)
+     | g :: G' => (primitive_toString g) ^
+     	     	    ((not_primitives_toString clk_pos_assoc G') handle Match => "")
+  end
+
+(* All the rest of primitives *)
 fun primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
   let fun pos_of_clk (cname: string) : int =
     (assoc clk_pos_assoc cname)
@@ -52,14 +72,10 @@ fun primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
       "    \\node[date] at (" ^ (string_of_int indx) ^ ", " ^ (string_of_int (pos_of_clk clk_name)) ^ ")  {" ^ (minus_instead_of_tild (string_of_tag tag)) ^ "} ;\n"
     | Ticks (Clk (clk_name), indx)          =>
       "    \\node[tick] at (" ^ (string_of_int indx) ^ ", " ^ (string_of_int (pos_of_clk clk_name)) ^ ")  {} ;\n"
-    | NotTicks (Clk (clk_name), indx)       =>
-      "" (* TODO *)
-    | NotTicksUntil (Clk (clk_name), indx)  =>
-      "" (* TODO *)
-    | NotTicksFrom (Clk (clk_name), indx)   =>
-      "" (* TODO *)
     | Affine (t1, t2, t3, t4)               =>
       "" (* TODO *)
+    | _                                     =>
+      ""
   in case G of
      []        => ""
      (* Raising Match means the clock of the primitive was not selected for output *)
@@ -77,12 +93,19 @@ fun instants_labels (n: int) (clk_numbers: int) =
 
 
 fun TEX_toString (standalone: bool) (RELEASE_VERSION: string) (step_index: int) (clocks: clock list) (G: system, _, _, _) =
-  ""
-  ^ "\\begin{tikzpicture}[>=stealth,x=\\xlength,y=\\ylength]\n"
-  ^ "    \\foreach \\i in {1,...," ^ (string_of_int step_index) ^ "} {\n"
-  ^ "      \\draw[edward, vline] (\\i+.1,-" ^ (string_of_int ((List.length clocks) - 1)) ^ ") -- +(0, " ^ (string_of_int ((List.length clocks) - 1)) ^ ".7) ;\n"
-  ^ "    }\n"
-  ^ (clocks_toString 0 step_index clocks (List.length clocks))
-  ^ (let val x = ref 1 in primitives_toString (List.map (fn Clk cname => (cname, (x := (!x) - 1; !x))) clocks) G end)
-  ^ (instants_labels step_index (List.length clocks))
-  ^ "\\end{tikzpicture}\n"
+    let val max_cname_length = largest (List.map (fn Clk cname => (String.size cname)) clocks)
+    in
+      (if standalone then "\\documentclass{standalone}\n\\usepackage{TESL}\n\n\\begin{document}" else "")
+      ^ "\\begin{tikzpicture}[>=stealth,x=\\xlength,y=\\ylength]\n"
+      (* First output non-ticking primitives to put in figure background...*)
+      ^ (let val x = ref 1 in not_primitives_toString (List.map (fn Clk cname => (cname, (x := (!x) - 1; !x))) clocks) G end)
+      ^ "    \\foreach \\i in {1,...," ^ (string_of_int step_index) ^ "} {\n"
+      ^ "      \\draw[edward, vline] (\\i+.1,-" ^ (string_of_int ((List.length clocks) - 1)) ^ ") -- +(0, " ^ (string_of_int ((List.length clocks) - 1)) ^ ".7) ;\n"
+      ^ "    }\n"
+      ^ (clocks_toString 0 step_index clocks (List.length clocks) max_cname_length)
+      (* Then, the rest of primitives *)
+      ^ (let val x = ref 1 in primitives_toString (List.map (fn Clk cname => (cname, (x := (!x) - 1; !x))) clocks) G end)
+      ^ (instants_labels step_index (List.length clocks))
+      ^ "\\end{tikzpicture}\n"
+      ^ (if standalone then "\\end{document}\n" else "")
+    end

@@ -104,6 +104,7 @@ ws = [\ \t];
 "vcd"				 => (Tokens.VCD(!pos,!pos));
 "tikz"				 => (Tokens.TIKZ(!pos,!pos));
 "tex"				 => (Tokens.TEX(!pos,!pos));
+"pdf"				 => (Tokens.PDF(!pos,!pos));
 "svg"				 => (Tokens.SVG(!pos,!pos));
 "@select"                    => (Tokens.DIR_SELECT(!pos,!pos));
 "select"                     => (Tokens.SELECT(!pos,!pos));

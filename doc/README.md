@@ -26,19 +26,32 @@ Run diagrams
 
 Outputs can be made with the directive `@print`.
 
-### LaTeX formatting
+### TikZ/LaTeX/PDF formatting
 
-It is also possible to produce a run diagram in LaTeX by adding at the end of the specification the directive
+It is also possible to produce a run diagram in TikZ/LaTeX by adding at the end of the specification the directive
 
 ```
-@output tex
+@output tikz  // for a TikZ figure
+@output tex   // for a standalone LaTeX file
 ```
 
-A file named `output.tex` will be produced in the local directory. To compile it, please use `document.tex` (provided in `lib/`) in the same directory
+A file named `output.tex` will be produced in the local directory. To compile it, please use `tesl.sty` (provided in `lib/`)
 
 ```bash
-pdflatex document.tex
+TEXINPUTS=$TEXINPUTS:"./lib" pdflatex output.tex
 ```
+Or, just simply use in your specification
+
+```
+@output pdf
+```
+
+#### Hide non-ticking primitives explicitly dsiplayed
+ Just change in `lib/TESL.sty` the color gradient of `nontickcolor` as
+```
+\definecolor{nontickcolor}{gray}{1.0}
+```
+Then, recompile your output.
 
 ### Runtime 
 
