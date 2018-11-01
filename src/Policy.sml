@@ -9,12 +9,15 @@
    file is distributed under the MIT License.
 *)
 
-(** Policies are supposed to restrict the universe by choosing configurations that are relevant for simulation.
-    They allow to focus on execution of models, and become handy to test your specifications.
+(** Policies are supposed to restrict the universe by choosing
+    configurations that are relevant for simulation.  They allow to
+    focus on execution of models, and become handy to test your
+    specifications.
 *)
 
-(* Policy 1. In a universe, the heuristic keeps snapshots with the minimal number of floating ticks.
-   We need to force the occurence of events as soon as possible. *)
+(* Policy 1. In a universe, the heuristic keeps snapshots with the
+   minimal number of floating ticks.  We need to force the occurence
+   of events as soon as possible. *)
 fun heuristic_minimize_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
     fun nb_floating (frun: TESL_formula) : int =
@@ -26,7 +29,8 @@ fun heuristic_minimize_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf
 	  cfs
   end
 
-(* Policy 2. Rejects runs containing empty instants. Something always have to happen at any step. *)
+(* Policy 2. Rejects runs containing empty instants. Something always
+   have to happen at any step. *)
 fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let fun has_at_least_one_event (G: system) (step : int) =
     List.exists (fn Ticks _ => true | _ => false) (haa_constrs_at_step G step)
@@ -49,7 +53,8 @@ fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf l
 	  cfs
   end
 
-(* Policy 4. Minimizes the number of affine constraints containing variables. *)
+(* Policy 4. Minimizes the number of affine constraints containing
+   variables. *)
 fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
@@ -168,20 +173,55 @@ fun heuristic_speedup_event_occ (cfs : TESL_ARS_conf list) =
   end
 
 
+(* Policy 7. Ticks at the soonest instants give more priority. Lexicographic order *)
+fun heuristic_lexicographic_priority (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+    case cfs of [] => []
+	      |  _ => let
+      fun lex_order_leq (l1: int list) (l2: int list) = case (l1, l2) of
+        (e1 :: l1', e2 :: l2') =>
+	   if e1 = e2
+	   then lex_order_leq l1' l2'
+	   else e1 >= e2
+      | ([], []) => true
+      | (_, _)   => raise UnexpectedMatch
+
+      fun tick_primitives_at_indx (G: system) (indx: int) =
+	   uniq (List.filter (fn Ticks (_, n) => n = indx | _ => false) G)
+
+      fun weight_vector (cf : TESL_ARS_conf) = case cf of (G, n, _, _) =>
+        List.map (fn indx => List.length (tick_primitives_at_indx G indx)) (range n)
+
+      fun snd (_, b) = b
+      val tupled_with_weight = List.map (fn cf => (cf, weight_vector cf)) cfs
+      (* Looking for the least *)
+      val least_w : int list = case tupled_with_weight of
+        cf_w :: cfs_w => snd (List.foldl (fn ((cf, w), (cf', w')) => if lex_order_leq w w'
+									 then (cf, w)
+									 else (cf, w')) cf_w cfs_w)
+			 | [] => raise UnexpectedMatch
+      (* Least may not be unique... *)
+      val smallest_ones =
+	 List.filter (fn (cf, w) => (lex_order_leq w least_w) andalso (lex_order_leq least_w w)) tupled_with_weight
+      val without_weight = List.map (fn (cf, _) => cf) smallest_ones
+    in without_weight
+    end
 
 exception Unreferenced_heuristic
 fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf list) =
   case f of
-    DirHeuristic "asap"                             => heuristic_minimize_ticks
-							       o heuristic_speedup_event_occ
-							       o heuristic_minimize_floating_ticks
-								o heuristic_minimize_unsolved_affine
+    DirHeuristic "asap"                             => 
+      heuristic_lexicographic_priority
+    o heuristic_minimize_ticks
+    o heuristic_speedup_event_occ
+    o heuristic_minimize_floating_ticks
+    o heuristic_minimize_unsolved_affine
   | DirHeuristic "minimize_ticks"                   => heuristic_minimize_ticks
   | DirHeuristic "speedup_event_occ"                => heuristic_speedup_event_occ
   | DirHeuristic "minimize_floating_ticks"          => heuristic_minimize_floating_ticks
   | DirHeuristic "minimize_unsolved_affine"         => heuristic_minimize_unsolved_affine
   | DirHeuristic "no_empty_instants"	          => heuristic_no_empty_instants
   | DirHeuristic "maximize_reactiveness"            => heuristic_maximize_reactiveness
+  | DirHeuristic "lexicographic_priority"           => heuristic_lexicographic_priority
   | DirHeuristic _                                  => raise Unreferenced_heuristic
   | _                                               => raise UnexpectedMatch
 
