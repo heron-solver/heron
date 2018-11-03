@@ -1,0 +1,12 @@
+master sporadic 1, 2, 3
+begin sporadic 2
+end sporadic 3
+
+tag relation master = 1 * begin
+tag relation master = 1 * end
+
+master sustained from begin to end implies slave
+
+@run
+@select 4
+@output tikz select master begin end slave

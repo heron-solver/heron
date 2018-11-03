@@ -1,0 +1,6 @@
+master sporadic 1, 2, 3
+
+master implies slave
+
+@run
+@output tikz select master slave

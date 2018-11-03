@@ -1,0 +1,9 @@
+  \node[tick] at (1, 0)  {} ;
+  \node[date] at (1, 0)  {1} ;
+  \node[tick] at (1, -1)  {} ;
+  \node[tick] at (2, 0)  {} ;
+  \node[date] at (2, 0)  {2} ;
+  \node[tick] at (2, -1)  {} ;
+  \node[tick] at (3, 0)  {} ;
+  \node[date] at (3, 0)  {3} ;
+  \node[tick] at (3, -1)  {} ;

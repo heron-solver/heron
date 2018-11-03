@@ -1,0 +1,10 @@
+m1 sporadic 1, 3
+m2 sporadic 2, 3
+tag relation m1 = 1 * m2
+
+await m1 m2 implies slave
+
+@dumpres
+@run
+@select 2
+@output tikz select m1 m2 slave

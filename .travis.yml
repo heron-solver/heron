@@ -10,24 +10,7 @@ before_install:
 install:
   - make
 script:
-  - ./heron --use examples/basic/FirstExample.tesl
-  - ./heron --use examples/basic/Implications.tesl
-  - ./heron --use examples/basic/ImplicationsTimeScales.tesl
-  - ./heron --use examples/basic/FilteredImplication.tesl
-  - ./heron --use examples/basic/DelayedImplication.tesl
-  - ./heron --use examples/basic/SustainedImplication.tesl
-  - ./heron --use examples/basic/WhenImplication.tesl
-  - ./heron --use examples/basic/AwaitImplication.tesl
-  - ./heron --use examples/basic/StrictlyPrecedes.tesl
-  - ./heron --use examples/basic/WeaklyPrecedes.tesl
-  - ./heron --use examples/reference-gallery/ConcurrentComputations.tesl
-  - ./heron --use examples/reference-gallery/LightSwitch.tesl
-  - ./heron --use examples/reference-gallery/LeapYears.tesl
-  - ./heron --use examples/HandWatch.tesl
-  - ./heron --use examples/HandWatch-minimal.tesl
-  - ./heron --use examples/HandWatch-monitoring.tesl
-  - ./heron --use examples/Radiotherapy.tesl
-  - ./heron --use examples/PowerWindow.tesl
+  - make test
   
 notifications:
   email: false

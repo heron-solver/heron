@@ -1,0 +1,11 @@
+master sporadic 1, 3, 4, 5, 7, 8
+sampl sporadic 2, 4, 6, 7
+ 
+tag relation sampl = 1 * master
+
+master when sampl implies slave
+
+@dumpres
+@policy asap
+@run
+@output tikz select master sampl slave

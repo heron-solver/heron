@@ -1,0 +1,9 @@
+master1 sporadic 1, 4, 7
+master2 sporadic   2, 5
+ 
+master1 implies slave
+master2 implies slave
+ 
+@run
+@select 5
+@output tikz select master1 master2

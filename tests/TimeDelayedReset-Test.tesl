@@ -1,0 +1,19 @@
+D-clock measuring
+D-clock master sporadic 0.0, 2.0, 4.0, 6.0
+tag relation master = measuring
+D-clock doreset sporadic 2.0, 5.5, 9.0
+tag relation doreset = measuring
+U-clock slave // no reset
+master time delayed by 3.0 on measuring implies slave
+U-clock slave_reset // default delayed weak reset
+master time delayed by 3.0 on measuring with reset on doreset implies slave_reset
+
+@policy asap
+@step
+@step
+@step
+@step
+@step
+@step
+@print
+@output tikz select measuring master doreset slave slave_reset

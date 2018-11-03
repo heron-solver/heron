@@ -74,7 +74,7 @@ BRK-apply kills V1-reach
 // tag relation chronometer = time-S
 
 @scenario 1 (time-S -> 0.0)
-@maxstep 5
+@maxstep 6
 @policy asap
 @run
 @print
