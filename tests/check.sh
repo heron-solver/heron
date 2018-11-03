@@ -22,8 +22,8 @@ generate () {
 # Checks output against expectation
 run_check () {
     if (! (diff $1 $2  | grep -v % | grep tick)) && (! (diff $1 $2  | grep -v % | grep date)) && (! (diff $1 $2  | grep -v % | grep Cross)) && (! (diff $1 $2  | grep -v % | grep Skull))
-    then echo "  --> \e[1m\e[32mPASS\e[0m" ; exit 0
-    else echo "  --> \e[1m\e[31mFAIL\e[0m" ; exit 1
+    then echo "  --> PASS" ; exit 0 # \e[1m\e[32mPASS\e[0m
+    else echo "  --> FAIL" ; exit 1 # \e[1m\e[31mFAIL\e[0m
     fi
 }
 
