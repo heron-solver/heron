@@ -41,6 +41,13 @@ print "  [CLOCK] \u001B[1m[strictly | weakly] precedes\u001B[0m [CLOCK]\n";
 print "  [CLOCK] \u001B[1mexcludes\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mkills\u001B[0m [CLOCK]\n"; 
 print "\n"; 
+print (BOLD_COLOR ^ "Extensions in Lustre-style:\n" ^ RESET_COLOR); 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [TAG]\n"; 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK]\n"; 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK] * [CLOCK] + [CLOCK]\n"; 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1m[\u001B[0m [TAG]+ \u001B[1m] ->\u001B[0m [CLOCK]\n"; 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1mpre\u001B[0m [CLOCK]\n"; 
+print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [INT]                    define the number of minimum run steps\n"; 
 print "  @maxstep [INT]                    define the number of maximum run steps\n"; 
@@ -295,6 +302,7 @@ fun string_of_expr e = case e of
   | TagRelationRefl (c1, c2)                                => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk c2)
   | TagRelationClk (c1, ca, c2, cb)                         => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk ca) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_clk cb)
   | TagRelationPre (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = pre " ^ (string_of_clk c2)
+  | TagRelationFby (c1, tags, c2)                           => "time relation " ^ (string_of_clk c1) ^ " = [" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk c2)
   | TimeDelayedBy (master, t, measuring, NONE, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
   | TimeDelayedBy (master, t, measuring, SOME (reset), slave)     => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " with reset on " ^ (string_of_clk reset) ^ " implies " ^ (string_of_clk slave)
   | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)

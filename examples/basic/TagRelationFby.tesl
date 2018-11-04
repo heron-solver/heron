@@ -1,0 +1,7 @@
+time relation h1 = [1. 2. ] -> h2
+time relation h2 = 5.0
+@step
+@step
+@step
+@step
+@print

@@ -102,6 +102,7 @@ fun opposite_tag t = case t of
 												      | Rat _ => TagRelation (CLK1, TAG, CLK2, Rat (rat_zero))
 												      | _     => raise UnsupportedParsedTerm)
       | TAGREL CLK EQ CLK                                                      (TagRelationRefl (CLK1, CLK2))
+      | TAGREL CLK EQ LBRACK TAGS RBRACK ARROW CLK                             (TagRelationFby (CLK1, TAGS, CLK2))
       | TAGREL CLK EQ TAG                                                      (TagRelationCst (CLK, TAG))
       | TAGREL CLK EQ CLK TIMES CLK PLUS CLK                                   (TagRelationClk (CLK1, CLK2, CLK3, CLK4))
       | TAGREL CLK EQ PRE CLK                                                  (TagRelationPre (CLK1, CLK2))
@@ -135,7 +136,7 @@ fun opposite_tag t = case t of
       | CLK STRICTLY PRECEDES CLK                                              (Precedes (CLK1, CLK2, false))
       | CLK WEAKLY PRECEDES CLK                                                (Precedes (CLK1, CLK2, true))
       | CLK EXCLUDES CLK                                                       (Excludes (CLK1, CLK2))
-      | CLK KILLS CLK							       (Kills (CLK1, CLK2))
+      | CLK KILLS CLK							         (Kills (CLK1, CLK2))
 
       | DIR_MAXSTEP NUM                                                        (DirMaxstep (NUM))
       | DIR_MINSTEP NUM                                                        (DirMinstep (NUM))

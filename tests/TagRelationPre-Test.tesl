@@ -1,0 +1,13 @@
+h2 periodic 1.0
+tag relation h1 = pre h2
+tag relation h0 = [-1.0] -> h1
+
+@policy asap
+@step
+@step
+@step
+@step
+@step
+@step
+@print
+@output tikz select h2 h1 h0

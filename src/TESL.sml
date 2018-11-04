@@ -90,6 +90,7 @@ datatype TESL_atomic =
   | TagRelationRefl                of clock * clock
   | TagRelationClk                 of clock * clock * clock * clock
   | TagRelationPre                 of clock * clock
+  | TagRelationFby                 of clock * tag list * clock
   | Implies                        of clock * clock
   | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock
@@ -138,6 +139,11 @@ type TESL_formula = TESL_atomic list
 
 type TESL_ARS_conf = system * instant_index * TESL_formula * TESL_formula
 
+(* *** WARNING ***
+ * TESL formulae must be clearly stated in one the following categories:
+ * ConstantlySubs, ConsumingSubs, SporadicNowSubs, ReproductiveSubs, or SelfModifyingSubs
+ * If not, they will be ignored at instant initialization...
+ *)
 fun ConstantlySubs f = List.filter (fn f' => case f' of
     Implies _        => true
   | ImpliesNot _     => true
@@ -209,6 +215,7 @@ fun SelfModifyingSubs f = List.filter (fn f' => case f' of
   | UntilRestartImmediately _         => true
   | UntilRestartImmediatelyWeakly _   => true
   | Await _                           => true
+  | TagRelationFby _                  => true
   | _                                 => false) f
 
 (* Type-checker *)
@@ -221,6 +228,7 @@ fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref)
      | TypeDeclSporadics (ty, clk, tags) => (clk, ty) :: (List.map (fn t => (clk, type_of_tag t)) tags)
      | TagRelation (c1, t1, c2, t2)      => [(c1, type_of_tags c1 [t1, t2]), (c2, type_of_tags c2 [t1, t2])]
      | TagRelationCst (c, t)             => [(c, type_of_tags c [t])]
+     | TagRelationFby (c1, tags, c2)     => [(c1, type_of_tags c1 tags), (c2, type_of_tags c2 tags)]
      | TimeDelayedBy (_, t, clk, _, _)   => [(clk, type_of_tag t)]
      | Periodic (c, t1, t2)              => [(c, type_of_tags c [t1, t2])]
      | TypeDeclPeriodic (ty, c, t1, t2)  => (c, ty) :: [(c, type_of_tags c [t1, t2])]
@@ -349,6 +357,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | TagRelationRefl (c1, c2)                  => [c1, c2]
   | TagRelationClk (c1, ca, c2, cb)           => [c1, ca, c2, cb]
   | TagRelationPre (c1, c2)                   => [c1, c2]
+  | TagRelationFby (c1, _, c2)                => [c1, c2]
   | Implies (c1, c2)                          => [c1, c2]
   | ImpliesNot (c1, c2)                       => [c1, c2]
   | TimeDelayedBy (c1, _, c2, NONE, c3)       => [c1, c2, c3]

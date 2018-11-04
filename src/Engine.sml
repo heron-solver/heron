@@ -431,7 +431,7 @@ fun ARS_rule_whentickingon_with_reset_on_3
 (* 62. Tag relation for constants elimination *)
 fun ARS_rule_tagrel_cst_elim
   (G, n, frun, finst) (fsubst as TagRelationCst (c, tag)) =
-    (print "HELLLLLO cst\n" ; (G @ [Timestamp (c, n, tag)], n, frun, finst @- [fsubst]))
+    (G @ [Timestamp (c, n, tag)], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_cst_elim _ _ = raise Assert_failure;
 
 (* 63. Tag relation with clocks elimination *)
@@ -454,13 +454,13 @@ fun ARS_rule_tagrel_refl_elim
 	  ], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_refl_elim _ _ = raise Assert_failure;
 
-(* 64. Tag relation with pre elimination at instant 0 *)
+(* 65. Tag relation with pre elimination at instant 0 *)
 fun ARS_rule_tagrel_pre_elim_init
   (G, n, frun, finst) (fsubst as TagRelationPre (c1, c2)) =
     (G, n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_pre_elim_init _ _ = raise Assert_failure;
 
-(* 64. Tag relation with pre elimination at instant > 0 *)
+(* 66. Tag relation with pre elimination at instant > 0 *)
 fun ARS_rule_tagrel_pre_elim_gen
   (G, n, frun, finst) (fsubst as TagRelationPre (c1, c2)) =
     (G @ [Timestamp (c1, n, Schematic (c1, n)),
@@ -469,6 +469,19 @@ fun ARS_rule_tagrel_pre_elim_gen
 	  ], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_pre_elim_gen _ _ = raise Assert_failure;
 
+(* 67. Tag relation with fby (->) elimination tag = 1 case *)
+fun ARS_rule_tagrel_fby_elim_1
+  (G, n, frun, finst) (fsubst as TagRelationFby (c1, tags, c2)) = (case tags of
+    [t]        => (G @ [Timestamp (c1, n, t)], n, frun @ [TagRelationRefl(c1, c2)], finst @- [fsubst])
+  | _          => raise Assert_failure)
+  | ARS_rule_tagrel_fby_elim_1 _ _ = raise Assert_failure;
+
+(* 68. Tag relation with fby (->) elimination tag > 1 case *)
+fun ARS_rule_tagrel_fby_elim_2
+  (G, n, frun, finst) (fsubst as TagRelationFby (c1, tags, c2)) = (case tags of
+     t :: tags' => (G @ [Timestamp (c1, n, t)], n, frun @ [TagRelationFby (c1, tags', c2)], finst @- [fsubst])
+   | _          => raise Assert_failure)
+  | ARS_rule_tagrel_fby_elim_2 _ _ = raise Assert_failure;
 
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
@@ -509,6 +522,10 @@ fun lawyer_e
 			     if n = 0
 			     then [(fatom, ARS_rule_tagrel_pre_elim_init)]
 			     else [(fatom, ARS_rule_tagrel_pre_elim_gen)]
+			 | TagRelationFby (_, tags, _) => (case tags of
+                            [_]    => [(fatom, ARS_rule_tagrel_fby_elim_1)]
+			     | _ :: _ => [(fatom, ARS_rule_tagrel_fby_elim_2)]
+			     | _ => raise Assert_failure)
 			 | Implies _ =>
 			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
 			 | ImpliesNot _ =>
@@ -666,7 +683,6 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
 *)
 fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
   let val choices = lawyer_e c
-      val _ = print ("LAWYER says: I made choices: " ^ (string_of_int (List.length choices)) ^ "\n")
   in
       case choices of
 	   [] => [] (* Removing [c] breaks empty specification simulation *)
@@ -764,7 +780,6 @@ fun exec_step
   )
   : TESL_ARS_conf list =
   let
-    val _ = print ("Execute un pas de simu. Dans 1er cf: \n" ^ (case (List.nth (cfs, 0)) of (_, _, phi, _) => string_of_expr (List.nth (phi, 0))))
       fun writeln_ifrun s = if rtprint then () else (writeln s)
       (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
       val () = case cfs of
