@@ -431,7 +431,7 @@ fun ARS_rule_whentickingon_with_reset_on_3
 (* 62. Tag relation for constants elimination *)
 fun ARS_rule_tagrel_cst_elim
   (G, n, frun, finst) (fsubst as TagRelationCst (c, tag)) =
-    (G @ [Timestamp (c, n, tag)], n, frun, finst @- [fsubst])
+    (print "HELLLLLO cst\n" ; (G @ [Timestamp (c, n, tag)], n, frun, finst @- [fsubst]))
   | ARS_rule_tagrel_cst_elim _ _ = raise Assert_failure;
 
 (* 63. Tag relation with clocks elimination *)
@@ -444,13 +444,40 @@ fun ARS_rule_tagrel_clk_elim
 	   Affine (Schematic (c1, n), Schematic (ca, n), Schematic (c2, n), Schematic (cb, n))
 	  ], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_clk_elim _ _ = raise Assert_failure;
- 
+
+(* 64. Tag relation with clocks elimination *)
+fun ARS_rule_tagrel_refl_elim
+  (G, n, frun, finst) (fsubst as TagRelationRefl (c1, c2)) =
+    (G @ [Timestamp (c1, n, Schematic (c1, n)),
+	   Timestamp (c2, n, Schematic (c2, n)),
+	   AffineRefl (Schematic (c1, n), Schematic (c2, n))
+	  ], n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_refl_elim _ _ = raise Assert_failure;
+
+(* 64. Tag relation with pre elimination at instant 0 *)
+fun ARS_rule_tagrel_pre_elim_init
+  (G, n, frun, finst) (fsubst as TagRelationPre (c1, c2)) =
+    (G, n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_pre_elim_init _ _ = raise Assert_failure;
+
+(* 64. Tag relation with pre elimination at instant > 0 *)
+fun ARS_rule_tagrel_pre_elim_gen
+  (G, n, frun, finst) (fsubst as TagRelationPre (c1, c2)) =
+    (G @ [Timestamp (c1, n, Schematic (c1, n)),
+	   Timestamp (c2, n - 1, Schematic (c2, n - 1)),
+	   AffineRefl (Schematic (c1, n), Schematic (c2, n - 1))
+	  ], n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_pre_elim_gen _ _ = raise Assert_failure;
+
+
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
    the least fixed-point.
 *)
 exception UnexpectedBehavior of string;
+exception UnspecifiedElimRule;
+exception Breakpoint;
 
 fun lawyer_e
   ((G, n, _, f_present) : TESL_ARS_conf)
@@ -476,6 +503,12 @@ fun lawyer_e
 			     [(fatom, ARS_rule_tagrel_cst_elim)]
 			 | TagRelationClk _ =>
 			     [(fatom, ARS_rule_tagrel_clk_elim)]
+			 | TagRelationRefl _ =>
+			     [(fatom, ARS_rule_tagrel_refl_elim)]
+			 | TagRelationPre _ =>
+			     if n = 0
+			     then [(fatom, ARS_rule_tagrel_pre_elim_init)]
+			     else [(fatom, ARS_rule_tagrel_pre_elim_gen)]
 			 | Implies _ =>
 			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
 			 | ImpliesNot _ =>
@@ -617,7 +650,7 @@ fun lawyer_e
 			     end
 			 | Excludes (c1, c2) => [(fatom, ARS_rule_excludes_1), (fatom, ARS_rule_excludes_2), (fatom, ARS_rule_excludes_3)]
 			 | Kills (c1, c2) => [(fatom, ARS_rule_kills_1), (fatom, ARS_rule_kills_2)]
-			 | _ => raise UnexpectedBehavior "Unspecified elimination rules"
+			 | _ => raise UnspecifiedElimRule
 		      );
 
 fun new_instant_init (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
@@ -632,7 +665,9 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
   end
 *)
 fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
-  let val choices = lawyer_e c in
+  let val choices = lawyer_e c
+      val _ = print ("LAWYER says: I made choices: " ^ (string_of_int (List.length choices)) ^ "\n")
+  in
       case choices of
 	   [] => [] (* Removing [c] breaks empty specification simulation *)
 	 | _  => List.foldl
@@ -729,6 +764,7 @@ fun exec_step
   )
   : TESL_ARS_conf list =
   let
+    val _ = print ("Execute un pas de simu. Dans 1er cf: \n" ^ (case (List.nth (cfs, 0)) of (_, _, phi, _) => string_of_expr (List.nth (phi, 0))))
       fun writeln_ifrun s = if rtprint then () else (writeln s)
       (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
       val () = case cfs of

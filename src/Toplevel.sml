@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for every code changes *)
-val RELEASE_VERSION = "0.51.0-alpha+20181104"
+val RELEASE_VERSION = "0.52.0-alpha+20181104"
 
 open OS.Process
 
@@ -141,6 +141,10 @@ fun action (stmt: TESL_atomic) =
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   | Kills (c1, c2)  =>
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
+  | TagRelationCst _  =>
+    (print "Ajout de trcst dans snapshots phi de ->\n" ;
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
+    )
   | _                     =>
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   end

@@ -161,6 +161,18 @@ fun apply_tag_substition ((t_old, t_new): tag * tag) (G: system) =
             else if b = t_old
               then Affine (ltag, a, rtag, t_new)
               else Affine (ltag, a, rtag, b)
+    | AffineRefl (ltag, rtag) =>
+(*
+      if ltag = t_old andalso rtag = t_old
+      then AffineRefl (t_new, t_new)
+      else
+*)
+      if ltag = t_old
+      then AffineRefl (t_new, rtag)
+      else
+	 if rtag = t_old
+	 then AffineRefl (ltag, t_new)
+        else AffineRefl (ltag, rtag)
     | x => x) G;
 
 (* Constants propagation is possible whenever there exists: *)
@@ -224,28 +236,6 @@ fun constants_propagation_candidates_int (G: system) =
         else []
          | _ => raise UnexpectedMatch
         ) affine_fixpoint_var)
-(*
-    (* - Two timestamps [H ⇓_σ C] and [X^σ_H = α * _ + β], where [X^σ_H] is a variable [C] is a constant *)
-    val affine_var_left = List.filter (fn cstr => case cstr of Affine (Schematic _, Int _, _, Int _) => true | _ => false) G
-    val affine_timestamp_left_var_unifiers =
-    List.concat (List.concat (List.map (fn
-      Affine (Schematic (clk1, k1), Int a, v, Int b) =>
-        (List.map (fn
-        Timestamp (clk2, k2, Int i) => (
-          if clk1 = clk2 andalso k1 = k2
-          then [(Schematic (clk1, k1), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_left))
-    (* - Two timestamps [H ⇓_σ C] and [_ = α * X^σ_H + β], where [X^σ_H] is a variable [C] is a constant *)
-    val affine_var_right = List.filter (fn cstr => case cstr of Affine (_, Int _, Schematic _, Int _) => true | _ => false) G
-    val affine_timestamp_right_var_unifiers =
-    List.concat (List.concat (List.map (fn
-      Affine (v, Int a, Schematic (clk1, k1), Int b) =>
-        (List.map (fn
-        Timestamp (clk2, k2, Int i) => (
-          if clk1 = clk2 andalso k1 = k2
-          then [(Schematic (clk1, k1), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_right))
-*)
     (* - Two timestamps [H ⇓_σ C] and [X^σ_H = _ * _ + _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_1 = List.filter (fn cstr => case cstr of Affine (Schematic _, _, _, _) => true | _ => false) G
     val affine_timestamp_1_var_unifiers =
@@ -286,6 +276,26 @@ fun constants_propagation_candidates_int (G: system) =
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Int i)]
           else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_4))
+    (* - Two timestamps [H ⇓_σ C] and [X^σ_H = _], where [X^σ_H] is a variable [C] is a constant *)
+    val affine_var_refl_1 = List.filter (fn cstr => case cstr of AffineRefl (Schematic _, _) => true | _ => false) G
+    val affine_timestamp_refl_1_var_unifiers =
+    List.concat (List.concat (List.map (fn
+      AffineRefl (Schematic (clk1, k1), _) =>
+        (List.map (fn
+        Timestamp (clk2, k2, Int i) => (
+          if clk1 = clk2 andalso k1 = k2
+          then [(Schematic (clk1, k1), Int i)]
+          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_1))
+    (* - Two timestamps [H ⇓_σ C] and [_ = X^σ_H], where [X^σ_H] is a variable [C] is a constant *)
+    val affine_var_refl_2 = List.filter (fn cstr => case cstr of AffineRefl (_, Schematic _) => true | _ => false) G
+    val affine_timestamp_refl_2_var_unifiers =
+    List.concat (List.concat (List.map (fn
+      AffineRefl (_, Schematic (clk1, k1)) =>
+        (List.map (fn
+        Timestamp (clk2, k2, Int i) => (
+          if clk1 = clk2 andalso k1 = k2
+          then [(Schematic (clk1, k1), Int i)]
+          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_2))
   in
     timestamp_unifiers
     @ timestamp_add_schem_left_unifiers
@@ -298,6 +308,8 @@ fun constants_propagation_candidates_int (G: system) =
     @ affine_timestamp_2_var_unifiers
     @ affine_timestamp_3_var_unifiers
     @ affine_timestamp_4_var_unifiers
+    @ affine_timestamp_refl_1_var_unifiers
+    @ affine_timestamp_refl_2_var_unifiers
   end;
 
 fun constants_propagation_candidates_rat (G: system) =
@@ -400,6 +412,26 @@ fun constants_propagation_candidates_rat (G: system) =
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Rat i)]
           else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_4))
+    (* - Two timestamps [H ⇓_σ C] and [X^σ_H = _], where [X^σ_H] is a variable [C] is a constant *)
+    val affine_var_refl_1 = List.filter (fn cstr => case cstr of AffineRefl (Schematic _, _) => true | _ => false) G
+    val affine_timestamp_refl_1_var_unifiers =
+    List.concat (List.concat (List.map (fn
+      AffineRefl (Schematic (clk1, k1), _) =>
+        (List.map (fn
+        Timestamp (clk2, k2, Rat i) => (
+          if clk1 = clk2 andalso k1 = k2
+          then [(Schematic (clk1, k1), Rat i)]
+          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_1))
+    (* - Two timestamps [H ⇓_σ C] and [_ = X^σ_H], where [X^σ_H] is a variable [C] is a constant *)
+    val affine_var_refl_2 = List.filter (fn cstr => case cstr of AffineRefl (_, Schematic _) => true | _ => false) G
+    val affine_timestamp_refl_2_var_unifiers =
+    List.concat (List.concat (List.map (fn
+      AffineRefl (_, Schematic (clk1, k1)) =>
+        (List.map (fn
+        Timestamp (clk2, k2, Rat i) => (
+          if clk1 = clk2 andalso k1 = k2
+          then [(Schematic (clk1, k1), Rat i)]
+          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_2))
   in
     timestamp_unifiers
     @ timestamp_add_schem_left_unifiers
@@ -412,7 +444,18 @@ fun constants_propagation_candidates_rat (G: system) =
     @ affine_timestamp_2_var_unifiers
     @ affine_timestamp_3_var_unifiers
     @ affine_timestamp_4_var_unifiers
+    @ affine_timestamp_refl_1_var_unifiers
+    @ affine_timestamp_refl_2_var_unifiers
   end;
+
+(* Reconvert reflexive affines into affines *)
+fun refl_affines_into_affine (G: system) =
+    List.map (fn
+		 AffineRefl (X, Rat r) => Affine (X, Rat rat_one, Rat r, Rat rat_zero)
+	      | AffineRefl (Rat r, X) => Affine (X, Rat rat_one, Rat r, Rat rat_zero)
+	      | AffineRefl (X, Int n) => Affine (X, Int 1, Int n, Int 0)
+	      | AffineRefl (Int n, X) => Affine (X, Int 1, Int n, Int 0)
+	      | g => g) G
 
 (* Constant propagation main step *)
 fun constants_propagation_step_int (G: system) =
@@ -420,7 +463,7 @@ fun constants_propagation_step_int (G: system) =
 fun constants_propagation_step_rat (G: system) =
   List.foldl (fn (subst, h) => apply_tag_substition subst h) G (constants_propagation_candidates_rat G);
 fun constants_propagation (G: system) =
-  lfp (constants_propagation_step_rat o constants_propagation_step_int) G
+  lfp (refl_affines_into_affine o constants_propagation_step_rat o constants_propagation_step_int) G
 
 (* Remove trivial schematic timestamp of the kind [H ⇓_n X^H_n]*)
 fun no_trivial_schem_timestamp (G: system) =

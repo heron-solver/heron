@@ -19,7 +19,7 @@ binary-release: all
 test:
 	rm -f tests/*.out tests/_results.log
 	chmod +x tests/check.sh
-	for var in $(shell ls tests/*.tesl) ; do tests/check.sh $${var} ; done | tee tests/results.log
+	for var in $(shell ls tests/*.tesl) ; do tests/check.sh $${var} ; done | tee tests/_results.log
 	if (! (grep "FAIL" tests/_results.log >/dev/null)) ; then echo "\e[1m\e[32mCongrats! ALL TESTS PASSED.\e[0m" ; else echo "\e[1m\e[31mSorry! SOME TEST HAS FAILED.\e[0m" ; exit 1 ; fi
 
 clean:

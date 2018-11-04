@@ -28,7 +28,7 @@ fun opposite_tag t = case t of
 
 %term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t
       | SEMI | EOF | EQ | PLUS | MINUS | TIMES | DIV | TAGREL | TIME | ON | DELAYED
-      | FILTERED | LPAR | RPAR | LDIP | RDIP | COMMA
+      | FILTERED | LPAR | RPAR | LBRACK | RBRACK | LDIP | RDIP | COMMA
       | SUSTAINED | IMMEDIATELY | TO | WEAKLY | STRICTLY
       | AWAIT | WEAK | STRONG
       | WHEN | NOT
@@ -50,8 +50,9 @@ fun opposite_tag t = case t of
       | PRECEDES
       | EXCLUDES
       | KILLS
+      | PRE 
 
-%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list 
+%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | TAGFBYS of tag list 
 
 %name Calc
 
@@ -103,6 +104,7 @@ fun opposite_tag t = case t of
       | TAGREL CLK EQ CLK                                                      (TagRelationRefl (CLK1, CLK2))
       | TAGREL CLK EQ TAG                                                      (TagRelationCst (CLK, TAG))
       | TAGREL CLK EQ CLK TIMES CLK PLUS CLK                                   (TagRelationClk (CLK1, CLK2, CLK3, CLK4))
+      | TAGREL CLK EQ PRE CLK                                                  (TagRelationPre (CLK1, CLK2))
       | CLK TIME DELAYED BY TAG ON CLK IMPLIES CLK                             (TimeDelayedBy (CLK1, TAG, CLK2, NONE, CLK3))
       | CLK TIME DELAYED BY TAG ON CLK WITH RESET ON CLK IMPLIES CLK		   (TimeDelayedBy (CLK1, TAG, CLK2, SOME (CLK3), CLK4))
       | CLK DELAYED BY NUM ON CLK IMPLIES CLK                                  (DelayedBy (CLK1, NUM, CLK2, CLK3))
