@@ -85,6 +85,7 @@ datatype TESL_atomic =
   | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
   | TypeDeclSporadics              of tag_t * clock * (tag list)    (* Syntactic sugar *)
   | TagRelation                    of clock * tag * clock * tag
+  | TagRelationCst                 of clock * tag
   | TagRelationRefl                of clock * clock                 (* Syntactic sugar *)
   | Implies                        of clock * clock
   | ImpliesNot                     of clock * clock
@@ -138,6 +139,7 @@ fun ConstantlySubs f = List.filter (fn f' => case f' of
     Implies _        => true
   | ImpliesNot _     => true
   | TagRelation _    => true
+  | TagRelationCst _ => true
   | WhenClock _      => true
   | WhenNotClock _   => true
   | Precedes _       => true
@@ -212,7 +214,8 @@ fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref)
      | Sporadics (clk, tlist)            => [(clk, type_of_tags clk tlist)]
      | TypeDeclSporadics (ty, clk, tags) => (clk, ty) :: (List.map (fn t => (clk, type_of_tag t)) tags)
      | TagRelation (c1, t1, c2, t2)      => [(c1, type_of_tags c1 [t1, t2]), (c2, type_of_tags c2 [t1, t2])]
-     | TimeDelayedBy (_, t, clk, _, _)      => [(clk, type_of_tag t)]
+     | TagRelationCst (c, t)             => [(c, type_of_tags c [t])]
+     | TimeDelayedBy (_, t, clk, _, _)   => [(clk, type_of_tag t)]
      | Periodic (c, t1, t2)              => [(c, type_of_tags c [t1, t2])]
      | TypeDeclPeriodic (ty, c, t1, t2)  => (c, ty) :: [(c, type_of_tags c [t1, t2])]
      | _                                 => []
@@ -333,6 +336,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | WhenTickingOn (c1, _, c2)                 => [c1, c2]
   | TypeDeclSporadics (_, c, _)               => [c]
   | TagRelation (c1, _, c2, _)                => [c1, c2]
+  | TagRelationCst (c, _)                     => [c]
   | TagRelationRefl (c1, c2)                  => [c1, c2]
   | Implies (c1, c2)                          => [c1, c2]
   | ImpliesNot (c1, c2)                       => [c1, c2]

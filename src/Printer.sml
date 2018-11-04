@@ -290,6 +290,7 @@ fun string_of_expr e = case e of
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
   | ImpliesNot (master, slave)                              => (string_of_clk master) ^ " implies not " ^ (string_of_clk slave)
   | TagRelation (c1, a, c2, b)                              => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
+  | TagRelationCst (c, t)                                   => "time relation " ^ (string_of_clk c) ^ " = " ^ (string_of_tag t)
   | TagRelationRefl (c1, c2)                                => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk c2)
   | TimeDelayedBy (master, t, measuring, NONE, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
   | TimeDelayedBy (master, t, measuring, SOME (reset), slave)     => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " with reset on " ^ (string_of_clk reset) ^ " implies " ^ (string_of_clk slave)

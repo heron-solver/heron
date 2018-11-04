@@ -427,6 +427,13 @@ fun ARS_rule_whentickingon_with_reset_on_3
   (G, n, frun, finst) (fsubst as WhenTickingOnWithReset (c1, tag, c2, rclock)) =
     (G @ [Ticks (rclock, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whentickingon_with_reset_on_3 _ _ = raise Assert_failure;
+
+(* 62. Tag relation for constants elimination *)
+fun ARS_rule_tagrel_cst_elim
+  (G, n, frun, finst) (fsubst as TagRelationCst (c, tag)) =
+    (G @ [Timestamp (c, n, tag)], n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_cst_elim _ _ = raise Assert_failure;
+
  
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
@@ -455,6 +462,8 @@ fun lawyer_e
                   (fatom, ARS_rule_whentickingon_with_reset_on_3)]
 			 | TagRelation _ =>
 			     [(fatom, ARS_rule_tagrel_elim)]
+			 | TagRelationCst _ =>
+			     [(fatom, ARS_rule_tagrel_cst_elim)]
 			 | Implies _ =>
 			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
 			 | ImpliesNot _ =>
