@@ -31,14 +31,24 @@ ws = [\ \t];
 %%
 \n       => (Tokens.SEMI(!pos,!pos));
 {ws}+    => (lex());
-"unit-clock"			 => (Tokens.TYPEDECL(Unit_t, !pos,!pos));
-"U-clock"			 => (Tokens.TYPEDECL(Unit_t, !pos,!pos));
-"int-clock"                  => (Tokens.TYPEDECL(Int_t, !pos,!pos));
-"Z-clock"			 => (Tokens.TYPEDECL(Int_t, !pos,!pos));
-"decimal-clock"		 => (print (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING: Decimal numbers are unsupported. Casting type to [rational].\n" ^ RESET_COLOR); Tokens.TYPEDECL(Rat_t, !pos,!pos));
-"D-clock"			 => (print (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING: Decimal numbers are unsupported. Casting type to [rational].\n" ^ RESET_COLOR); Tokens.TYPEDECL(Rat_t, !pos,!pos));
-"rational-clock"		 => (Tokens.TYPEDECL(Rat_t, !pos,!pos));
-"Q-clock"			 => (Tokens.TYPEDECL(Rat_t, !pos,!pos));
+"unit-clock"			 => (Tokens.TYPEDECL((Unit_t, true), !pos,!pos));
+"U-clock"			 => (Tokens.TYPEDECL((Unit_t, true), !pos,!pos));
+"int-clock"                  => (Tokens.TYPEDECL((Int_t, true), !pos,!pos));
+"Z-clock"			 => (Tokens.TYPEDECL((Int_t, true), !pos,!pos));
+"rational-clock"		 => (Tokens.TYPEDECL((Rat_t, true), !pos,!pos));
+"Q-clock"			 => (Tokens.TYPEDECL((Rat_t, true), !pos,!pos));
+"int-quantity"               => (Tokens.TYPEDECL((Int_t, false), !pos,!pos));
+"Z-quantity"			 => (Tokens.TYPEDECL((Int_t, false), !pos,!pos));
+"rational-quantity"		 => (Tokens.TYPEDECL((Rat_t, false), !pos,!pos));
+"Q-quantity"			 => (Tokens.TYPEDECL((Rat_t, false), !pos,!pos));
+"decimal-clock"		 => (print (BOLD_COLOR ^ YELLOW_COLOR
+					     ^ "### WARNING: Decimal numbers are unsupported. Casting type to [rational].\n"
+					     ^ RESET_COLOR);
+				     Tokens.TYPEDECL((Rat_t, true), !pos,!pos));
+"D-clock"			 => (print (BOLD_COLOR ^ YELLOW_COLOR
+					     ^ "### WARNING: Decimal numbers are unsupported. Casting type to [rational].\n"
+					     ^ RESET_COLOR);
+				     Tokens.TYPEDECL((Rat_t, true), !pos,!pos));
 "let"                        => (Tokens.LET(!pos,!pos)); 
 "int"				 => (Tokens.INT(!pos,!pos)); 
 "decimal"			 => (Tokens.DECIMAL(!pos,!pos)); 

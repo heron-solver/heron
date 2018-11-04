@@ -13,6 +13,7 @@ in
  Basics.sml
  Rational.sml
  TESL.sml
+ TypeChecker.sml
  parse.grm.sig
  parse.grm.sml
  parse.lex.sml

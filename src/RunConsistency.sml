@@ -20,6 +20,75 @@
    4. Conjunction
 *)
 
+exception UnexpectedMatch_RunConsistency_1
+exception UnexpectedMatch_RunConsistency_2
+exception UnexpectedMatch_RunConsistency_3
+exception UnexpectedMatch_RunConsistency_4
+exception UnexpectedMatch_RunConsistency_5
+exception UnexpectedMatch_RunConsistency_6
+exception UnexpectedMatch_RunConsistency_7
+exception UnexpectedMatch_RunConsistency_8
+exception UnexpectedMatch_RunConsistency_9
+exception UnexpectedMatch_RunConsistency_10
+exception UnexpectedMatch_RunConsistency_11
+exception UnexpectedMatch_RunConsistency_12
+exception UnexpectedMatch_RunConsistency_13
+exception UnexpectedMatch_RunConsistency_14
+exception UnexpectedMatch_RunConsistency_15
+exception UnexpectedMatch_RunConsistency_16
+exception UnexpectedMatch_RunConsistency_17
+exception UnexpectedMatch_RunConsistency_18
+exception UnexpectedMatch_RunConsistency_19
+exception UnexpectedMatch_RunConsistency_20
+exception UnexpectedMatch_RunConsistency_21
+exception UnexpectedMatch_RunConsistency_22
+exception UnexpectedMatch_RunConsistency_23
+exception UnexpectedMatch_RunConsistency_24
+exception UnexpectedMatch_RunConsistency_25
+exception UnexpectedMatch_RunConsistency_26
+exception UnexpectedMatch_RunConsistency_27
+exception UnexpectedMatch_RunConsistency_28
+exception UnexpectedMatch_RunConsistency_29
+exception UnexpectedMatch_RunConsistency_30
+exception UnexpectedMatch_RunConsistency_31
+exception UnexpectedMatch_RunConsistency_32
+exception UnexpectedMatch_RunConsistency_33
+exception UnexpectedMatch_RunConsistency_34
+exception UnexpectedMatch_RunConsistency_35
+exception UnexpectedMatch_RunConsistency_36
+exception UnexpectedMatch_RunConsistency_37
+exception UnexpectedMatch_RunConsistency_38
+exception UnexpectedMatch_RunConsistency_39
+exception UnexpectedMatch_RunConsistency_40
+exception UnexpectedMatch_RunConsistency_41
+exception UnexpectedMatch_RunConsistency_42
+exception UnexpectedMatch_RunConsistency_43
+exception UnexpectedMatch_RunConsistency_44
+exception UnexpectedMatch_RunConsistency_45
+exception UnexpectedMatch_RunConsistency_46
+exception UnexpectedMatch_RunConsistency_47
+exception UnexpectedMatch_RunConsistency_48
+exception UnexpectedMatch_RunConsistency_49
+exception UnexpectedMatch_RunConsistency_50
+exception UnexpectedMatch_RunConsistency_51
+exception UnexpectedMatch_RunConsistency_52
+exception UnexpectedMatch_RunConsistency_53
+exception UnexpectedMatch_RunConsistency_54
+exception UnexpectedMatch_RunConsistency_55
+exception UnexpectedMatch_RunConsistency_56
+exception UnexpectedMatch_RunConsistency_57
+exception UnexpectedMatch_RunConsistency_58
+exception UnexpectedMatch_RunConsistency_59
+exception UnexpectedMatch_RunConsistency_60
+exception UnexpectedMatch_RunConsistency_61
+exception UnexpectedMatch_RunConsistency_62
+exception UnexpectedMatch_RunConsistency_63
+exception UnexpectedMatch_RunConsistency_64
+exception UnexpectedMatch_RunConsistency_65
+exception UnexpectedMatch_RunConsistency_66
+exception UnexpectedMatch_RunConsistency_67
+exception UnexpectedMatch_RunConsistency_68
+exception UnexpectedMatch_RunConsistency_69
 
 (* Returns primitives for a given specific step *)
 fun haa_constrs_at_step (G: system) (step: int) =
@@ -29,7 +98,6 @@ fun haa_constrs_at_step (G: system) (step: int) =
     | NotTicks (_, step')     => step = step'
     | Affine _                => false
 ) G
-exception UnexpectedMatch2
 
 (* Whenever there's a ticking predicate, there shouln't be a refutation. Same way for non-ticking predicate. *)
 fun check_non_contradictory_ticks (G: system) =
@@ -40,14 +108,14 @@ fun check_non_contradictory_ticks (G: system) =
     val notticksfrom  = (List.filter (fn cstr => case cstr of NotTicksFrom _ => true | _ => false) G)
   in
     List.all
-      (fn Ticks (clk, i) => not (List.exists (fn NotTicks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch2) notticks)
-      	  	      	    andalso (not (List.exists (fn NotTicksUntil (clk', i') => clk = clk' andalso i < i' | _ => raise UnexpectedMatch2) notticksuntil))
-      	  	      	    andalso (not (List.exists (fn NotTicksFrom  (clk', i') => clk = clk' andalso i >= i' | _ => raise UnexpectedMatch2) notticksfrom))
-      	  | _ => raise UnexpectedMatch2)
+      (fn Ticks (clk, i) => not (List.exists (fn NotTicks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch_RunConsistency_1) notticks)
+      	  	      	    andalso (not (List.exists (fn NotTicksUntil (clk', i') => clk = clk' andalso i < i' | _ => raise UnexpectedMatch_RunConsistency_2) notticksuntil))
+      	  	      	    andalso (not (List.exists (fn NotTicksFrom  (clk', i') => clk = clk' andalso i >= i' | _ => raise UnexpectedMatch_RunConsistency_3) notticksfrom))
+      	  | _ => raise UnexpectedMatch_RunConsistency_4)
       ticks
   andalso
     List.all
-      (fn NotTicks (clk, i) => not (List.exists (fn Ticks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch2) ticks) | _ => raise UnexpectedMatch2)
+      (fn NotTicks (clk, i) => not (List.exists (fn Ticks (clk', i') => clk = clk' andalso i = i' | _ => raise UnexpectedMatch_RunConsistency_5) ticks) | _ => raise UnexpectedMatch_RunConsistency_6)
       notticks
   end;
 
@@ -60,7 +128,7 @@ fun check_injectivity_on_timestamps (G: system) =
       | Timestamp (_, _, Rat _) => true
       | _           => false) G
   in List.all
-      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i = i') orelse tag = tag' | _ => raise UnexpectedMatch) timestamps | _ => raise UnexpectedMatch)
+      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i = i') orelse tag = tag' | _ => raise UnexpectedMatch_RunConsistency_7) timestamps | _ => raise UnexpectedMatch_RunConsistency_8)
       timestamps
   end;
 
@@ -77,20 +145,24 @@ fun check_injectivity_on_timestamps_varadd (G: system) =
             not (clk = clk' andalso i = i' andalso clk = clk'' andalso i = i'') orelse dt = 0
         | Timestamp (clk', i', Add (Schematic (clk'', i''), Rat dt)) =>
             not (clk = clk' andalso i = i' andalso clk = clk'' andalso i = i'') orelse =/ (dt, rat_zero)
-        | _ => raise UnexpectedMatch) timestamps_add | _ => raise UnexpectedMatch)
+        | _ => raise UnexpectedMatch_RunConsistency_9) timestamps_add | _ => raise UnexpectedMatch_RunConsistency_10)
       timestamps_var
   end;
 
-(* Whenever there's a timestamp constraint at fixed clock, all others with higher instant index also have higher time tags *)
-fun check_ascending_chain_on_timestamps (G: system) =
+(* Whenever there's a timestamp constraint at fixed clock, all others
+ *  with higher instant index also have higher time tags
+ * ... except for clock declared as quantities
+ *)
+fun check_ascending_chain_on_timestamps (declared_quantities: clock list) (G: system) =
   let
+    fun not_in e l = List.all (fn e' => e <> e) l
     val timestamps = (List.filter (fn cstr => case cstr of
         Timestamp (_, _, Unit)  => true
-      | Timestamp (_, _, Int _) => true
-      | Timestamp (_, _, Rat _) => true
+      | Timestamp (clk, _, Int _) => not_in clk declared_quantities
+      | Timestamp (clk, _, Rat _) => not_in clk declared_quantities
       | _           => false) G)
   in List.all
-      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i < i') orelse ::<= (tag, tag') | _ => raise UnexpectedMatch) timestamps | _ => raise UnexpectedMatch)
+      (fn Timestamp (clk, i, tag) => List.all (fn Timestamp (clk', i', tag') => not (clk = clk' andalso i < i') orelse ::<= (tag, tag') | _ => raise UnexpectedMatch_RunConsistency_11) timestamps | _ => raise UnexpectedMatch_RunConsistency_12)
       timestamps
   end;
 
@@ -104,7 +176,7 @@ fun check_type_consistency (G: system) =
       | _           => false) G)
   in List.all
       (fn Timestamp (clk, _, tag) =>
-          List.all (fn Timestamp (clk', _, tag') => not (clk = clk') orelse ::~ (tag, tag') | _ => raise UnexpectedMatch) timestamps | _ => raise UnexpectedMatch)
+          List.all (fn Timestamp (clk', _, tag') => not (clk = clk') orelse ::~ (tag, tag') | _ => raise UnexpectedMatch_RunConsistency_13) timestamps | _ => raise UnexpectedMatch_RunConsistency_14)
       timestamps
   end;
 
@@ -118,11 +190,16 @@ fun schematic_elim (G: system) (evar: tag) : system =
     val eliminated = List.concat (List.map (fn
         Affine (x1, Int a, evar, Int b) => List.map (fn
           Affine (_, Int a', x3, Int b') =>
-            Affine (x1, Int (a * a'), x3, Int (a * b' + b)) | _ => raise UnexpectedMatch) (left_occ @- [Affine (x1, Int a, evar, Int b)])
+            Affine (x1, Int (a * a'), x3, Int (a * b' + b))
+        | _ => raise UnexpectedMatch_RunConsistency_15) (left_occ @- [Affine (x1, Int a, evar, Int b)])
       | Affine (x1, Rat a, evar, Rat b) => List.map (fn
           Affine (_, Rat a', x3, Rat b') =>
-            Affine (x1, Rat ( */ (a, a')), x3, Rat (+/ ( */ (a, b'), b))) | _ => raise UnexpectedMatch) (left_occ @- [Affine (x1, Rat a, evar, Rat b)])
-      | _ => raise UnexpectedMatch) right_occ)
+            Affine (x1, Rat ( */ (a, a')), x3, Rat (+/ ( */ (a, b'), b)))
+        | aff => aff (* TWEAK, check for well-foundedness *)
+        | _ => raise UnexpectedMatch_RunConsistency_16
+        ) (left_occ @- [Affine (x1, Rat a, evar, Rat b)])
+      | aff => [aff] (* TWEAK, check for well-foundedness *)
+      | _ => raise UnexpectedMatch_RunConsistency_17) right_occ)
   in
     eliminated @ no_occ
   end;
@@ -135,8 +212,8 @@ fun schematic_elim_step (G: system) =
       List.filter (fn
         Affine (x1 as Schematic _, a, x2, b) => List.exists (fn
           Affine (_, _, x2', _) =>
-            x1 = x2' | _ => raise UnexpectedMatch) (affines @- [Affine(x1, a, x2, b)]) | _ => false) affines
-    val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch) eliminable_constr
+            x1 = x2' | _ => raise UnexpectedMatch_RunConsistency_18) (affines @- [Affine(x1, a, x2, b)]) | _ => false) affines
+    val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch_RunConsistency_19) eliminable_constr
   in
     if is_empty (eliminable_vars)
     then G
@@ -186,7 +263,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk', k', Int i) => (
           if clk = clk' andalso k = k'
           then [(Schematic (clk, k), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) timestamp_var_right))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_20) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_21) timestamp_var_right))
     (* - Two timestamps [H ⇓_σ C] and [H' ⇓_σ' X^σ_H + _], where [X^σ_H] a variable and [C] is a constant *)
     val timestamp_add_schem_left = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (Schematic _, _)) => true | _ => false) G)
     val timestamp_add_schem_left_unifiers =
@@ -196,7 +273,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Add (Schematic (clk1, k1), t), Add (Int i, t))]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) timestamp_add_schem_left))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_22) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_23) timestamp_add_schem_left))
     (* - Two timestamps [H ⇓_σ C] and [H' ⇓_σ' _ + X^σ_H], where [X^σ_H] a variable and [C] is a constant *)
     val timestamp_add_schem_right = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (_, Schematic _)) => true | _ => false) G)
     val timestamp_add_schem_right_unifiers =
@@ -206,18 +283,18 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Add (t, Schematic (clk1, k1)), Add (Int i, t))]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) timestamp_add_schem_right))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_24) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_25) timestamp_add_schem_right))
     (* - Two timestamps [H ⇓_σ C_1 + C_2], where [C_1] and [C_2] are constants *)
     val timestamp_add_csts = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (Int _, Int _)) => true | _ => false) G)
     val timestamp_add_csts_unifiers = List.map
-      (fn Timestamp (_, _, Add (Int n1, Int n2)) => (Add (Int n1, Int n2), Int (n1 + n2)) | _ => raise UnexpectedMatch)
+      (fn Timestamp (_, _, Add (Int n1, Int n2)) => (Add (Int n1, Int n2), Int (n1 + n2)) | _ => raise UnexpectedMatch_RunConsistency_26)
       timestamp_add_csts
     (* - Affine relation [X = a * C + b] (by (+, ×) closure of Z) *)
     val affine_var_left_only = List.filter (fn cstr => case cstr of Affine (Schematic _, Int _, Int _, Int _) => true | _ => false) G
     val affine_cst_left_only = List.filter (fn cstr => case cstr of Affine (Int _, Int _, Schematic _, Int _) => true | _ => false) G
     val affine_left_unifiers =
       List.map
-        (fn Affine (Schematic (clk, k), Int a, Int i, Int b) => (Schematic (clk, k), Int (a * i + b))  | _ => raise UnexpectedMatch)
+        (fn Affine (Schematic (clk, k), Int a, Int i, Int b) => (Schematic (clk, k), Int (a * i + b))  | _ => raise UnexpectedMatch_RunConsistency_27)
         affine_var_left_only
     (* - Affine relation [C = a * X + b] if [X] has a solution in Z *)
     val affine_right_unifiers =
@@ -225,7 +302,7 @@ fun constants_propagation_candidates_int (G: system) =
         if (i - b) mod a = 0
         then [(X, Int ((i - b) div a))]
         else []
-         | _ => raise UnexpectedMatch
+         | _ => raise UnexpectedMatch_RunConsistency_28
         ) affine_cst_left_only)
     (* - Affine relation with integer fixpoint [X = a * X + b] if [X] has a solution in Z *)
     val affine_fixpoint_var = List.filter (fn cstr => case cstr of Affine (X1 as Schematic _, Int _, X2 as Schematic _, Int _) => X1 = X2 | _ => false) G
@@ -234,7 +311,7 @@ fun constants_propagation_candidates_int (G: system) =
         if b mod (1 - a) = 0
         then [(X, Int (b div (1 - a)))]
         else []
-         | _ => raise UnexpectedMatch
+         | _ => raise UnexpectedMatch_RunConsistency_29
         ) affine_fixpoint_var)
     (* - Two timestamps [H ⇓_σ C] and [X^σ_H = _ * _ + _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_1 = List.filter (fn cstr => case cstr of Affine (Schematic _, _, _, _) => true | _ => false) G
@@ -245,7 +322,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int x) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Int x)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_1))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_30) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_31) affine_var_1))
     (* - Two timestamps [H ⇓_σ C] and [_ = X^σ_H * _ + _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_2 = List.filter (fn cstr => case cstr of Affine (_, Schematic _, _, _) => true | _ => false) G
     val affine_timestamp_2_var_unifiers =
@@ -255,7 +332,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_2))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_32) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_33) affine_var_2))
     (* - Two timestamps [H ⇓_σ C] and [_ = _ * X^σ_H + _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_3 = List.filter (fn cstr => case cstr of Affine (_, _, Schematic _, _) => true | _ => false) G
     val affine_timestamp_3_var_unifiers =
@@ -265,7 +342,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_3))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_34) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_35) affine_var_3))
     (* - Two timestamps [H ⇓_σ C] and [_ = _ * _ + X^σ_H], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_4 = List.filter (fn cstr => case cstr of Affine (_, _, _, Schematic _) => true | _ => false) G
     val affine_timestamp_4_var_unifiers =
@@ -275,7 +352,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_4))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_36) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_37) affine_var_4))
     (* - Two timestamps [H ⇓_σ C] and [X^σ_H = _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_refl_1 = List.filter (fn cstr => case cstr of AffineRefl (Schematic _, _) => true | _ => false) G
     val affine_timestamp_refl_1_var_unifiers =
@@ -285,7 +362,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_1))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_38) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_39) affine_var_refl_1))
     (* - Two timestamps [H ⇓_σ C] and [_ = X^σ_H], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_refl_2 = List.filter (fn cstr => case cstr of AffineRefl (_, Schematic _) => true | _ => false) G
     val affine_timestamp_refl_2_var_unifiers =
@@ -295,7 +372,7 @@ fun constants_propagation_candidates_int (G: system) =
         Timestamp (clk2, k2, Int i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Int i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_2))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_40) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_41) affine_var_refl_2))
   in
     timestamp_unifiers
     @ timestamp_add_schem_left_unifiers
@@ -322,7 +399,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk', k', Rat i) => (
           if clk = clk' andalso k = k'
           then [(Schematic (clk, k), Rat i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) timestamp_var_right))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_42) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_43) timestamp_var_right))
     (* - Two timestamps [H ⇓_σ C] and [H' ⇓_σ' X^σ_H + _], where [X^σ_H] a variable and [C] is a constant *)
     val timestamp_add_schem_left = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (Schematic _, _)) => true | _ => false) G)
     val timestamp_add_schem_left_unifiers =
@@ -332,7 +409,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Add (Schematic (clk1, k1), t), Add (Rat i, t))]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) timestamp_add_schem_left))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_44) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_45) timestamp_add_schem_left))
     (* - Two timestamps [H ⇓_σ C] and [H' ⇓_σ' _ + X^σ_H], where [X^σ_H] a variable and [C] is a constant *)
     val timestamp_add_schem_right = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (_, Schematic _)) => true | _ => false) G)
     val timestamp_add_schem_right_unifiers =
@@ -342,17 +419,17 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Add (t, Schematic (clk1, k1)), Add (Rat i, t))]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) timestamp_add_schem_right))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_46) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_47) timestamp_add_schem_right))
     (* - Two timestamps [H ⇓_σ C_1 + C_2], where [C_1] and [C_2] are constants *)
     val timestamp_add_csts = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (Rat _, Rat _)) => true | _ => false) G)
     val timestamp_add_csts_unifiers = List.map
-      (fn Timestamp (_, _, Add (Rat x1, Rat x2)) => (Add (Rat x1, Rat x2), Rat (+/ (x1, x2))) | _ => raise UnexpectedMatch)
+      (fn Timestamp (_, _, Add (Rat x1, Rat x2)) => (Add (Rat x1, Rat x2), Rat (+/ (x1, x2))) | _ => raise UnexpectedMatch_RunConsistency_48)
       timestamp_add_csts
     (* - Affine relation [X = a * C + b] (by (+, ×) closure of ℚ ) *)
     val affine_var_left_only = List.filter (fn cstr => case cstr of Affine (Schematic _, Rat _, Rat _, Rat _) => true | _ => false) G
     val affine_left_unifiers =
       List.map
-        (fn Affine (Schematic (clk, k), Rat a, Rat x, Rat b) => (Schematic (clk, k), Rat (+/ ( */ (a, x), b)))  | _ => raise UnexpectedMatch)
+        (fn Affine (Schematic (clk, k), Rat a, Rat x, Rat b) => (Schematic (clk, k), Rat (+/ ( */ (a, x), b)))  | _ => raise UnexpectedMatch_RunConsistency_49)
         affine_var_left_only
     (* - Affine relation [C = a * X + b] if [X] has a solution in ℚ *)
     val affine_cst_left_only = List.filter (fn cstr => case cstr of Affine (Rat _, Rat _, Schematic _, Rat _) => true | _ => false) G
@@ -361,7 +438,7 @@ fun constants_propagation_candidates_rat (G: system) =
         if <>/ (a, rat_zero)
         then [(X, Rat (// (-/ (r, b), a)))]
         else []
-         | _ => raise UnexpectedMatch
+         | _ => raise UnexpectedMatch_RunConsistency_50
         ) affine_cst_left_only)
     (* - Affine relation with integer fixpoint [X = a * X + b] if [X] has a solution in ℚ *)
     val affine_fixpoint_var = List.filter (fn cstr => case cstr of Affine (X1 as Schematic _, Rat _, X2 as Schematic _, Rat _) => X1 = X2 | _ => false) G
@@ -370,7 +447,7 @@ fun constants_propagation_candidates_rat (G: system) =
         if <>/ (-/ (rat_one, a), rat_zero)
         then [(X, Rat (// (b, -/ (rat_one, a))))]
         else []
-         | _ => raise UnexpectedMatch
+         | _ => raise UnexpectedMatch_RunConsistency_51
         ) affine_fixpoint_var)
     (* - Two timestamps [H ⇓_σ C] and [X^σ_H = _ * _ + _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_1 = List.filter (fn cstr => case cstr of Affine (Schematic _, _, _, _) => true | _ => false) G
@@ -381,7 +458,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat x) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Rat x)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_1))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_52) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_53) affine_var_1))
     (* - Two timestamps [H ⇓_σ C] and [_ = X^σ_H * _ + _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_2 = List.filter (fn cstr => case cstr of Affine (_, Schematic _, _, _) => true | _ => false) G
     val affine_timestamp_2_var_unifiers =
@@ -391,7 +468,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Rat i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_2))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_54) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_55) affine_var_2))
     (* - Two timestamps [H ⇓_σ C] and [_ = _ * X^σ_H + _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_3 = List.filter (fn cstr => case cstr of Affine (_, _, Schematic _, _) => true | _ => false) G
     val affine_timestamp_3_var_unifiers =
@@ -401,7 +478,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Rat i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_3))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_56) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_57) affine_var_3))
     (* - Two timestamps [H ⇓_σ C] and [_ = _ * _ + X^σ_H], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_4 = List.filter (fn cstr => case cstr of Affine (_, _, _, Schematic _) => true | _ => false) G
     val affine_timestamp_4_var_unifiers =
@@ -411,7 +488,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Rat i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_4))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_58) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_59) affine_var_4))
     (* - Two timestamps [H ⇓_σ C] and [X^σ_H = _], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_refl_1 = List.filter (fn cstr => case cstr of AffineRefl (Schematic _, _) => true | _ => false) G
     val affine_timestamp_refl_1_var_unifiers =
@@ -421,7 +498,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Rat i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_1))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_60) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_61) affine_var_refl_1))
     (* - Two timestamps [H ⇓_σ C] and [_ = X^σ_H], where [X^σ_H] is a variable [C] is a constant *)
     val affine_var_refl_2 = List.filter (fn cstr => case cstr of AffineRefl (_, Schematic _) => true | _ => false) G
     val affine_timestamp_refl_2_var_unifiers =
@@ -431,7 +508,7 @@ fun constants_propagation_candidates_rat (G: system) =
         Timestamp (clk2, k2, Rat i) => (
           if clk1 = clk2 andalso k1 = k2
           then [(Schematic (clk1, k1), Rat i)]
-          else []) | _ => raise UnexpectedMatch) timestamp_cst_right) | _ => raise UnexpectedMatch) affine_var_refl_2))
+          else []) | _ => raise UnexpectedMatch_RunConsistency_62) timestamp_cst_right) | _ => raise UnexpectedMatch_RunConsistency_63) affine_var_refl_2))
   in
     timestamp_unifiers
     @ timestamp_add_schem_left_unifiers
@@ -523,11 +600,11 @@ fun check_no_shared_var_affeqns (G: system) =
    REPEAT UNTIL NORMAL FORM
 
 *)
-fun decide (G: system) : bool =
+fun decide (declared_quantities: clock list) (G: system) : bool =
            check_non_contradictory_ticks G
   andalso check_injectivity_on_timestamps G
   andalso check_injectivity_on_timestamps_varadd G
-  andalso check_ascending_chain_on_timestamps G
+  andalso check_ascending_chain_on_timestamps declared_quantities G
   andalso check_type_consistency G
   andalso check_fixpoint_affeqns G
   andalso check_constants_affeqns G
@@ -538,10 +615,10 @@ fun decide (G: system) : bool =
 fun reduce (G: system) =
   no_trivial_schem_timestamp (constant_affine_eqns_elim (all_schematic_elim (constants_propagation (uniq G))))
 
-fun SAT (G: system) : bool =
+fun SAT (declared_quantities: clock list) (G: system) : bool =
   let val G_prop_and_elim_until_fp = lfp (reduce) G (* Keep reducing *)
-  in decide G_prop_and_elim_until_fp                 (* Then decide! *)
+  in decide declared_quantities G_prop_and_elim_until_fp                 (* Then decide! *)
   end
 
-fun context_SAT ((G, _, _, _) : TESL_ARS_conf) =
-  SAT G
+fun context_SAT (declared_quantities: clock list) ((G, _, _, _) : TESL_ARS_conf) =
+  SAT declared_quantities G

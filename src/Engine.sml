@@ -9,15 +9,22 @@
    file is distributed under the MIT License.
 *)
 
+(* *** WARNING ***
+ * Compared to theoretical papers on the operational semantics of TESL,
+ * a configuration in Heron is slighty different and organized as
+ * (PAST, INSTANT-INDEX, FUTURE, PRESENT)
+ *)
+
 (** Rules used for reduction *)
 (* 1. New instant introduction *)
 fun ARS_rule_instant_intro
+  (declared_quantities: clock list)
   (G, n, f, []) =
-    (G,
+    (print ("Quantities: " ^ (string_of_int(List.length (SporadicQuantitiesSubs declared_quantities f))) ^ "\n") ; (G,
      n + 1,
-     ((f @- (SelfModifyingSubs f)) @- (ConsumingSubs f)) @- (SporadicNowSubs f),
-     (ConsumingSubs f) @ (SporadicNowSubs f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
-  | ARS_rule_instant_intro _ = raise Assert_failure;
+     (((f @- (SelfModifyingSubs f)) @- (ConsumingSubs f)) @- (SporadicNowSubs f)) @- (SporadicQuantitiesSubs declared_quantities f),
+     (ConsumingSubs f) @ (SporadicNowSubs f) @ (SporadicQuantitiesSubs declared_quantities f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f)))
+  | ARS_rule_instant_intro _ _ = raise Assert_failure;
 
 (* 2. Sporadic elimination when deciding to trigger tick sporadicaly *)
 fun ARS_rule_sporadic_1
@@ -454,13 +461,13 @@ fun ARS_rule_tagrel_refl_elim
 	  ], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_refl_elim _ _ = raise Assert_failure;
 
-(* 65. Tag relation with pre elimination at instant 0 *)
+(* 65. Tag relation with pre elimination at instant 1 *)
 fun ARS_rule_tagrel_pre_elim_init
   (G, n, frun, finst) (fsubst as TagRelationPre (c1, c2)) =
     (G, n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_pre_elim_init _ _ = raise Assert_failure;
 
-(* 66. Tag relation with pre elimination at instant > 0 *)
+(* 66. Tag relation with pre elimination at instant > 1 *)
 fun ARS_rule_tagrel_pre_elim_gen
   (G, n, frun, finst) (fsubst as TagRelationPre (c1, c2)) =
     (G @ [Timestamp (c1, n, Schematic (c1, n)),
@@ -492,7 +499,11 @@ exception UnexpectedBehavior of string;
 exception UnspecifiedElimRule;
 exception Breakpoint;
 
+exception UnexpectedMatch_Engine_3
+exception UnexpectedMatch_Engine_4
+
 fun lawyer_e
+  (declared_quantities: clock list)
   ((G, n, _, f_present) : TESL_ARS_conf)
     : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
     case f_present of
@@ -503,7 +514,7 @@ fun lawyer_e
 	    generating useless elim-reduction sequence permutations *)
     | fatom :: _ => (case fatom of
 			   Sporadic _ =>
-			     [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)]
+			     (print "SPORADIC E\n" ; [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)])
 			 | WhenTickingOn _ =>
 			     [(fatom, ARS_rule_whentickingon_1), (fatom, ARS_rule_whentickingon_2)]
              | WhenTickingOnWithReset _ =>
@@ -519,7 +530,7 @@ fun lawyer_e
 			 | TagRelationRefl _ =>
 			     [(fatom, ARS_rule_tagrel_refl_elim)]
 			 | TagRelationPre _ =>
-			     if n = 0
+			     if n = 1
 			     then [(fatom, ARS_rule_tagrel_pre_elim_init)]
 			     else [(fatom, ARS_rule_tagrel_pre_elim_gen)]
 			 | TagRelationFby (_, tags, _) => (case tags of
@@ -583,7 +594,7 @@ fun lawyer_e
 			 | WhenNotClock _ =>
 			     [(fatom, ARS_rule_whennotclock_implies_1), (fatom, ARS_rule_whennotclock_implies_2), (fatom, ARS_rule_whennotclock_implies_3)]
 			 | Precedes (c1, c2, weakly_b) =>
-			   if not (SAT G)
+			   if not (SAT declared_quantities G)
 			   then (* (print "*** cntxt courant: nonsat!\n"; *) [] (* ) *)
 			   else
 			     (* (print "*** cntxt courant: sat!\n";  *)
@@ -642,7 +653,7 @@ fun lawyer_e
 					 in *) (* (print ("--> decoupage combinatoire: sur c1 en index " ^ (Int.toString indx) ^ "\n"); *) combinatorial_unfolding c1 indx(* ) end *)
 					 | NONE => (case smallest_index_hamlet_primitive_undefined c2 1 n of
 							  SOME indx => (* (print ("--> decoupage combinatoire: sur c2 en index " ^ (Int.toString indx) ^ "\n"); *)combinatorial_unfolding c2 indx (* ) *)
-							| NONE => raise UnexpectedBehavior "Precedence combinatorial unfolding can't be done anymore..."
+							| NONE => raise UnexpectedMatch_Engine_3 (* Precedence combinatorial unfolding can't be done anymore... *)
 						    ))
 							 (* ) *)
 				| true =>
@@ -662,7 +673,7 @@ fun lawyer_e
 					   combinatorial_unfolding c1 indx
 					 | NONE => (case smallest_index_hamlet_primitive_undefined c2 1 n of
 							  SOME indx => combinatorial_unfolding c2 indx
-							| NONE => raise UnexpectedBehavior "Precedence combinatorial unfolding can't be done anymore..."
+							| NONE => raise UnexpectedMatch_Engine_4  (* Precedence combinatorial unfolding can't be done anymore... *)
 						    ))
 			     end
 			 | Excludes (c1, c2) => [(fatom, ARS_rule_excludes_1), (fatom, ARS_rule_excludes_2), (fatom, ARS_rule_excludes_3)]
@@ -670,8 +681,8 @@ fun lawyer_e
 			 | _ => raise UnspecifiedElimRule
 		      );
 
-fun new_instant_init (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  List.map (ARS_rule_instant_intro) cfs
+fun new_instant_init (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  List.map (ARS_rule_instant_intro declared_quantities) cfs
 
 (*
 fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
@@ -681,8 +692,8 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
     | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
   end
 *)
-fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
-  let val choices = lawyer_e c
+fun shy_adventurer_step_e (declared_quantities: clock list) (c : TESL_ARS_conf) : TESL_ARS_conf list =
+  let val choices = lawyer_e declared_quantities c
   in
       case choices of
 	   [] => [] (* Removing [c] breaks empty specification simulation *)
@@ -690,7 +701,7 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
 		      (fn ((focus, redrule), l) =>
 			   let val cf = redrule c focus
 				val cf_reduced = (fn (G, n, phi, psi) => ((* (lfp reduce) *) G, n, phi, psi)) cf in
-				if context_SAT cf_reduced
+				if context_SAT declared_quantities cf_reduced
 				then cf_reduced :: l
 				else l
 			   end
@@ -698,7 +709,7 @@ fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
   end
 
 
-fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list) (rtprint:bool) : TESL_ARS_conf list =
+fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list) (rtprint:bool) (declared_quantities: clock list): TESL_ARS_conf list =
   let val print = if rtprint then (fn _ => ()) else (print)
   in case pending of
       [] =>
@@ -706,7 +717,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
 	last_reduced)
     | _  =>
       let
-	   val reduced = List.concat (List.map (shy_adventurer_step_e) pending)
+	   val reduced = List.concat (List.map (shy_adventurer_step_e declared_quantities) pending)
 	   val next_pending = List.filter (fn (_, _, _, psi) => psi <> []) reduced
 	   val next_counter = List.length next_pending
 	   val next_reduced = List.filter (fn (_, _, _, psi) => psi = []) reduced
@@ -715,7 +726,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
 		    then print (BOLD_COLOR ^ RED_COLOR ^ " \226\150\178 " ^ RESET_COLOR) (* Or use \226\134\145 *)
 		    else print (BOLD_COLOR ^ GREEN_COLOR ^ " \226\150\188 " ^ RESET_COLOR) (* Or use \226\134\147 *)
       in 
-	   psi_reduce next_counter (next_reduced @ last_reduced) next_pending rtprint
+	   psi_reduce next_counter (next_reduced @ last_reduced) next_pending rtprint declared_quantities
       end
   end
 
@@ -723,6 +734,7 @@ exception Maxstep_reached   of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
 exception Abort;
 
+exception UnexpectedMatch_Engine_1
 fun simplify_whentickings (G: system) (frun: TESL_formula) =
   let
     fun simplify_tag t: tag = case t of
@@ -734,7 +746,7 @@ fun simplify_whentickings (G: system) (frun: TESL_formula) =
             | _ => false) G of
         NONE => t
       | SOME (Timestamp(_, _, cst)) => cst
-      | _ => raise UnexpectedMatch)
+      | _ => raise UnexpectedMatch_Engine_1)
     | Add (Int n1, Int n2) => Int (n1 + n2)
     | Rat _ => t
     | Add (Rat x1, Rat x2) => Rat (+/ (x1, x2))
@@ -748,20 +760,28 @@ fun simplify_whentickings (G: system) (frun: TESL_formula) =
 (* Tweak. Given a clock, if a sporadic was chosen to be merged, then it must be the smallest in the specification.
    Otherwise it will surely lead to inconsistencies. Indeed, if time has progressed enough and a past tick is pending
    for merge, the clock of this tick will never react! The tick will be delayed for merge forever, and never merged in
-   the future *)
-fun policy_no_spurious_sporadics (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  List.filter
-    (fn (G, _, phi, _) =>
-      List.all (fn Sporadic (clk, Int n1) => (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n2 <= n1) | _ => true) G)
-               | Sporadic (clk, Rat q1) => (List.all (fn Timestamp (clk', _, Rat q2) => not (clk = clk') orelse (<=/ (q2, q1)) | _ => true) G)
-               | _ => true) phi)
-    cfs;
-fun policy_no_spurious_whentickings (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+   the future.
+   ... except for quantities *)
+fun policy_no_spurious_sporadics (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   List.filter
     (fn (G, _, phi, _) =>
       List.all (fn
-        WhenTickingOn (clk, Int n1, _) => (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
-      | WhenTickingOn (clk, Rat x1, _) => (List.all (fn Timestamp (clk', _, Rat x2) => not (clk = clk') orelse (<=/ (x2, x1)) | _ => true) G)
+		   Sporadic (clk, Int n1) =>
+		     (List.exists (fn qty => clk = qty) declared_quantities)
+		     orelse (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n2 <= n1) | _ => true) G)
+               | Sporadic (clk, Rat q1) =>
+		     (List.exists (fn qty => clk = qty) declared_quantities)
+		     orelse (List.all (fn Timestamp (clk', _, Rat q2) => not (clk = clk') orelse (<=/ (q2, q1)) | _ => true) G)
+               | _ => true) phi)
+    cfs;
+fun policy_no_spurious_whentickings (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  List.filter
+    (fn (G, _, phi, _) =>
+      List.all (fn
+        WhenTickingOn (clk, Int n1, _) => (List.exists (fn qty => clk = qty) declared_quantities)
+						orelse (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
+      | WhenTickingOn (clk, Rat x1, _) => (List.exists (fn qty => clk = qty) declared_quantities)
+						orelse (List.all (fn Timestamp (clk', _, Rat x2) => not (clk = clk') orelse (<=/ (x2, x1)) | _ => true) G)
       | _ => true) phi)
     cfs;
 
@@ -771,6 +791,7 @@ fun exec_step
   (cfs : TESL_ARS_conf list)
   (step_index: int ref)
   (declared_clocks : clock list)
+  (declared_quantities : clock list)
   (minstep     : int,
    maxstep     : int,
    dumpres     : bool,
@@ -789,9 +810,9 @@ fun exec_step
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
       val () = writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
       val _ = writeln_ifrun "Initializing new instant..."
-      val introduced_cfs = new_instant_init cfs
+      val introduced_cfs = new_instant_init declared_quantities cfs
       val _ = writeln_ifrun "Preparing constraints..."
-      val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs rtprint
+      val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs rtprint declared_quantities
       val _ = writeln_ifrun "Simplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) =>
 						    let 
@@ -801,13 +822,13 @@ fun exec_step
 						    end) reduce_psi_formulae
 
       (* 2. REMOVE CONFIGURATIONS IN DEADLOCK STATE DUE TO UNMERGEABLE SPORADICS *)
-      val no_deadlock = policy_no_spurious_sporadics (policy_no_spurious_whentickings reduced_haa_contexts)
+      val no_deadlock = policy_no_spurious_sporadics declared_quantities (policy_no_spurious_whentickings declared_quantities reduced_haa_contexts)
 
       (* 3. KEEPING PREFIX-COMPLIANT RUNS *)
       val cfs_selected_by_codirection = case codirection of
 					    [] => no_deadlock
 					   | _	 => (writeln_ifrun "Keeping prefix-compliant premodels..." ;
-						     List.filter (fn (G, _, _, _) => SAT G)
+						     List.filter (fn (G, _, _, _) => SAT declared_quantities G)
 							(List.map (fn (G, n, phi, psi) => (G @ codirection, n, phi, psi)) no_deadlock))
 
       (* 4. KEEPING HEURISTICS-COMPLIANT RUNS *)
@@ -831,12 +852,14 @@ fun exec_step
   handle
     Abort => (print_dumpres declared_clocks []; [])
 
+exception UnexpectedMatch_Engine_2
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
 fun exec
   (cfs : TESL_ARS_conf list)
   (step_index : int ref)
   (declared_clocks : clock list)
+  (declared_quantities : clock list)
   (minstep     : int,
    maxstep     : int,
    dumpres     : bool,
@@ -850,7 +873,7 @@ fun exec
     val () = writeln_ifrun "Solving simulation..."
     val () = writeln_ifrun ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
     val () = writeln_ifrun ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
-    val () = writeln_ifrun ("Policy: " ^ (case heuristics of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch) "" heuristics))
+    val () = writeln_ifrun ("Policy: " ^ (case heuristics of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch_Engine_2) "" heuristics))
     (* MAIN SIMULATION LOOP *)
     fun loop cfs =
       let
@@ -881,7 +904,7 @@ fun exec
                 raise Model_found cfs_sat)
           else () end
         (* INSTANT SOLVING *)
-        val next_snapshots = exec_step cfs step_index declared_clocks (minstep, maxstep, dumpres, codirection, heuristics, rtprint) in
+        val next_snapshots = exec_step cfs step_index declared_clocks declared_quantities (minstep, maxstep, dumpres, codirection, heuristics, rtprint) in
 	 case next_snapshots of
 	     [] => []
 	   | _ => loop next_snapshots

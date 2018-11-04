@@ -148,7 +148,10 @@ fun heuristic_speedup_event_occ (cfs : TESL_ARS_conf list) =
 	   val frun = List.map (fn Sporadic (c, tag) => WhenTickingOn (c, tag, c) | f => f) frun
       in
 	   List.map (fn c0 => 
-			  case List.find (fn WhenTickingOn (c, tag, _) => c0 = c andalso is_tag_constant tag andalso (List.all (fn WhenTickingOn (c', tag', _) => not (c = c' andalso is_tag_constant tag') orelse ::<= (tag, tag') | _ => true) frun) | _ => false) frun of
+			  case List.find (fn WhenTickingOn (c, tag, _) => c0 = c
+										 andalso is_tag_constant tag
+										 andalso (List.all (fn WhenTickingOn (c', tag', _) => not (c = c' andalso is_tag_constant tag') orelse ::<= (tag, tag') | _ => true) frun)
+					   | _ => false) frun of
 			      NONE                          => NONE
 			    | SOME (WhenTickingOn (_, tag, _)) => SOME tag
 			    | _ => raise UnexpectedMatch

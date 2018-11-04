@@ -42,6 +42,7 @@ print "  [CLOCK] \u001B[1mexcludes\u001B[0m [CLOCK]\n";
 print "  [CLOCK] \u001B[1mkills\u001B[0m [CLOCK]\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Extensions in Lustre-style:\n" ^ RESET_COLOR); 
+print "  \u001B[1mrational-quantity\u001B[0m [CLOCK]\n"; 
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [TAG]\n"; 
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK]\n"; 
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK] * [CLOCK] + [CLOCK]\n"; 
@@ -290,11 +291,16 @@ fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = cas
   end
 
 fun string_of_expr e = case e of
-    TypeDecl (c, ty)                                        => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c)
+    TypeDecl (c, ty, mono)                                  => (string_of_tag_type ty)
+									^ (if mono then "-clock " else "-quantity ")
+									^ (string_of_clk c)
   | Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
   | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (String.concatWith ", " (List.map (string_of_tag) tags))
   | WhenTickingOn (cmeas, t, ctick)                         => (string_of_clk ctick) ^ " sporadic " ^ (string_of_tag t) ^ " on " ^ (string_of_clk cmeas)
-  | TypeDeclSporadics (ty, c, tags)                         => (string_of_tag_type ty) ^ "-clock " ^ (string_of_clk c) ^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
+  | TypeDeclSporadics (ty, c, tags, mono)                   => (string_of_tag_type ty)
+									^ (if mono then "-clock " else "-quantity ")
+									^ (string_of_clk c)
+									^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
   | ImpliesNot (master, slave)                              => (string_of_clk master) ^ " implies not " ^ (string_of_clk slave)
   | TagRelation (c1, a, c2, b)                              => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)

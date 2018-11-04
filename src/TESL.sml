@@ -81,10 +81,10 @@ fun type_of_tags (clk: clock) (tlist: tag list) =
 
 datatype TESL_atomic =
   True
-  | TypeDecl                       of clock * tag_t
+  | TypeDecl                       of clock * tag_t * bool
   | Sporadic                       of clock * tag
   | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
-  | TypeDeclSporadics              of tag_t * clock * (tag list)    (* Syntactic sugar *)
+  | TypeDeclSporadics              of tag_t * clock * (tag list) * bool   (* Syntactic sugar *)
   | TagRelation                    of clock * tag * clock * tag
   | TagRelationCst                 of clock * tag
   | TagRelationRefl                of clock * clock
@@ -164,6 +164,11 @@ fun ConsumingSubs f = List.filter (fn f' => case f' of
   | TimesImpliesOn _ => true
   | _                => false) f
 
+fun SporadicQuantitiesSubs (declared_clocks: clock list) (f: TESL_formula) : TESL_formula =
+    List.filter (fn
+		    Sporadic (clk, t) => List.exists (fn clk' => clk = clk') declared_clocks
+		  | _ => false) f
+
 (* Returns sporadic formulae that are relevant to get instantaneously reduced *)
 (* This tweak is necessary to avoid the state space explosion problem *)
 fun SporadicNowSubs (f : TESL_formula) : TESL_formula =
@@ -218,52 +223,16 @@ fun SelfModifyingSubs f = List.filter (fn f' => case f' of
   | TagRelationFby _                  => true
   | _                                 => false) f
 
-(* Type-checker *)
-fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref) : unit =
-  clock_types :=
-  uniq ((case stmt of
-	TypeDecl decl                     => [decl]
-     | Sporadic (clk, t)                 => [(clk, type_of_tag t)]
-     | Sporadics (clk, tlist)            => [(clk, type_of_tags clk tlist)]
-     | TypeDeclSporadics (ty, clk, tags) => (clk, ty) :: (List.map (fn t => (clk, type_of_tag t)) tags)
-     | TagRelation (c1, t1, c2, t2)      => [(c1, type_of_tags c1 [t1, t2]), (c2, type_of_tags c2 [t1, t2])]
-     | TagRelationCst (c, t)             => [(c, type_of_tags c [t])]
-     | TagRelationFby (c1, tags, c2)     => [(c1, type_of_tags c1 tags), (c2, type_of_tags c2 tags)]
-     | TimeDelayedBy (_, t, clk, _, _)   => [(clk, type_of_tag t)]
-     | Periodic (c, t1, t2)              => [(c, type_of_tags c [t1, t2])]
-     | TypeDeclPeriodic (ty, c, t1, t2)  => (c, ty) :: [(c, type_of_tags c [t1, t2])]
-     | _                                 => []
-  ) @ !clock_types)
-
-fun type_check (clock_types: (clock * tag_t) list) =
-  List.app (fn (clk, ty) => case List.find (fn (clk', ty') => clk = clk' andalso ty <> ty') clock_types of
-				  NONE          => ()
-				| SOME (_, ty') => raise TagTypeInconsistency (clk, ty, ty')
-	    ) clock_types
-
-exception UnconcretizedTagType of clock
-fun clk_type_lookup clock_types (clk: clock): tag_t =
-  case List.find (fn (clk', ty) => clk = clk') clock_types of
-      NONE         => raise UnconcretizedTagType (clk)
-    | SOME (_, ty) => ty
-
 exception UnsupportedTESLOperator
 exception UnitTagRelationFault
 
-(* Eliminate TESL syntactic sugar *)
+(* Eliminate TESL syntactic sugars *)
 fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
   List.concat (List.map (fn
 	      Sporadics (master, tags)             => (List.map (fn t => Sporadic (master, t)) tags)
-(*
-           | TagRelationRefl (c1, c2)             => (case (clk_type_lookup clock_types c1, clk_type_lookup clock_types c2) of
-               (Unit_t, Unit_t) => raise UnitTagRelationFault
-             | (Int_t, Int_t)   => [TagRelation (c1, Int 1, c2, Int 0)]
-             | (Rat_t, Rat_t)   => [TagRelation (c1, Rat rat_one, c2, Rat rat_zero)]
-             | (ty, ty')        => raise TagTypeInconsistency (c1, ty, ty'))
-*)
 	    (* TODO: How to type TagRelationRefl, TagRelationClk and TagRelationPre ? *)
-           | TypeDeclSporadics (ty, master, tags) => unsugar clock_types [Sporadics (master, tags)]
-           | TypeDecl (ty, clk)                   => []
+           | TypeDeclSporadics (ty, master, tags, _) => unsugar clock_types [Sporadics (master, tags)]
+           | TypeDecl (ty, clk, _)                => []
 	    | EveryImplies (master, n, x, slave)   => [FilteredBy (master, x, 1, n - 1, 1, slave)]
 	    | NextTo (master, master_next, slave)  => [SustainedFromImmediately (master, master_next, master, slave)]
 	    | Periodic (clk, period, offset)       => [Sporadic (clk, offset),
@@ -347,11 +316,11 @@ fun string_of_tag_type ty = case ty of
 
 fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   uniq (List.concat (List.map (fn
-    TypeDecl (c, _)                           => [c]
+    TypeDecl (c, _, _)                     => [c]
   | Sporadic (c, _)                           => [c]
   | Sporadics (c, _)                          => [c]
   | WhenTickingOn (c1, _, c2)                 => [c1, c2]
-  | TypeDeclSporadics (_, c, _)               => [c]
+  | TypeDeclSporadics (_, c, _, _)            => [c]
   | TagRelation (c1, _, c2, _)                => [c1, c2]
   | TagRelationCst (c, _)                     => [c]
   | TagRelationRefl (c1, c2)                  => [c1, c2]
@@ -381,6 +350,13 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | Kills (c1, c2)                            => [c1, c2]
   | DirScenario (_, _, tclks)                 => List.map (fn (clk, _) => clk) tclks
   | DirDrivingClock clks                      => clks
+  | _ => []
+  ) f))  
+
+fun quantities_of_tesl_formula (f : TESL_formula) : clock list =
+  uniq (List.concat (List.map (fn
+    TypeDecl (c, _, mono)                        => if not mono then [c] else []
+  | TypeDeclSporadics (_, c, _, mono)            => if not mono then [c] else []
   | _ => []
   ) f))  
 

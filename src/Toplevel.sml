@@ -9,8 +9,8 @@
    file is distributed under the MIT License.
 *)
 
-(* Update this value for every code changes *)
-val RELEASE_VERSION = "0.53.0-alpha+20181104"
+(* Update this value for everytime code changes *)
+val RELEASE_VERSION = "0.54.0-alpha+20181104"
 
 open OS.Process
 
@@ -45,6 +45,7 @@ val scenario: system ref = ref []
 
 val declared_clocks: clock list ref = ref []
 val declared_driving_clocks: clock list ref = ref []
+val declared_clocks_quantities: clock list ref = ref [] (* included in declared_clocks *)
 
 val snapshots: TESL_ARS_conf list ref = ref [([], 0, [], [])]
 val current_step: int ref = ref 1
@@ -59,6 +60,7 @@ fun action (stmt: TESL_atomic) =
   (* On-the-fly clock identifiers declaration *)
   let
       val _ = declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt]))
+      val _ = declared_clocks_quantities := uniq ((!declared_clocks_quantities) @ (quantities_of_tesl_formula [stmt]))
       val _ = clk_type_declare stmt clock_types
       val _ = type_check (!clock_types)
   in
@@ -87,12 +89,14 @@ fun action (stmt: TESL_atomic) =
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
+			  (!declared_clocks_quantities)
 			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
   | DirRunStep	     =>
       snapshots := exec_step
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
+			  (!declared_clocks_quantities)
 			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
   | DirPrint              => print_dumpres (!declared_clocks) (!snapshots)
   | DirOutputVCD          =>
@@ -141,10 +145,6 @@ fun action (stmt: TESL_atomic) =
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   | Kills (c1, c2)  =>
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
-  | TagRelationCst _  =>
-    (print "Ajout de trcst dans snapshots phi de ->\n" ;
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
-    )
   | _                     =>
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   end

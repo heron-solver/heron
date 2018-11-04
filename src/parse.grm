@@ -26,7 +26,7 @@ fun opposite_tag t = case t of
 %left SPORADIC
 %left IMPLIES
 
-%term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t
+%term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t * bool
       | SEMI | EOF | EQ | PLUS | MINUS | TIMES | DIV | TAGREL | TIME | ON | DELAYED
       | FILTERED | LPAR | RPAR | LBRACK | RBRACK | LDIP | RDIP | COMMA
       | SUSTAINED | IMMEDIATELY | TO | WEAKLY | STRICTLY
@@ -82,7 +82,7 @@ fun opposite_tag t = case t of
 	 | LPAR ID ARROW TAG RPAR                                               ([(Clk ID, SOME TAG)])
         | LPAR ID ARROW TAG RPAR TCLKS                                        ((Clk ID, SOME TAG) :: TCLKS)
   EXP : 
-	 TYPEDECL CLK                                                           (TypeDecl (CLK, TYPEDECL))
+	 TYPEDECL CLK                                                           (case TYPEDECL of (tt, mb) => TypeDecl (CLK, tt, mb))
       | LET INT ID EQ TAG                                                      (raise UnsupportedParsedTerm) 
       | LET DECIMAL ID EQ TAG							  (raise UnsupportedParsedTerm) 
       | LET RATIONAL ID EQ TAG							  (raise UnsupportedParsedTerm) 
@@ -90,9 +90,10 @@ fun opposite_tag t = case t of
       | CLK SPORADIC                                                           (Sporadics (CLK, [Unit]))
       | CLK SPORADIC TAGS                                                      (Sporadics (CLK, TAGS))
       | CLK SPORADIC TAG ON CLK                                                (WhenTickingOn (CLK2, TAG, CLK1))
-      | TYPEDECL CLK SPORADIC TAGS                                             (TypeDeclSporadics (TYPEDECL, CLK, TAGS))
+      | TYPEDECL CLK SPORADIC TAGS                                             (case TYPEDECL of (tt, mono) => 
+													      TypeDeclSporadics (tt, CLK, TAGS, mono))
       | TYPEDECL CLK SPORADIC                                                  (case TYPEDECL of
-												Unit_t => TypeDeclSporadics (TYPEDECL, CLK, [Unit])
+												(Unit_t, _) => TypeDeclSporadics (Unit_t, CLK, [Unit], true)
 											     | _ => raise UnsupportedParsedTerm)
       | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
       | CLK IMPLIES NOT CLK						       (ImpliesNot (CLK1, CLK2))
@@ -128,10 +129,12 @@ fun opposite_tag t = case t of
       | CLK PERIODIC TAG                                                       (case TAG of Int _ => Periodic (CLK, TAG, Int 0) 
 												      | Rat _ => Periodic (CLK, TAG, Rat rat_zero)
 												      | _     => raise UnsupportedParsedTerm)
-      | TYPEDECL CLK PERIODIC TAG OFFSET TAG                                   (TypeDeclPeriodic (TYPEDECL, CLK, TAG1, TAG2)) 
-      | TYPEDECL CLK PERIODIC TAG							  (case TAG of Int _ => TypeDeclPeriodic (TYPEDECL, CLK, TAG, Int 0) 
-												      | Rat _ => TypeDeclPeriodic (TYPEDECL, CLK, TAG, Rat rat_zero)
-												      | _     => raise UnsupportedParsedTerm)
+      | TYPEDECL CLK PERIODIC TAG OFFSET TAG                                   (case TYPEDECL of (tt, _) => 
+												TypeDeclPeriodic (tt, CLK, TAG1, TAG2)) 
+      | TYPEDECL CLK PERIODIC TAG							  (case TYPEDECL of (tt, _) => 
+												(case TAG of Int _ => TypeDeclPeriodic (tt, CLK, TAG, Int 0) 
+													   | Rat _ => TypeDeclPeriodic (tt, CLK, TAG, Rat rat_zero)
+													   | _     => raise UnsupportedParsedTerm))
       | CLK NEXT TO CLK IMPLIES CLK                                            (NextTo (CLK1, CLK2, CLK3))
       | CLK STRICTLY PRECEDES CLK                                              (Precedes (CLK1, CLK2, false))
       | CLK WEAKLY PRECEDES CLK                                                (Precedes (CLK1, CLK2, true))
