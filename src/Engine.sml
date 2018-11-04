@@ -434,6 +434,16 @@ fun ARS_rule_tagrel_cst_elim
     (G @ [Timestamp (c, n, tag)], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_cst_elim _ _ = raise Assert_failure;
 
+(* 63. Tag relation with clocks elimination *)
+fun ARS_rule_tagrel_clk_elim
+  (G, n, frun, finst) (fsubst as TagRelationClk (c1, ca, c2, cb)) =
+    (G @ [Timestamp (c1, n, Schematic (c1, n)),
+	   Timestamp (ca, n, Schematic (ca, n)),
+	   Timestamp (c2, n, Schematic (c2, n)),
+	   Timestamp (cb, n, Schematic (cb, n)),
+	   Affine (Schematic (c1, n), Schematic (ca, n), Schematic (c2, n), Schematic (cb, n))
+	  ], n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_clk_elim _ _ = raise Assert_failure;
  
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
@@ -464,6 +474,8 @@ fun lawyer_e
 			     [(fatom, ARS_rule_tagrel_elim)]
 			 | TagRelationCst _ =>
 			     [(fatom, ARS_rule_tagrel_cst_elim)]
+			 | TagRelationClk _ =>
+			     [(fatom, ARS_rule_tagrel_clk_elim)]
 			 | Implies _ =>
 			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
 			 | ImpliesNot _ =>

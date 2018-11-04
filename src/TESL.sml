@@ -87,6 +87,7 @@ datatype TESL_atomic =
   | TagRelation                    of clock * tag * clock * tag
   | TagRelationCst                 of clock * tag
   | TagRelationRefl                of clock * clock                 (* Syntactic sugar *)
+  | TagRelationClk                 of clock * clock * clock * clock
   | Implies                        of clock * clock
   | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock
@@ -140,6 +141,7 @@ fun ConstantlySubs f = List.filter (fn f' => case f' of
   | ImpliesNot _     => true
   | TagRelation _    => true
   | TagRelationCst _ => true
+  | TagRelationClk _ => true
   | WhenClock _      => true
   | WhenNotClock _   => true
   | Precedes _       => true
@@ -245,6 +247,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
              | (Int_t, Int_t)   => [TagRelation (c1, Int 1, c2, Int 0)]
              | (Rat_t, Rat_t)   => [TagRelation (c1, Rat rat_one, c2, Rat rat_zero)]
              | (ty, ty')        => raise TagTypeInconsistency (c1, ty, ty'))
+	    (* TODO: How to type TagRelationClk ? *)
            | TypeDeclSporadics (ty, master, tags) => unsugar clock_types [Sporadics (master, tags)]
            | TypeDecl (ty, clk)                   => []
 	    | EveryImplies (master, n, x, slave)   => [FilteredBy (master, x, 1, n - 1, 1, slave)]
@@ -338,6 +341,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | TagRelation (c1, _, c2, _)                => [c1, c2]
   | TagRelationCst (c, _)                     => [c]
   | TagRelationRefl (c1, c2)                  => [c1, c2]
+  | TagRelationClk (c1, ca, c2, cb)           => [c1, ca, c2, cb]
   | Implies (c1, c2)                          => [c1, c2]
   | ImpliesNot (c1, c2)                       => [c1, c2]
   | TimeDelayedBy (c1, _, c2, NONE, c3)       => [c1, c2, c3]
