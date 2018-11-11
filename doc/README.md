@@ -8,6 +8,18 @@ This manual highlights specific features of the Heron solver that are undocument
 ./heron --help
 ```
 
+Compile from sources
+-------------------
+```bash
+sudo apt install mlton      #If Ubuntu
+brew install mlton          #If macOS
+
+git clone https://github.com/heron-solver/heron.git
+cd heron
+make
+```
+
+
 Emacs mode
 -------------------
 A simple syntax highlighting mode is provided for Emacs in `lib/tesl-mode.el`. To use it, add the following lines to your `~/.emacs`:

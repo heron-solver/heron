@@ -14,7 +14,7 @@ binary-release: all
 		examples/PowerWindow.tesl \
 		examples/basic \
 		examples/reference-gallery \
-		examples/takeoff-procedures
+		examples/aviation
 
 # Tests are done with TESL files and expected outputs available in ./tests
 test:

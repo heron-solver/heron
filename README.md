@@ -1,3 +1,4 @@
+
 Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/heron-solver/heron)
 ===================
 
@@ -12,21 +13,16 @@ Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=maste
 
 Getting started
 -------------------
+
 ### Binary distribution
 The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems). To solve an example, you can simply type
 ```bash
 ./heron --use examples/basic/FirstExample.tesl
 ```
 
-### From sources
-```bash
-sudo apt install mlton      #If Ubuntu
-brew install mlton          #If macOS
-
-git clone https://github.com/heron-solver/heron.git
-cd heron
-make
-```
+### Examples
+ - [Airbus A320 Autobrake System](examples/aviation/A320-Takeoff.tesl)
+ - [Distance Calculation with Time-Integrals](examples/aviation/SpeedIntegral.tesl)
 
 For more information, please refer to the [Heron Reference Manual](doc/README.md).
 
