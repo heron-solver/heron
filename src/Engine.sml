@@ -514,7 +514,7 @@ fun lawyer_e
 	    generating useless elim-reduction sequence permutations *)
     | fatom :: _ => (case fatom of
 			   Sporadic _ =>
-			     (print "SPORADIC E\n" ; [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)])
+			     [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)]
 			 | WhenTickingOn _ =>
 			     [(fatom, ARS_rule_whentickingon_1), (fatom, ARS_rule_whentickingon_2)]
              | WhenTickingOnWithReset _ =>
