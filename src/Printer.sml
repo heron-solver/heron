@@ -48,6 +48,7 @@ print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK]\n";
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK] * [CLOCK] + [CLOCK]\n"; 
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1m[\u001B[0m [TAG]+ \u001B[1m] ->\u001B[0m [CLOCK]\n"; 
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1mpre\u001B[0m [CLOCK]\n"; 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [FUNCTION NAME] \u001B[1m(\u001B[0m[CLOCK] [CLOCK]...\u001B[1m)\u001B[0m\n";
 print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [INT]                    define the number of minimum run steps\n"; 
@@ -155,6 +156,9 @@ fun string_of_tag_fancy (t : tag) =
 (* You may change this parameter, depending on your CLI abilities *)
 val string_of_tag = (string_of_tag_fancy)
 
+fun string_of_tags tlist =
+    String.concatWith " " (List.map (string_of_tag) tlist)    
+
 fun string_of_timestamp_constr c =
   case c of
       Timestamp (Clk cname, n, tag) => "X" ^ subscript_of_int n ^ superscript_of_string cname ^ " = " ^ string_of_tag tag
@@ -163,6 +167,7 @@ fun string_of_affine_constr c =
   case c of
       Affine (t1, ta, t2, tb) => (string_of_tag t1) ^ " = " ^ (string_of_tag ta) ^ " * " ^  (string_of_tag t2) ^ " + " ^ (string_of_tag tb)
     | AffineRefl (t1, t2) => (string_of_tag t1) ^ " = " ^ (string_of_tag t2)
+    | FunRel (t, Fun (fname), tlist) => (string_of_tag t) ^ " = " ^ fname ^ " (" ^ (string_of_tags tlist) ^ ")"
     | _ => raise UnexpectedMatch
 
 (* Print HAA-system *)
@@ -228,7 +233,7 @@ end
 fun print_affine_constrs (G : system) : unit =
   let
       val affine_constrs =
-	   List.filter (fn Affine _ => true | AffineRefl _ => true | _ => false) G
+	   List.filter (fn Affine _ => true | AffineRefl _ => true | FunRel _ => true | _ => false) G
       val nontriv_timestamps_constrs =
 	   List.filter (fn Timestamp (_, _, Schematic _) => true | Timestamp (_, _, Add _) => true | _ => false) G
   in (case (affine_constrs, nontriv_timestamps_constrs) of ([], []) => () | _ => writeln "Affine constraints and non-trivial timestamps:" ;
@@ -309,6 +314,7 @@ fun string_of_expr e = case e of
   | TagRelationClk (c1, ca, c2, cb)                         => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk ca) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_clk cb)
   | TagRelationPre (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = pre " ^ (string_of_clk c2)
   | TagRelationFby (c1, tags, c2)                           => "time relation " ^ (string_of_clk c1) ^ " = [" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk c2)
+  | TagRelationFun (c, Fun(fname), clist)                   => "time relation " ^ (string_of_clk c) ^ " = " ^ fname ^ " (" ^ (string_of_clks clist) ^ ")"
   | TimeDelayedBy (master, t, measuring, NONE, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
   | TimeDelayedBy (master, t, measuring, SOME (reset), slave)     => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " with reset on " ^ (string_of_clk reset) ^ " implies " ^ (string_of_clk slave)
   | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)

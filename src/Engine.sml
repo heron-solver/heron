@@ -20,7 +20,7 @@
 fun ARS_rule_instant_intro
   (declared_quantities: clock list)
   (G, n, f, []) =
-    (print ("Quantities: " ^ (string_of_int(List.length (SporadicQuantitiesSubs declared_quantities f))) ^ "\n") ; (G,
+    (print ("Quantities: " ^ (string_of_clks declared_quantities) ^ "\n") ; (G,
      n + 1,
      (((f @- (SelfModifyingSubs f)) @- (ConsumingSubs f)) @- (SporadicNowSubs f)) @- (SporadicQuantitiesSubs declared_quantities f),
      (ConsumingSubs f) @ (SporadicNowSubs f) @ (SporadicQuantitiesSubs declared_quantities f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f)))
@@ -490,6 +490,15 @@ fun ARS_rule_tagrel_fby_elim_2
    | _          => raise Assert_failure)
   | ARS_rule_tagrel_fby_elim_2 _ _ = raise Assert_failure;
 
+(* 69. Tag relation with a function application *)
+fun ARS_rule_tagrel_fun_elim
+  (G, n, frun, finst) (fsubst as TagRelationFun (c, f, clist)) =
+    (G @ [Timestamp (c, n, Schematic (c, n)),
+	   FunRel (Schematic (c, n), f, List.map (fn c => Schematic (c, n)) clist)
+	  ] @ (List.map (fn c => Timestamp (c, n, Schematic (c, n))) clist)
+      , n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_fun_elim _ _ = raise Assert_failure;
+
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
@@ -537,6 +546,8 @@ fun lawyer_e
                             [_]    => [(fatom, ARS_rule_tagrel_fby_elim_1)]
 			     | _ :: _ => [(fatom, ARS_rule_tagrel_fby_elim_2)]
 			     | _ => raise Assert_failure)
+			 | TagRelationFun _ =>
+			     [(fatom, ARS_rule_tagrel_fun_elim)]
 			 | Implies _ =>
 			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
 			 | ImpliesNot _ =>

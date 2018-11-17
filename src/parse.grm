@@ -107,6 +107,8 @@ fun opposite_tag t = case t of
       | TAGREL CLK EQ TAG                                                      (TagRelationCst (CLK, TAG))
       | TAGREL CLK EQ CLK TIMES CLK PLUS CLK                                   (TagRelationClk (CLK1, CLK2, CLK3, CLK4))
       | TAGREL CLK EQ PRE CLK                                                  (TagRelationPre (CLK1, CLK2))
+      | TAGREL CLK EQ CLK LPAR CLKS RPAR                                       (case CLK2 of Clk (name) =>
+													  TagRelationFun (CLK1, Fun (name), CLKS))
       | CLK TIME DELAYED BY TAG ON CLK IMPLIES CLK                             (TimeDelayedBy (CLK1, TAG, CLK2, NONE, CLK3))
       | CLK TIME DELAYED BY TAG ON CLK WITH RESET ON CLK IMPLIES CLK		   (TimeDelayedBy (CLK1, TAG, CLK2, SOME (CLK3), CLK4))
       | CLK DELAYED BY NUM ON CLK IMPLIES CLK                                  (DelayedBy (CLK1, NUM, CLK2, CLK3))

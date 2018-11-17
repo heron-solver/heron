@@ -16,6 +16,7 @@
 exception UnexpectedMatch
 datatype clock = Clk of string
 type instant_index = int
+datatype fname = Fun of string
 
 exception UnsupportedParsedTerm
 
@@ -32,8 +33,9 @@ datatype constr =
   | NotTicks  of clock * instant_index
   | NotTicksUntil of clock * instant_index
   | NotTicksFrom  of clock * instant_index
-  | Affine    of tag * tag * tag * tag
-  | AffineRefl of tag * tag
+  | Affine    of tag * tag * tag * tag        (* X1 = X2 * X3 + X4 *)
+  | AffineRefl of tag * tag                   (* X = Y *)
+  | FunRel of tag * fname * tag list          (* X = f (X1, X2...) *)
 
 type system = constr list
 
@@ -91,6 +93,7 @@ datatype TESL_atomic =
   | TagRelationClk                 of clock * clock * clock * clock
   | TagRelationPre                 of clock * clock
   | TagRelationFby                 of clock * tag list * clock
+  | TagRelationFun                 of clock * fname * clock list
   | Implies                        of clock * clock
   | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock
@@ -152,6 +155,7 @@ fun ConstantlySubs f = List.filter (fn f' => case f' of
   | TagRelationCst _ => true
   | TagRelationClk _ => true
   | TagRelationPre _ => true
+  | TagRelationFun _ => true
   | WhenClock _      => true
   | WhenNotClock _   => true
   | Precedes _       => true
@@ -305,9 +309,12 @@ fun string_of_tag t = case t of
   | Int n => string_of_int n
   | Rat x => string_of_rat x
   | _     => "<tag>"
-	      
+
 fun string_of_clk c = case c of
   Clk cname => cname
+
+fun string_of_clks clist =
+    String.concatWith " " (List.map (string_of_clk) clist)
 
 fun string_of_tag_type ty = case ty of
     Unit_t => "unit"
@@ -327,6 +334,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | TagRelationClk (c1, ca, c2, cb)           => [c1, ca, c2, cb]
   | TagRelationPre (c1, c2)                   => [c1, c2]
   | TagRelationFby (c1, _, c2)                => [c1, c2]
+  | TagRelationFun (c, _, clist)              => [c] @ clist
   | Implies (c1, c2)                          => [c1, c2]
   | ImpliesNot (c1, c2)                       => [c1, c2]
   | TimeDelayedBy (c1, _, c2, NONE, c3)       => [c1, c2, c3]
