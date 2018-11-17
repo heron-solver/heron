@@ -17,7 +17,7 @@ in
  parse.grm.sig
  parse.grm.sml
  parse.lex.sml
- RunConsistency.sml
+ ArithmeticSolver.sml
  Printer.sml
  VCD.sml
  TEX.sml

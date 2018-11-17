@@ -1,5 +1,5 @@
 (**
-   Module RunConsistency
+   Module ArithmeticSolver
 
    Author : Hai Nguyen Van
             LRI, Université Paris-Sud/CNRS
