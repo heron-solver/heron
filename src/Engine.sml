@@ -20,10 +20,10 @@
 fun ARS_rule_instant_intro
   (declared_quantities: clock list)
   (G, n, f, []) =
-    (print ("Quantities: " ^ (string_of_clks declared_quantities) ^ "\n") ; (G,
+    (G,
      n + 1,
      (((f @- (SelfModifyingSubs f)) @- (ConsumingSubs f)) @- (SporadicNowSubs f)) @- (SporadicQuantitiesSubs declared_quantities f),
-     (ConsumingSubs f) @ (SporadicNowSubs f) @ (SporadicQuantitiesSubs declared_quantities f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f)))
+     (ConsumingSubs f) @ (SporadicNowSubs f) @ (SporadicQuantitiesSubs declared_quantities f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
   | ARS_rule_instant_intro _ _ = raise Assert_failure;
 
 (* 2. Sporadic elimination when deciding to trigger tick sporadicaly *)

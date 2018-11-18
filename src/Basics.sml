@@ -97,8 +97,10 @@ fun random_int_range (i: int, j: int) (s: word): int =
       end
 handle Overflow => random_int_range (i, j) (valOf (MLton.Random.useed ()));
 
+exception NotFoundAssoc
 fun assoc l x = case (List.find (fn (k, v) => k = x) l) of
   SOME (_, V) => V
+| NONE => raise NotFoundAssoc
 
 exception Empty
 

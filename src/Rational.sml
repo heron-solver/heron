@@ -100,6 +100,21 @@ fun rat_of_string (s: string) : rat option =
       NONE   => NONE
     | SOME r => SOME (rat_of_real r)
 *)
+
+
+(* WARNING: USE WITH CAUTION
+   Casting operation reduces precision *)
+fun real_of_rat ((p, q): rat) : real =
+  (Real.fromLargeInt p) / (Real.fromLargeInt q)
+
+fun rat_of_real (r: real) : rat =
+    let
+      val decimal_precision = MAXINT
+      val {frac: real, whole: real} = Real.split r
+    in +/ ((LargeInt.fromInt (floor whole), LargeInt.fromInt 1),
+	    (LargeInt.fromInt (floor (frac * (Real.fromInt decimal_precision))), LargeInt.fromInt decimal_precision))
+    end
+
 fun rat_of_LargeInt (n: LargeInt.int): rat =
   (n, LargeInt.fromInt 1)
 

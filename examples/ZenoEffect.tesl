@@ -1,0 +1,8 @@
+Q-clock t periodic 0.5
+Q-quantity y
+tag relation y = tanh (t)
+
+@policy asap
+@maxstep 30
+@run
+@print

@@ -16,7 +16,7 @@
 exception UnexpectedMatch
 datatype clock = Clk of string
 type instant_index = int
-datatype fname = Fun of string
+datatype func = Fun of string
 
 exception UnsupportedParsedTerm
 
@@ -35,7 +35,7 @@ datatype constr =
   | NotTicksFrom  of clock * instant_index
   | Affine    of tag * tag * tag * tag        (* X1 = X2 * X3 + X4 *)
   | AffineRefl of tag * tag                   (* X = Y *)
-  | FunRel of tag * fname * tag list          (* X = f (X1, X2...) *)
+  | FunRel of tag * func * tag list           (* X = f (X1, X2...) *)
 
 type system = constr list
 
@@ -93,7 +93,7 @@ datatype TESL_atomic =
   | TagRelationClk                 of clock * clock * clock * clock
   | TagRelationPre                 of clock * clock
   | TagRelationFby                 of clock * tag list * clock
-  | TagRelationFun                 of clock * fname * clock list
+  | TagRelationFun                 of clock * func * clock list
   | Implies                        of clock * clock
   | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock

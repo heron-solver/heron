@@ -60,7 +60,7 @@ fun not_primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
      []        => ""
      (* Raising Match means the clock of the primitive was not selected for output *)
      | g :: G' => (primitive_toString g) ^
-     	     	    ((not_primitives_toString clk_pos_assoc G') handle Match => "")
+     	     	    ((not_primitives_toString clk_pos_assoc G') handle NotFoundAssoc => "")
   end
 
 (* All the rest of primitives *)
@@ -80,7 +80,7 @@ fun primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
      []        => ""
      (* Raising Match means the clock of the primitive was not selected for output *)
      | g :: G' => (primitive_toString g) ^
-     	     	    ((primitives_toString clk_pos_assoc G') handle Match => "")
+     	     	    ((primitives_toString clk_pos_assoc G') handle NotFoundAssoc => "")
   end
 
 

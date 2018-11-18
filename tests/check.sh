@@ -13,6 +13,14 @@ does_file_exists () {
     fi
 }
 
+does_output_exists () {
+    if (!(cat $1.out >/dev/null))
+    then
+	 echo "  --> FAIL (no output found)"
+	 exit 1
+    fi
+}
+
 # From TESL file, generates output
 generate () {
     ./heron --use $1  >/dev/null
@@ -30,6 +38,7 @@ run_check () {
 # Checks specification
 check () {
     generate $1
+    does_output_exists $1
     run_check $1.out $1.expected
 }
 
