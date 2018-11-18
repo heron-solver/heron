@@ -59,13 +59,17 @@ fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_con
   let
     val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
     fun nb_unsolved_affine (G: system) : int =
-      List.length (List.filter (fn Affine (x1, _, x2, _) =>
-					(case (x1, x2) of
-					     (Unit, Unit)   => false
-					   | (Int _, Int _) => false
-					   | (Rat _, Rat _) => false
-					   | _  => true
-					)
+      List.length (List.filter (fn
+					Affine (x1, _, x2, _) =>
+					 (case (x1, x2) of
+					      (Unit, Unit)   => false
+					    | (Int _, Int _) => false
+					    | (Rat _, Rat _) => false
+					    | _  => true
+					 )
+				   | AffineRefl (Schematic _, _) => true
+				   | AffineRefl (_, Schematic _) => true
+				   | FunRel _ => true
 				   | _ => false) G)
     val min_unsolved_affine : int =
       List.foldl (fn ((G, _, _, _), n) => Int.min(n, nb_unsolved_affine G)) MAXINT cfs

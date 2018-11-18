@@ -19,11 +19,12 @@ print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Va
 print "             Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334.\n";
 print "\n";
 print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
+print "  [\u001B[1mint\u001B[0m | \u001B[1mrational\u001B[0m | \u001B[1munit\u001B[0m]\u001B[1m-clock\u001B[0m [CLOCK]\n"; 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [TAG] * [CLOCK] + [TAG]\n"; 
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG]+\n"; 
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mperiodic\u001B[0m [TAG] (\u001B[1moffset\u001B[0m [TAG])\n"; 
 print "  [CLOCK] \u001B[1mimplies (not)\u001B[0m [CLOCK]\n"; 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [TAG] * [CLOCK] + [TAG]\n"; 
 print "  [CLOCK] \u001B[1mtime delayed by\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK] (\u001B[1mwith reset on\u001B[0m [CLOCK]) \u001B[1mimplies\u001B[0m [CLOCK]\n";
 print "  [CLOCK] \u001B[1mdelayed by\u001B[0m [INT] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mfiltered by\u001B[0m [INT], [INT] ([INT], [INT])* \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
@@ -50,6 +51,9 @@ print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1m[\u001B[0m [TAG]+ \u
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1mpre\u001B[0m [CLOCK]\n"; 
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [FUNCTION NAME] \u001B[1m(\u001B[0m[CLOCK] [CLOCK]...\u001B[1m)\u001B[0m\n";
 print "\n"; 
+print "  Real functions interpreted as in ISO C's math.h:\n"; 
+print "  pi, e, sqrt, sin, cos, tan, asin, acos, atan, atan2, exp, pow, ln, log10, sinh, cosh, tanh\n"; 
+print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
 print "  @minstep [INT]                    define the number of minimum run steps\n"; 
 print "  @maxstep [INT]                    define the number of maximum run steps\n"; 
@@ -73,7 +77,7 @@ print "  @run                              run the specification until model fou
 print "  @step                             run the specification for one step\n"; 
 print "  @event-concretize                 concretize ticks/tags of driving clocks\n"; 
 print "  @print                            display the current snapshots\n"; 
-print "  @output vcd/tikz/tex/pdf [CLOCK]* export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
+print "  @output vcd/tikz/tex/pdf          export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
 print "  @help                             display the list of commands\n")
 
 fun superscript_of_char (c : char) =
@@ -143,14 +147,14 @@ fun string_of_tag_ugly (t : tag) =
       Unit  => "()"
     | Int n => string_of_int n
     | Rat x => string_of_rat x
-    | Schematic (Clk c_str, n) => "X\226\135\167" ^ (string_of_int n) ^ "\226\135\169" ^ c_str
+    | Schematic (Clk c_str, n) => "tvar\226\135\167" ^ (string_of_int n) ^ "\226\135\169" ^ c_str
     | Add (t1, t2) => (string_of_tag_ugly t1) ^ " + " ^ (string_of_tag_ugly t2)
 fun string_of_tag_fancy (t : tag) =
   case t of
       Unit  => "()"
     | Int n => string_of_int_exp n
     | Rat x => string_of_rat x
-    | Schematic (Clk c_str, n) => "X" ^ subscript_of_int n ^ superscript_of_string c_str
+    | Schematic (Clk c_str, n) => "tvar" ^ subscript_of_int n ^ superscript_of_string c_str
     | Add (t1, t2) => (string_of_tag_fancy t1) ^ " + " ^ (string_of_tag_fancy t2)
 
 (* You may change this parameter, depending on your CLI abilities *)
@@ -161,7 +165,7 @@ fun string_of_tags tlist =
 
 fun string_of_timestamp_constr c =
   case c of
-      Timestamp (Clk cname, n, tag) => "X" ^ subscript_of_int n ^ superscript_of_string cname ^ " = " ^ string_of_tag tag
+      Timestamp (Clk cname, n, tag) => "tvar" ^ subscript_of_int n ^ superscript_of_string cname ^ " = " ^ string_of_tag tag
     | _ => raise UnexpectedMatch
 fun string_of_affine_constr c =
   case c of
@@ -269,9 +273,9 @@ fun print_step_runtime (declared_clocks : clock list) (cfs: TESL_ARS_conf list) 
   in case cfs of
     [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
-  | _ => case List.hd cfs of
-      (G, step, phi, _) =>
-      (print_system_step current_step declared_clocks G)
+  | _ => (case List.hd cfs of
+        (_, 0, _, _)    => ()
+      | (G, step, phi, _) => (print_system_step current_step declared_clocks G))
   end
 
 fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
@@ -347,6 +351,6 @@ fun string_of_expr e = case e of
   | DirOutputVCD						    => "<directive>"
   | DirOutputTEX _	   				    => "<directive>"
   | DirExit							    => "<directive>"
-  | DirPrint							    => "<directive>"
+  | DirPrint _  					    => "<directive>"
   | DirHelp							    => "<directive>"
   | _                                                       => "<unknown>"

@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.56.2-alpha+20181118"
+val RELEASE_VERSION = "0.56.3-alpha+20181118"
 
 open OS.Process
 
@@ -98,7 +98,9 @@ fun action (stmt: TESL_atomic) =
 			  (!declared_clocks)
 			  (!declared_clocks_quantities)
 			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
-  | DirPrint              => print_dumpres (!declared_clocks) (!snapshots)
+  | DirPrint selected_clocks => (case selected_clocks of
+					  [] => print_dumpres (!declared_clocks) (!snapshots)
+				      |  _  => print_dumpres selected_clocks (!snapshots))
   | DirOutputVCD          =>
     (case !snapshots of
 	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)

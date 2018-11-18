@@ -394,7 +394,7 @@ fun constants_propagation_candidates_int (G: system) =
     @ affine_timestamp_refl_2_var_unifiers
   end;
 
-exception UnknownFunctionSymbol
+exception UnknownFunctionSymbolOrIncorrectArity
 exception NotYetConcretizedforFunctionInterpr
 fun interpret_fun G fname schem_list : rat =
     let val concretized_list =
@@ -403,27 +403,30 @@ fun interpret_fun G fname schem_list : rat =
 							 | _ => raise NotYetConcretizedforFunctionInterpr)
 			| _ => raise UnexpectedMatch_RunConsistency_64) schem_list
     in case (fname, concretized_list) of
-	   ("sqrt", x :: _)     => rat_of_real (Math.sqrt (real_of_rat x))
- 	 | ("sin", x :: _)      => rat_of_real (Math.sin (real_of_rat x))
- 	 | ("cos", x :: _)      => rat_of_real (Math.cos (real_of_rat x))
- 	 | ("tan", x :: _)      => rat_of_real (Math.tan (real_of_rat x))
- 	 | ("asin", x :: _)     => rat_of_real (Math.asin (real_of_rat x))
- 	 | ("acos", x :: _)     => rat_of_real (Math.acos (real_of_rat x))
- 	 | ("atan", x :: _)     => rat_of_real (Math.atan (real_of_rat x))
- 	 | ("exp", x :: _)      => rat_of_real (Math.exp (real_of_rat x))
- 	 | ("pow", x :: y :: _) => rat_of_real (Math.pow (real_of_rat x, real_of_rat y))
- 	 | ("ln", x :: _)       => rat_of_real (Math.ln (real_of_rat x))
- 	 | ("log10", x :: _)    => rat_of_real (Math.log10 (real_of_rat x))
- 	 | ("sinh", x :: _)     => rat_of_real (Math.sinh (real_of_rat x))
- 	 | ("cosh", x :: _)     => rat_of_real (Math.cosh (real_of_rat x))
- 	 | ("tanh", x :: _)     => rat_of_real (Math.tanh (real_of_rat x))
-	 | _                    => raise UnknownFunctionSymbol
+	   ("pi", [])             => rat_of_real (Math.pi)
+ 	 | ("e", [])              => rat_of_real (Math.e)
+	 | ("sqrt", x :: _)       => rat_of_real (Math.sqrt (real_of_rat x))
+ 	 | ("sin", x :: _)        => rat_of_real (Math.sin (real_of_rat x))
+ 	 | ("cos", x :: _)        => rat_of_real (Math.cos (real_of_rat x))
+ 	 | ("tan", x :: _)        => rat_of_real (Math.tan (real_of_rat x))
+ 	 | ("asin", x :: _)       => rat_of_real (Math.asin (real_of_rat x))
+ 	 | ("acos", x :: _)       => rat_of_real (Math.acos (real_of_rat x))
+ 	 | ("atan", x :: _)       => rat_of_real (Math.atan (real_of_rat x))
+ 	 | ("atan2", x :: y :: _) => rat_of_real (Math.atan2 (real_of_rat x, real_of_rat y))
+ 	 | ("exp", x :: _)        => rat_of_real (Math.exp (real_of_rat x))
+ 	 | ("pow", x :: y :: _)   => rat_of_real (Math.pow (real_of_rat x, real_of_rat y))
+ 	 | ("ln", x :: _)         => rat_of_real (Math.ln (real_of_rat x))
+ 	 | ("log10", x :: _)      => rat_of_real (Math.log10 (real_of_rat x))
+ 	 | ("sinh", x :: _)       => rat_of_real (Math.sinh (real_of_rat x))
+ 	 | ("cosh", x :: _)       => rat_of_real (Math.cosh (real_of_rat x))
+ 	 | ("tanh", x :: _)       => rat_of_real (Math.tanh (real_of_rat x))
+	 | _                      => raise UnknownFunctionSymbolOrIncorrectArity
     end
 fun is_interpretable G fname schem_list =
     let val _ = interpret_fun G fname schem_list
     in true
     end
-    handle UnknownFunctionSymbol => false
+    handle UnknownFunctionSymbolOrIncorrectArity => false
 	  | NotYetConcretizedforFunctionInterpr => false
 
 fun constants_propagation_candidates_rat (G: system) =

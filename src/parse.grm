@@ -52,7 +52,7 @@ fun opposite_tag t = case t of
       | KILLS
       | PRE 
 
-%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | TAGFBYS of tag list 
+%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | TAGFBYS of tag list | CLKARGS of clock list
 
 %name Calc
 
@@ -70,6 +70,9 @@ fun opposite_tag t = case t of
   CLK : ID                                                                     (Clk (ID))
   CLKS : ID                                                                    ([Clk (ID)])
        | ID CLKS                                                               (Clk (ID) :: CLKS)
+  CLKARGS : RPAR                                                               ([])
+          | ID RPAR                                                            ([Clk (ID)])
+          | ID COMMA CLKARGS                                                   (Clk (ID) :: CLKARGS)
   TAG  : UNIT_VAL                                                              (Unit)
 	| NUM                                                                   (Int (NUM))
        | DECNUM                                                                (Rat (DECNUM))
@@ -80,7 +83,7 @@ fun opposite_tag t = case t of
   TCLKS : ID                                                                   ([(Clk ID, NONE)])
         | ID TCLKS                                                             ((Clk ID, NONE) :: TCLKS)
 	 | LPAR ID ARROW TAG RPAR                                               ([(Clk ID, SOME TAG)])
-        | LPAR ID ARROW TAG RPAR TCLKS                                        ((Clk ID, SOME TAG) :: TCLKS)
+        | LPAR ID ARROW TAG RPAR TCLKS                                         ((Clk ID, SOME TAG) :: TCLKS)
   EXP : 
 	 TYPEDECL CLK                                                           (case TYPEDECL of (tt, mb) => TypeDecl (CLK, tt, mb))
       | LET INT ID EQ TAG                                                      (raise UnsupportedParsedTerm) 
@@ -107,8 +110,8 @@ fun opposite_tag t = case t of
       | TAGREL CLK EQ TAG                                                      (TagRelationCst (CLK, TAG))
       | TAGREL CLK EQ CLK TIMES CLK PLUS CLK                                   (TagRelationClk (CLK1, CLK2, CLK3, CLK4))
       | TAGREL CLK EQ PRE CLK                                                  (TagRelationPre (CLK1, CLK2))
-      | TAGREL CLK EQ CLK LPAR CLKS RPAR                                       (case CLK2 of Clk (name) =>
-													  TagRelationFun (CLK1, Fun (name), CLKS))
+      | TAGREL CLK EQ ID UNIT_VAL                                              (TagRelationFun (CLK, Fun ID, []))
+      | TAGREL CLK EQ ID LPAR CLKARGS                                          (TagRelationFun (CLK, Fun ID, CLKARGS))
       | CLK TIME DELAYED BY TAG ON CLK IMPLIES CLK                             (TimeDelayedBy (CLK1, TAG, CLK2, NONE, CLK3))
       | CLK TIME DELAYED BY TAG ON CLK WITH RESET ON CLK IMPLIES CLK		   (TimeDelayedBy (CLK1, TAG, CLK2, SOME (CLK3), CLK4))
       | CLK DELAYED BY NUM ON CLK IMPLIES CLK                                  (DelayedBy (CLK1, NUM, CLK2, CLK3))
@@ -153,7 +156,8 @@ fun opposite_tag t = case t of
       | DIR_SCENARIO		NUM  TCLKS						  (DirScenario (false, SOME NUM, TCLKS))
       | DIR_RUN                                                                (DirRun)
       | DIR_RUNSTEP                                                            (DirRunStep)
-      | DIR_PRINT                                                              (DirPrint)
+      | DIR_PRINT                                                              (DirPrint [])
+      | DIR_PRINT SELECT CLKS                                                  (DirPrint CLKS)
       | DIR_EXIT                                                               (DirExit)
       | DIR_HELP                                                               (DirHelp)
       | DIR_OUTPUT VCD                                                         (DirOutputVCD)

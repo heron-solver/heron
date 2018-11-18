@@ -37,14 +37,7 @@ References
 People
 -------------------
 
-The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. Made with love by
-
- - Hai Nguyen Van
- - Thibaut Balabonski
- - Frédéric Boulanger
- - Chantal Keller
- - Benoît Valiron
- - Burkhart Wolff
+The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff
 
 License
 -------------------
