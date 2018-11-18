@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.56.1-alpha+20181118"
+val RELEASE_VERSION = "0.56.2-alpha+20181118"
 
 open OS.Process
 

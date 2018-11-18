@@ -428,6 +428,11 @@ fun is_interpretable G fname schem_list =
 
 fun constants_propagation_candidates_rat (G: system) =
   let
+    (**  Rearranged similar equation cases **)
+    (* - Affine relation [C = X * a + b] --> [C = a * X + b] where [X] is a variable *)
+    val G = List.map (fn Affine (Rat r1, Schematic s, Rat r2, Rat r3) => Affine (Rat r1, Rat r2, Schematic s, Rat r3) | g => g) G
+    (* - Affine relation [C = a * a' + X] --> [C = 1 * X + (a * a')] where [X] is a variable *)
+    val G = List.map (fn Affine (Rat c, Rat a, Rat a', Schematic x) => Affine (Rat c, Rat rat_one, Schematic x, Rat ( */ (a, a'))) | g => g) G
     (* - Two timestamps [H ⇓_σ C] and [H ⇓_σ X], where [X] a variable and [C] is a constant (by injectivity) *)
     val timestamp_var_right = (List.filter (fn cstr => case cstr of Timestamp (_, _, Schematic _) => true | _ => false) G)
     val timestamp_cst_right = (List.filter (fn cstr => case cstr of Timestamp (_, _, Rat _) => true | _ => false) G)
