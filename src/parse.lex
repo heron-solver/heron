@@ -26,7 +26,7 @@ fun error (e,l : int,_) = TextIO.output (TextIO.stdOut, String.concat[
 %header (functor CalcLexFun(structure Tokens: Calc_TOKENS));
 alpha=[A-Za-z];
 digit=[0-9];
-optsign=("+"|"-")?;
+optsign=("+"|"-"|"~")?;
 ws = [\ \t];
 %%
 \n       => (Tokens.SEMI(!pos,!pos));
