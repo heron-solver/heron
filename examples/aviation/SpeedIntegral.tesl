@@ -6,36 +6,34 @@
 // Distance x (in m)
 // Velocity v (in m.s⁻¹)
 
-rational-quantity pre_t
-rational-quantity mpre_t
-rational-quantity t_mpre_t
-rational-quantity v_t_mpre_t
 rational-quantity x
-rational-quantity pre_x
-rational-quantity pre_x_plus_v_t_mpre_t
-
 tag relation zero = 0.0
-tag relation one = 1.0
 
 // Fixed simulation step
-t periodic 0.2
+t periodic 5.0
 tag relation v = 1.5 * t
 
-// Take dx = v.dt
-// We have x_i = x_{i-1} + v_i * (t_i - t_{i-1})
-// This can be expressed in Heron with a tag relation
-//   tag relation x = 0 -> (pre x + v * (t - pre t))
-tag relation pre_t = pre t
-tag relation mpre_t = -1.0 * pre_t + 0.0
-tag relation t_mpre_t = one * t + mpre_t
-tag relation v_t_mpre_t = v * t_mpre_t + zero
+tag relation dt = der t
+tag relation dx = der x
 
-tag relation pre_x = pre x
-tag relation pre_x_plus_v_t_mpre_t = one * pre_x + v_t_mpre_t
-tag relation x = [ 0.0 ] -> pre_x_plus_v_t_mpre_t
+// From dx = v.dt
+tag relation v_dt = v * dt + zero
+tag relation dx = v_dt
+
+// Initial condition (x₀ = 0.0)
+@scenario 1 (x -> 0.0)
 
 @policy asap
-@maxstep 10
+@maxstep 100
 @run
 @print select t v x
 @output pdf select t v x
+
+// An alternative using fby operator allows to write causal tag relations
+// Thus, avoiding a scenario. Rewrite as x_i = x_{i-1} + v_i * (t_i - t_{i-1})
+// This can be expressed in Heron with a tag relation
+//   tag relation x = 0 -> (pre x + v * (t - pre t))
+// In other words...
+//   rational-quantity pre_x_plus_v_dt
+//   tag relation pre_x_plus_v_dt = one * pre_x + v_dt
+//   tag relation x = [ 0.0 ] -> pre_x_plus_v_dt

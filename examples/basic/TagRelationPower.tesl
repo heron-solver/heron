@@ -1,0 +1,8 @@
+tag relation two = 2.0
+x periodic 0.5
+tag relation y = pow (x, two)
+
+@policy asap
+@maxstep 5
+@run
+@print select x y

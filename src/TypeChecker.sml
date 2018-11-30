@@ -44,6 +44,7 @@ fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref)
 									 [(c2, clk_type_lookup (!clock_types) c1)]))
      | TagRelationFby (c1, tags, c2)     => [(c1, type_of_tags c1 tags), (c2, type_of_tags c2 tags)]
      | TagRelationFun (c, _, clist)      => [(c, Rat_t)] @ (List.map (fn c => (c, Rat_t)) clist)
+     | TagRelationDer (c1, c2)           => [(c1, Rat_t), (c2, Rat_t)]
      | TimeDelayedBy (_, t, clk, _, _)   => [(clk, type_of_tag t)]
      | Periodic (c, t1, t2)              => [(c, type_of_tags c [t1, t2])]
      | TypeDeclPeriodic (ty, c, t1, t2)  => (c, ty) :: [(c, type_of_tags c [t1, t2])]

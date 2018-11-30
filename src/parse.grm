@@ -51,8 +51,9 @@ fun opposite_tag t = case t of
       | EXCLUDES
       | KILLS
       | PRE 
+      | DER
 
-%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | TAGFBYS of tag list | CLKARGS of clock list
+%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list
 
 %name Calc
 
@@ -110,6 +111,7 @@ fun opposite_tag t = case t of
       | TAGREL CLK EQ TAG                                                      (TagRelationCst (CLK, TAG))
       | TAGREL CLK EQ CLK TIMES CLK PLUS CLK                                   (TagRelationClk (CLK1, CLK2, CLK3, CLK4))
       | TAGREL CLK EQ PRE CLK                                                  (TagRelationPre (CLK1, CLK2))
+      | TAGREL CLK EQ DER CLK                                                  (TagRelationDer (CLK1, CLK2))
       | TAGREL CLK EQ ID UNIT_VAL                                              (TagRelationFun (CLK, Fun ID, []))
       | TAGREL CLK EQ ID LPAR CLKARGS                                          (TagRelationFun (CLK, Fun ID, CLKARGS))
       | CLK TIME DELAYED BY TAG ON CLK IMPLIES CLK                             (TimeDelayedBy (CLK1, TAG, CLK2, NONE, CLK3))
