@@ -499,6 +499,22 @@ fun ARS_rule_tagrel_fun_elim
       , n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_fun_elim _ _ = raise Assert_failure;
 
+(* 70. Reflexive tag relation with implication under false premise *)
+fun ARS_rule_tagrel_refl_implies_elim_1
+  (G, n, frun, finst) (fsubst as TagRelationReflImplies (ctrig, _, _)) =
+    (G @ [NotTicks (ctrig, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_refl_implies_elim_1 _ _ = raise Assert_failure;
+
+(* 71. Reflexive tag relation with implication under true premise *)
+fun ARS_rule_tagrel_refl_implies_elim_2
+  (G, n, frun, finst) (fsubst as TagRelationReflImplies (ctrig, c1, c2)) =
+    (G @ [Ticks (ctrig, n),
+	   Timestamp (c1, n, Schematic (c1, n)),
+	   Timestamp (c2, n, Schematic (c2, n)),
+	   AffineRefl (Schematic (c1, n), Schematic (c2, n))
+	  ], n, frun, finst @- [fsubst])
+  | ARS_rule_tagrel_refl_implies_elim_2 _ _ = raise Assert_failure;
+
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
@@ -548,6 +564,8 @@ fun lawyer_e
 			     | _ => raise Assert_failure)
 			 | TagRelationFun _ =>
 			     [(fatom, ARS_rule_tagrel_fun_elim)]
+			 | TagRelationReflImplies _ =>
+			     [(fatom, ARS_rule_tagrel_refl_implies_elim_1), (fatom, ARS_rule_tagrel_refl_implies_elim_2)]
 			 | Implies _ =>
 			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
 			 | ImpliesNot _ =>

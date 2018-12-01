@@ -52,6 +52,7 @@ print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1mpre\u001B[0m [CLOCK]
 print "\n"; 
 print (BOLD_COLOR ^ "Extensions in hybrid style:\n" ^ RESET_COLOR); 
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1mder\u001B[0m [CLOCK]\n";
+print "  [CLOCK] \u001B[1mimplies time relation\u001B[0m [CLOCK] = [CLOCK]\n";
 print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [FUNCTION NAME] \u001B[1m(\u001B[0m[CLOCK] [CLOCK]...\u001B[1m)\u001B[0m\n";
 print "\n"; 
 print "  Real functions interpreted as in ISO C's math.h:\n"; 
@@ -323,6 +324,7 @@ fun string_of_expr e = case e of
   | TagRelationFby (c1, tags, c2)                           => "time relation " ^ (string_of_clk c1) ^ " = [" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk c2)
   | TagRelationFun (c, Fun(fname), clist)                   => "time relation " ^ (string_of_clk c) ^ " = " ^ fname ^ " (" ^ (string_of_clks clist) ^ ")"
   | TagRelationDer (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = der " ^ (string_of_clk c2)
+  | TagRelationReflImplies (c1, c2, c3)                     => (string_of_clk c1) ^ " implies time relation " ^ (string_of_clk c2) ^ " = " ^ (string_of_clk c3)
   | TimeDelayedBy (master, t, measuring, NONE, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
   | TimeDelayedBy (master, t, measuring, SOME (reset), slave)     => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " with reset on " ^ (string_of_clk reset) ^ " implies " ^ (string_of_clk slave)
   | DelayedBy (master, n, counting, slave)                  => (string_of_clk master) ^ " delayed by " ^ (string_of_int n) ^ " on " ^ (string_of_clk counting) ^ " implies " ^ (string_of_clk slave)

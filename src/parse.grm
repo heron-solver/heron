@@ -114,6 +114,7 @@ fun opposite_tag t = case t of
       | TAGREL CLK EQ DER CLK                                                  (TagRelationDer (CLK1, CLK2))
       | TAGREL CLK EQ ID UNIT_VAL                                              (TagRelationFun (CLK, Fun ID, []))
       | TAGREL CLK EQ ID LPAR CLKARGS                                          (TagRelationFun (CLK, Fun ID, CLKARGS))
+      | CLK IMPLIES TAGREL CLK EQ CLK                                          (TagRelationReflImplies (CLK1, CLK2, CLK3))
       | CLK TIME DELAYED BY TAG ON CLK IMPLIES CLK                             (TimeDelayedBy (CLK1, TAG, CLK2, NONE, CLK3))
       | CLK TIME DELAYED BY TAG ON CLK WITH RESET ON CLK IMPLIES CLK		   (TimeDelayedBy (CLK1, TAG, CLK2, SOME (CLK3), CLK4))
       | CLK DELAYED BY NUM ON CLK IMPLIES CLK                                  (DelayedBy (CLK1, NUM, CLK2, CLK3))
