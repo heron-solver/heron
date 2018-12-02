@@ -314,9 +314,19 @@ fun cfs_eq ((G1, s1, phi1, psi1) : TESL_ARS_conf) ((G2, s2, phi2, psi2) : TESL_A
   andalso @== (psi1, psi2)
 
 (* Computes the least fixpoint of a functional [ff] starting at [x] *)
+(*
 fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
   let val x' = ff x in
   (if x = x' then x else lfp (ff) x') end
+*)
+fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
+    let val x_ = ref x
+	 val x' = ref (ff x)
+    in (while ((!x_) <> (!x')) do
+	      (x_ := (!x') ;
+	       x' := ff (!x'))) ;
+	!x_
+    end
 
 (* Removes redundants ARS configurations *)
 fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =

@@ -10,12 +10,13 @@
 //   WEIGHT 55.8 tons
 //   Flaps 1 (CONF 1+F)
 //   Maximum takeoff thrust
+//   ASDA = 1500 m
 
 // Performance speeds (IAS):
 //   V1 = 118 kt
 
 rational-clock time-S     // in [s]
-rational-clock speed-MPS  // in [m.s^-1]
+rational-clock speed-MPS  // in [m.s⁻¹]
 rational-clock speed-KT   // in [kt]
 rational-quantity speed-KT-DECEL
 rational-quantity speed-MPS-DECEL
@@ -31,7 +32,7 @@ tag relation ddistance-M = speed-MPS_dtime-S
 
 time-S periodic 2.5
 
-// Unit conversion between [kt] and [m.s^-1]
+// Unit conversion between [kt] and [m.s⁻¹]
 tag relation speed-KT = <3600/1852> * speed-MPS
 tag relation speed-KT-DECEL = <3600/1852> * speed-MPS-DECEL
 
@@ -42,23 +43,27 @@ tag relation speed-KT = 4.5 * time-S
 V1-reach sporadic 118.0 on speed-KT
 
 // Deceleration of -3 kt/s
+// dv = ad.dt
 RTO sporadic 20.0 on time-S
-tag relation speed-KT-DECEL = -3.0 * time-S + 150.0 // MANUAL TAG SYNC
+tag relation ad = -3.0
+tag relation dspeed-KT-DECEL = der speed-KT-DECEL
+tag relation ad-dtime-S = ad * dtime-S + zero
+tag relation dspeed-KT-DECEL = ad-dtime-S
 
 // Again, dx = v.dt
 tag relation ddistance-M-DECEL = der distance-M-DECEL
 tag relation speed-MPS_dtime-S-DECEL = speed-MPS-DECEL * dtime-S + zero
 tag relation ddistance-M-DECEL = speed-MPS_dtime-S-DECEL
 
-@scenario 1 (time-S -> 0.0)
-@scenario 1 (distance-M -> 0.0) // Initial condition
-@scenario 9 (distance-M-DECEL -> 520.875) // MANUAL TAG SYNC
-@maxstep 22
+
 @policy asap
+@scenario 1 (distance-M -> 0.0) // Initial condition
+@run until RTO
+@scenario now (distance-M-DECEL -> distance-M)
+@scenario now (speed-KT-DECEL -> speed-KT)
+@maxstep 23
 @run
-@print
 @output pdf select time-S speed-MPS speed-KT distance-M speed-MPS-DECEL speed-KT-DECEL distance-M-DECEL V1-reach RTO
 
-// At the 22nd simulation step, speed has completely decelerated
-// Approximated acceleration-stop distance is 1159 meters
-// which complies with ASDA = 1500 m
+// At the 23rd simulation step, speed has completely decelerated.
+// Approximated acceleration-stop distance is 1159 meters.

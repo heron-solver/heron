@@ -762,6 +762,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
 exception Maxstep_reached   of TESL_ARS_conf list;
 exception Model_found       of TESL_ARS_conf list;
 exception Stopclock_ticked  of TESL_ARS_conf list;
+exception EmptySnapshots;
 exception Abort;
 
 exception UnexpectedMatch_Engine_1
@@ -929,18 +930,19 @@ fun exec
     val () = writeln_ifrun ("Policy: " ^ (case heuristics of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch_Engine_2) "" heuristics))
     val () = writeln_ifrun ("Stop clocks: " ^ (case stop_clks of [] => "null"
 									| _ => String.concatWith " " (List.map (fn Clk cname => cname) stop_clks)))
+    val next_cfs = ref cfs
     (* MAIN SIMULATION LOOP *)
-    fun loop cfs =
+    val _ = (while (true) do
       let
-        val () = if rtprint then print_step_runtime declared_clocks cfs (!step_index - 1) else ()
+        val () = if rtprint then print_step_runtime declared_clocks (!next_cfs) (!step_index - 1) else ()
         (* STOPS WHEN MAXSTEP REACHED *)
         val () =
           if ((!step_index) = maxstep + 1)
           then (writeln_ifrun ("# Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
                 writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
 		  writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING:" ^ RESET_COLOR) ;
-                writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length cfs) ^ " premodels (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
-                raise Maxstep_reached cfs)
+                writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length (!next_cfs)) ^ " premodels (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
+                raise Maxstep_reached (!next_cfs))
           else ()
         (* STOPS WHEN FINITE MODEL FOUND *)
         val () =
@@ -951,7 +953,7 @@ fun exec
             andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0)
             (* Stop condition 3. Minstep has already been overheaded *)
             andalso (minstep < (!step_index))
-            ) cfs in
+            ) (!next_cfs) in
           if List.length cfs_sat > 0
           then (writeln_ifrun ("# Stopping simulation when finite model found") ;
                 writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
@@ -965,33 +967,35 @@ fun exec
 			   (fn (G, _, _, _) =>
 				(List.exists (fn stopc =>
 						   (List.exists (fn Ticks (c, _) => c = stopc | _ => false) G)) stop_clks))
-			   cfs
+			   (!next_cfs)
 	     in if List.length cfs_sat > 0
 		 then (writeln_ifrun ("# Stopping simulation as some stop clock has explicitly reacted") ;
 			writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
 			writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models" ^ RESET_COLOR);
-                raise Stopclock_ticked cfs)
+                raise Stopclock_ticked (!next_cfs))
 		 else () end
         (* INSTANT SOLVING *)
-        val next_snapshots = exec_step cfs step_index declared_clocks declared_quantities (minstep, maxstep, dumpres, heuristics, rtprint) in
-	 case next_snapshots of
-	     [] => []
-	   | _ => loop next_snapshots
-        end
-  in loop cfs end
-        handle
-	 Maxstep_reached   cfs =>
-	 (if dumpres
-	  then print_dumpres declared_clocks cfs
-	  else writeln "# No output format requested" ;
-	  cfs)
-        | Model_found       cfs =>
-	   (if dumpres
-	    then print_dumpres declared_clocks cfs
-	    else writeln "# No output format requested" ;
-	    cfs)
-        | Stopclock_ticked       cfs =>
-	   (if dumpres
-	    then print_dumpres declared_clocks cfs
-	    else writeln "# No output format requested" ;
-	    cfs)
+        val _ = next_cfs := exec_step (!next_cfs) step_index declared_clocks declared_quantities (minstep, maxstep, dumpres, heuristics, rtprint)
+	 in case (!next_cfs) of
+	     [] => raise EmptySnapshots
+	   | _  => ()
+      end)
+    in (!next_cfs)
+  end
+  handle
+  Maxstep_reached   cfs =>
+  (if dumpres
+   then print_dumpres declared_clocks cfs
+   else writeln "# No output format requested" ;
+   cfs)
+  | Model_found       cfs =>
+    (if dumpres
+     then print_dumpres declared_clocks cfs
+     else writeln "# No output format requested" ;
+     cfs)
+  | Stopclock_ticked       cfs =>
+    (if dumpres
+     then print_dumpres declared_clocks cfs
+     else writeln "# No output format requested" ;
+     cfs)
+  | EmptySnapshots => []

@@ -73,7 +73,7 @@ print "  \u001B[1m@dumpres\u001B[0m                          option to display t
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) [INT] [CLOCK]+ refine snapshots with instantaneous scenario\n"; 
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) \u001B[1mnow\u001B[0m [CLOCK]+   refine snapshots of last simulation step\n"; 
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) \u001B[1mnext\u001B[0m [CLOCK]+  refine snapshots of next simulation step\n"; 
-print "  \u001B[1m@scenario\u001B[0m [INT]                     select by keeping only one simulation state\n"; 
+print "  \u001B[1m@select\u001B[0m [INT]                     select by keeping only one simulation state\n"; 
 print "  \u001B[1m@driving-clock\u001B[0m [CLOCK]+           declare driving clocks\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
