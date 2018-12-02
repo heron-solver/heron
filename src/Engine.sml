@@ -854,7 +854,6 @@ fun exec_step
   (minstep     : int,
    maxstep     : int,
    dumpres     : bool,
-   codirection : system,
    heuristics  : TESL_formula,
    rtprint     : bool
   )
@@ -881,20 +880,13 @@ fun exec_step
 						    end) reduce_psi_formulae
 
       (* 2. REMOVE CONFIGURATIONS IN DEADLOCK STATE DUE TO UNMERGEABLE SPORADICS *)
-      val no_deadlock = policy_no_spurious_sporadics declared_quantities (policy_no_spurious_whentickings declared_quantities reduced_haa_contexts)
+      val cfs_no_deadlock = policy_no_spurious_sporadics declared_quantities (policy_no_spurious_whentickings declared_quantities reduced_haa_contexts)
 
-      (* 3. KEEPING PREFIX-COMPLIANT RUNS *)
-      val cfs_selected_by_codirection = case codirection of
-					    [] => no_deadlock
-					   | _	 => (writeln_ifrun "Keeping prefix-compliant premodels..." ;
-						     List.filter (fn (G, _, _, _) => SAT declared_quantities G)
-							(List.map (fn (G, n, phi, psi) => (G @ codirection, n, phi, psi)) no_deadlock))
-
-      (* 4. KEEPING HEURISTICS-COMPLIANT RUNS *)
+      (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
       val cfs_selected_by_heuristic = case heuristics of
 	    [] => cfs_selected_by_codirection
 	  | _	=> (writeln_ifrun "Keeping heuristics-compliant premodels..." ;
-		       (heuristic_combine heuristics) cfs_selected_by_codirection)
+		       (heuristic_combine heuristics) cfs_no_deadlock)
 
       (* END OF SIMULATION *)
       val end_time = Time.now()
@@ -922,7 +914,6 @@ fun exec
   (minstep     : int,
    maxstep     : int,
    dumpres     : bool,
-   codirection : system,
    heuristics  : TESL_formula,
    rtprint     : bool,
    stop_clks   : clock list
@@ -980,7 +971,7 @@ fun exec
                 raise Stopclock_ticked cfs)
 		 else () end
         (* INSTANT SOLVING *)
-        val next_snapshots = exec_step cfs step_index declared_clocks declared_quantities (minstep, maxstep, dumpres, codirection, heuristics, rtprint) in
+        val next_snapshots = exec_step cfs step_index declared_clocks declared_quantities (minstep, maxstep, dumpres, heuristics, rtprint) in
 	 case next_snapshots of
 	     [] => []
 	   | _ => loop next_snapshots

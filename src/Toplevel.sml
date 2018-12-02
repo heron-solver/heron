@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.58.0-alpha+20181202"
+val RELEASE_VERSION = "0.58.1-alpha+20181202"
 
 open OS.Process
 
@@ -41,8 +41,6 @@ val dumpres                          = ref false
 val rtprint                          = ref false
 val file_to_open                     = ref ""
 
-val scenario: system ref = ref []
-
 val declared_clocks: clock list ref = ref []
 val declared_driving_clocks: clock list ref = ref []
 val declared_clocks_quantities: clock list ref = ref [] (* included in declared_clocks *)
@@ -71,7 +69,8 @@ fun action (stmt: TESL_atomic) =
   | DirHeuristic _	     => heuristics <>> stmt
   | DirDumpres	     => dumpres := true
   | DirScenario (strictness, step_index, tclks) =>
-    let val n = (case step_index of NowPos  => if (!current_step) = 1 then 1 else (!current_step) - 1
+    let val scenario: system ref = ref []
+        val n = (case step_index of NowPos  => if (!current_step) = 1 then 1 else (!current_step) - 1
 				      | NextPos => !current_step
 				      | Pos n   => n)
 	 val _ = List.app (fn (c, otag) =>
@@ -86,6 +85,20 @@ fun action (stmt: TESL_atomic) =
 					    then ()
 					    else scenario <>> NotTicks (c, n)) (!declared_clocks)
 		  else ()
+	 val () = snapshots := List.map (fn (G, n, phi, psi) => (G @ (!scenario), n, phi, psi)) (!snapshots)
+	 val () = snapshots := List.map (fn (G, n, phi, psi) =>
+						 let 
+						   val G'   = (lfp reduce) G
+						   val phi' = simplify_whentickings G' phi
+						 in (G', n, phi', psi)
+						 end) (!snapshots)
+	 val () = snapshots := List.filter (fn (G, _, _, _) => SAT (!declared_clocks_quantities) G) (!snapshots)
+	 val _ = case (!snapshots) of
+		      [] =>
+		      (writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;
+			writeln ("           Simulation is now stuck in inconsistent mode." ^ RESET_COLOR))
+		    | _ => ()  
+				 
     in ()
     end
   | DirDrivingClock c     => declared_driving_clocks <>>> c
@@ -96,14 +109,14 @@ fun action (stmt: TESL_atomic) =
 			  current_step
 			  (!declared_clocks)
 			  (!declared_clocks_quantities)
-			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint, stop_clks)
+			  (!minstep, !maxstep, !dumpres, !heuristics, !rtprint, stop_clks)
   | DirRunStep	     =>
       snapshots := exec_step
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
 			  (!declared_clocks_quantities)
-			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
+			  (!minstep, !maxstep, !dumpres, !heuristics, !rtprint)
   | DirStutter	     =>
       snapshots := stutter_step
 			  (!snapshots)
