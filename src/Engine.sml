@@ -827,6 +827,7 @@ fun stutter_step
 	     | _  => ()
       val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
       val _  = writeln "Stuttering the last instant..." 
+(*
       fun primitives_to_stutter G indx =
 	   List.concat
 	      (List.map (fn Timestamp (c, n, t) => if n <> indx then [] else [Timestamp (c, n+1, t)]
@@ -836,8 +837,9 @@ fun stutter_step
 			   | NotTicksFrom (c, n)  => if n <> indx then [] else [NotTicksFrom (c, n+1)]
 			   | _ => [] (* WARNING: investigate the rest... *)
 			 ) G)
+*)
       fun stutter (G, n, phi, psi) =
-	   (G @ (primitives_to_stutter G n), n + 1, phi, psi)
+	   (G (*@ (primitives_to_stutter G n) *), n + 1, phi, psi)
       val stuttered_cfs = List.map (stutter) cfs
       val _ = step_index := (!step_index) + 1
     in stuttered_cfs
@@ -884,7 +886,7 @@ fun exec_step
 
       (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
       val cfs_selected_by_heuristic = case heuristics of
-	    [] => cfs_selected_by_codirection
+	    [] => cfs_no_deadlock
 	  | _	=> (writeln_ifrun "Keeping heuristics-compliant premodels..." ;
 		       (heuristic_combine heuristics) cfs_no_deadlock)
 

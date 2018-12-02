@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.58.1-alpha+20181202"
+val RELEASE_VERSION = "0.58.2-alpha+20181202"
 
 open OS.Process
 
@@ -85,6 +85,7 @@ fun action (stmt: TESL_atomic) =
 					    then ()
 					    else scenario <>> NotTicks (c, n)) (!declared_clocks)
 		  else ()
+	 val start_time = Time.now()
 	 val () = snapshots := List.map (fn (G, n, phi, psi) => (G @ (!scenario), n, phi, psi)) (!snapshots)
 	 val () = snapshots := List.map (fn (G, n, phi, psi) =>
 						 let 
@@ -93,6 +94,9 @@ fun action (stmt: TESL_atomic) =
 						 in (G', n, phi', psi)
 						 end) (!snapshots)
 	 val () = snapshots := List.filter (fn (G, _, _, _) => SAT (!declared_clocks_quantities) G) (!snapshots)
+	 val end_time = Time.now()
+	 val _ = writeln ("--> Consistent premodels: " ^ string_of_int (List.length (!snapshots)))
+	 val _ = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec")
 	 val _ = case (!snapshots) of
 		      [] =>
 		      (writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;
