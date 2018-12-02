@@ -59,9 +59,9 @@ print "  Real functions interpreted as in ISO C's math.h:\n";
 print "  pi, e, sqrt, sin, cos, tan, asin, acos, atan, atan2, exp, pow, ln, log10, sinh, cosh, tanh\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Run parameters:\n" ^ RESET_COLOR);  
-print "  @minstep [INT]                    define the number of minimum run steps\n"; 
-print "  @maxstep [INT]                    define the number of maximum run steps\n"; 
-print "  @policy [NAME]                    load a simulation policy among:\n";
+print "  \u001B[1m@minstep\u001B[0m [INT]                    define the number of minimum run steps\n"; 
+print "  \u001B[1m@maxstep\u001B[0m [INT]                    define the number of maximum run steps\n"; 
+print "  \u001B[1m@policy\u001B[0m [NAME]                    load a simulation policy among:\n";
 print "                                      \u001B[1masap\u001B[0m\n"; 
 print "                                      \u001B[1mminimize_ticks\u001B[0m\n";
 print "                                      \u001B[1mspeedup_event_occ\u001B[0m\n";
@@ -69,20 +69,22 @@ print "                                      \u001B[1mminimize_floating_ticks\u0
 print "                                      \u001B[1mminimize_unsolved_affine\u001B[0m\n";
 print "                                      \u001B[1mno_empty_instants\u001B[0m\n";
 print "                                      \u001B[1mmaximize_reactiveness\u001B[0m\n";
-print "  @dumpres                          option to display the results after @run\n"; 
-print "  @scenario (strict) [INT] [CLOCK]+ refine snapshots with instantaneous scenario\n"; 
-print "  @scenario (strict) next [CLOCK]+  refine snapshots of next simulation step\n"; 
-print "  @select [INT]                     select by keeping only one simulation state\n"; 
-print "  @driving-clock [CLOCK]+           declare driving clocks\n"; 
+print "  \u001B[1m@dumpres\u001B[0m                          option to display the results after @run\n"; 
+print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) [INT] [CLOCK]+ refine snapshots with instantaneous scenario\n"; 
+print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) \u001B[1mnow\u001B[0m [CLOCK]+   refine snapshots of last simulation step\n"; 
+print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) \u001B[1mnext\u001B[0m [CLOCK]+  refine snapshots of next simulation step\n"; 
+print "  \u001B[1m@scenario\u001B[0m [INT]                     select by keeping only one simulation state\n"; 
+print "  \u001B[1m@driving-clock\u001B[0m [CLOCK]+           declare driving clocks\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
-print "  @exit                             exit Heron\n"; 
-print "  @run                              run the specification until model found\n"; 
-print "  @step                             run the specification for one step\n"; 
-print "  @event-concretize                 concretize ticks/tags of driving clocks\n"; 
-print "  @print                            display the current snapshots\n"; 
-print "  @output vcd/tikz/tex/pdf          export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
-print "  @help                             display the list of commands\n")
+print "  \u001B[1m@exit\u001B[0m                             exit Heron\n"; 
+print "  \u001B[1m@run\u001B[0m (\u001B[1muntil\u001B[0m [CLOCK]+)             run the specification until model found\n"; 
+print "  \u001B[1m@step\u001B[0m                             run the specification for one step\n"; 
+print "  \u001B[1m@stutter\u001B[0m                          stutters the last snapshot instant\n"; 
+print "  \u001B[1m@event-concretize\u001B[0m                 concretize ticks/tags of driving clocks\n"; 
+print "  \u001B[1m@print\u001B[0m                            display the current snapshots\n"; 
+print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m          export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
+print "  \u001B[1m@help\u001B[0m                             display the list of commands\n")
 
 fun superscript_of_char (c : char) =
   case c of
@@ -350,8 +352,9 @@ fun string_of_expr e = case e of
   | DirDumpres						    => "<parameter>"
   | DirScenario _                      			    => "<parameter>"
   | DirDrivingClock _				           => "<parameter>"
-  | DirRun							    => "<directive>"
+  | DirRun _ 						    => "<directive>"
   | DirRunStep						    => "<directive>"
+  | DirStutter						    => "<directive>"
   | DirSelect _						    => "<directive>"
   | DirEventConcretize _					    => "<directive>"
   | DirOutputVCD						    => "<directive>"

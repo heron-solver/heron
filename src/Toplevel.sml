@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.58.0-alpha+20181201"
+val RELEASE_VERSION = "0.58.0-alpha+20181202"
 
 open OS.Process
 
@@ -59,10 +59,11 @@ fun quit () = case (!snapshots) of
 fun action (stmt: TESL_atomic) =
   (* On-the-fly clock identifiers declaration *)
   let
-      val _ = declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt]))
-      val _ = declared_clocks_quantities := uniq ((!declared_clocks_quantities) @ (quantities_of_tesl_formula [stmt]))
-      val _ = clk_type_declare stmt clock_types
-      val _ = type_check (!clock_types)
+    exception Toplevel_Action_Cannot_Happen
+    val _ = declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt]))
+    val _ = declared_clocks_quantities := uniq ((!declared_clocks_quantities) @ (quantities_of_tesl_formula [stmt]))
+    val _ = clk_type_declare stmt clock_types
+    val _ = type_check (!clock_types)
   in
   case stmt of
     DirMinstep n	     => minstep := n
@@ -70,11 +71,16 @@ fun action (stmt: TESL_atomic) =
   | DirHeuristic _	     => heuristics <>> stmt
   | DirDumpres	     => dumpres := true
   | DirScenario (strictness, step_index, tclks) =>
-    let val n = (case step_index of NONE => !current_step
-				      | SOME n => n)
+    let val n = (case step_index of NowPos  => if (!current_step) = 1 then 1 else (!current_step) - 1
+				      | NextPos => !current_step
+				      | Pos n   => n)
 	 val _ = List.app (fn (c, otag) =>
 				 (scenario <>> (Ticks (c, n)) ;
-				  case otag of SOME tag => scenario <>> (Timestamp (c, n, tag)) | NONE => ())) tclks
+				  case otag of NoneTag    => ()
+					      | CstTag tag => scenario <>> (Timestamp (c, n, tag))
+					      | SymbTag c_to_retrieve => (scenario <>> (Timestamp (c, n, Schematic (c, n))) ;
+									      scenario <>> (AffineRefl (Schematic (c, n), Schematic (c_to_retrieve, n))))
+			    )) tclks
 	 val _ = if strictness
 		  then List.app (fn c => if List.exists (fn (x, _) => x = c) tclks
 					    then ()
@@ -84,13 +90,13 @@ fun action (stmt: TESL_atomic) =
     end
   | DirDrivingClock c     => declared_driving_clocks <>>> c
   | DirEventConcretize index => snapshots := event_concretize (!declared_driving_clocks) (!clock_types) index (!snapshots)
-  | DirRun		     =>
+  | DirRun stop_clks	     =>
       snapshots := exec
 			  (!snapshots)
 			  current_step
 			  (!declared_clocks)
 			  (!declared_clocks_quantities)
-			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
+			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint, stop_clks)
   | DirRunStep	     =>
       snapshots := exec_step
 			  (!snapshots)
@@ -98,6 +104,10 @@ fun action (stmt: TESL_atomic) =
 			  (!declared_clocks)
 			  (!declared_clocks_quantities)
 			  (!minstep, !maxstep, !dumpres, !scenario, !heuristics, !rtprint)
+  | DirStutter	     =>
+      snapshots := stutter_step
+			  (!snapshots)
+			  current_step
   | DirPrint selected_clocks => (case selected_clocks of
 					  [] => print_dumpres (!declared_clocks) (!snapshots)
 				      |  _  => print_dumpres selected_clocks (!snapshots))

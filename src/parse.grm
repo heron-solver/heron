@@ -34,6 +34,7 @@ fun opposite_tag t = case t of
       | WHEN | NOT
       | EVERY | STARTING | AT
       | PERIODIC | OFFSET
+      | NOW
       | NEXT
       | WITH
       | RESET
@@ -41,7 +42,8 @@ fun opposite_tag t = case t of
       | BY
       | FROM
       | LET | INT | DECIMAL | RATIONAL | FLOAT
-      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP | DIR_STUTTER
+      | UNTIL
       | DIR_OUTPUT | VCD | SVG | TEX | TIKZ | PDF
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
       | DIR_SELECT 
@@ -53,7 +55,7 @@ fun opposite_tag t = case t of
       | PRE 
       | DER
 
-%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag option) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list
+%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag_scenario) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list
 
 %name Calc
 
@@ -81,10 +83,12 @@ fun opposite_tag t = case t of
   TAGS : TAG                                                                   ([TAG])
        | TAG COMMA TAGS                                                        (TAG :: TAGS)
        | TAG TAGS                                                              (TAG :: TAGS)
-  TCLKS : ID                                                                   ([(Clk ID, NONE)])
-        | ID TCLKS                                                             ((Clk ID, NONE) :: TCLKS)
-	 | LPAR ID ARROW TAG RPAR                                               ([(Clk ID, SOME TAG)])
-        | LPAR ID ARROW TAG RPAR TCLKS                                         ((Clk ID, SOME TAG) :: TCLKS)
+  TCLKS : ID                                                                   ([(Clk ID, NoneTag)])
+        | ID TCLKS                                                             ((Clk ID, NoneTag) :: TCLKS)
+	 | LPAR ID ARROW TAG RPAR                                               ([(Clk ID, CstTag TAG)])
+        | LPAR ID ARROW TAG RPAR TCLKS                                         ((Clk ID, CstTag TAG) :: TCLKS)
+	 | LPAR ID ARROW ID RPAR                                                ([(Clk ID1, SymbTag (Clk ID2))])
+        | LPAR ID ARROW ID RPAR TCLKS                                          ((Clk ID1, SymbTag (Clk ID2)) :: TCLKS)
   EXP : 
 	 TYPEDECL CLK                                                           (case TYPEDECL of (tt, mb) => TypeDecl (CLK, tt, mb))
       | LET INT ID EQ TAG                                                      (raise UnsupportedParsedTerm) 
@@ -100,7 +104,7 @@ fun opposite_tag t = case t of
 												(Unit_t, _) => TypeDeclSporadics (Unit_t, CLK, [Unit], true)
 											     | _ => raise UnsupportedParsedTerm)
       | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
-      | CLK IMPLIES NOT CLK						       (ImpliesNot (CLK1, CLK2))
+      | CLK IMPLIES NOT CLK						                (ImpliesNot (CLK1, CLK2))
       | TAGREL CLK EQ TAG TIMES CLK PLUS TAG                                   (TagRelation (CLK1, TAG1, CLK2, TAG2))
       | TAGREL CLK EQ TAG TIMES CLK MINUS TAG                                  (TagRelation (CLK1, TAG1, CLK2, opposite_tag TAG2))
       | TAGREL CLK EQ TAG TIMES CLK                                            (case TAG of Int _ => TagRelation (CLK1, TAG, CLK2, Int (0))
@@ -153,11 +157,14 @@ fun opposite_tag t = case t of
       | DIR_MINSTEP NUM                                                        (DirMinstep (NUM))
       | DIR_HEURISTIC ID                                                       (DirHeuristic (ID))
       | DIR_DUMPRES                                                            (DirDumpres)
-      | DIR_SCENARIO STRICT NEXT TCLKS						  (DirScenario (true, NONE, TCLKS))
-      | DIR_SCENARIO STRICT NUM  TCLKS						  (DirScenario (true, SOME NUM, TCLKS))
-      | DIR_SCENARIO		NEXT TCLKS						  (DirScenario (false, NONE, TCLKS))
-      | DIR_SCENARIO		NUM  TCLKS						  (DirScenario (false, SOME NUM, TCLKS))
-      | DIR_RUN                                                                (DirRun)
+      | DIR_SCENARIO STRICT NOW TCLKS						  (DirScenario (true, NowPos, TCLKS))
+      | DIR_SCENARIO STRICT NEXT TCLKS						  (DirScenario (true, NextPos, TCLKS))
+      | DIR_SCENARIO STRICT NUM  TCLKS						  (DirScenario (true, Pos NUM, TCLKS))
+      | DIR_SCENARIO		NOW TCLKS						  (DirScenario (false, NowPos, TCLKS))
+      | DIR_SCENARIO		NEXT TCLKS						  (DirScenario (false, NextPos, TCLKS))
+      | DIR_SCENARIO		NUM  TCLKS						  (DirScenario (false, Pos NUM, TCLKS))
+      | DIR_RUN                                                                (DirRun [])
+      | DIR_RUN UNTIL CLKS                                                     (DirRun CLKS)
       | DIR_RUNSTEP                                                            (DirRunStep)
       | DIR_PRINT                                                              (DirPrint [])
       | DIR_PRINT SELECT CLKS                                                  (DirPrint CLKS)
@@ -175,3 +182,4 @@ fun opposite_tag t = case t of
       | DIR_DRIVINGDECL CLKS                                                   (DirDrivingClock (CLKS))
       | DIR_EVENTCONCRETIZE								  (DirEventConcretize (NONE))
       | DIR_EVENTCONCRETIZE NUM							  (DirEventConcretize (SOME NUM))
+      | DIR_STUTTER          							  (DirStutter)

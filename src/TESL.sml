@@ -27,6 +27,12 @@ datatype tag =
   | Schematic of clock * instant_index
   | Add of tag * tag
 
+fun is_cst_tag t = case t of
+    Unit  => true
+  | Int _ => true
+  | Rat _ => true
+  | _ => false
+
 datatype constr =
     Timestamp of clock * instant_index * tag
   | Ticks     of clock * instant_index
@@ -81,6 +87,16 @@ fun type_of_tags (clk: clock) (tlist: tag list) =
 			then type_of_tag t
 			else raise TagTypeInconsistency (clk, type_of_tag t, type_of_tags clk tlist')
 
+datatype index_pos_symb =
+    NowPos
+  | NextPos
+  | Pos of int
+
+datatype tag_scenario =
+    NoneTag
+  | CstTag  of tag
+  | SymbTag of clock
+
 datatype TESL_atomic =
   True
   | TypeDecl                       of clock * tag_t * bool
@@ -127,10 +143,11 @@ datatype TESL_atomic =
   | DirMinstep                     of int
   | DirHeuristic                   of string
   | DirDumpres
-  | DirScenario                    of bool * int option * (clock * tag option) list
+  | DirScenario                    of bool * index_pos_symb * (clock * tag_scenario) list
                                       (* strict?, next or index, clk with tag (or not) *)
   | DirRunStep
-  | DirRun
+  | DirStutter
+  | DirRun                         of clock list
   | DirSelect                      of int
   | DirDrivingClock                of clock list
   | DirEventConcretize             of int option
@@ -254,8 +271,9 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | DirHeuristic _        => []
 	    | DirDumpres            => []
 	    | DirScenario _         => []
-	    | DirRun                => []
+	    | DirRun _              => []
 	    | DirRunStep            => []
+	    | DirStutter            => []
 	    | DirDrivingClock _     => []
 	    | DirEventConcretize _  => []
 	    | DirSelect _           => []
