@@ -16,15 +16,15 @@ binary-release: all
 		examples/reference-gallery \
 		examples/aviation
 
-# Tests are done with TESL files and expected outputs available in ./tests
+# Tests are done with TESL files and expected outputs available in ./regression
 test:
-	rm -f tests/*.out tests/_results.log
-	chmod +x tests/check.sh
-	for var in $(shell ls tests/*.tesl) ; do tests/check.sh $${var} ; done | tee tests/_results.log
-	if (! (grep "FAIL" tests/_results.log >/dev/null)) ; then echo "\e[1m\e[32mCongrats! ALL TESTS PASSED.\e[0m" ; else echo "\e[1m\e[31mSorry! SOME TESTS HAS FAILED.\e[0m" ; exit 1 ; fi
+	rm -f regression/*.out regression/_results.log
+	chmod +x regression/check.sh
+	for var in $(shell ls regression/*.tesl) ; do regression/check.sh $${var} ; done | tee regression/_results.log
+	if (! (grep "FAIL" regression/_results.log >/dev/null)) ; then echo "\e[1m\e[32mCongrats! ALL REGRESSION TESTS PASSED.\e[0m" ; else echo "\e[1m\e[31mSorry! SOME REGRESSION TESTS HAVE FAILED.\e[0m" ; exit 1 ; fi
 
 clean:
-	rm -f tests/*.out tests/_results.log
+	rm -f regression/*.out regression/_results.log
 	rm -f src/parse.grm.desc src/parse.grm.sig src/parse.grm.sml src/parse.lex.sml
 
 # with_polyml:
