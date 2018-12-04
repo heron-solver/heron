@@ -15,5 +15,4 @@ master time delayed by 3.0 on measuring with reset on doreset implies slave_rese
 @step
 @step
 @step
-@print
 @output tikz select measuring master doreset slave slave_reset

@@ -4,5 +4,4 @@ time relation h2 = 5.0
 @step
 @step
 @step
-@print
 @output tikz select h2 h1

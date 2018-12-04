@@ -19,5 +19,4 @@ emstop sporadic 0.5 on hr
 
 @policy asap
 @run
-@print
 @output tikz select hr gy start stop emstop

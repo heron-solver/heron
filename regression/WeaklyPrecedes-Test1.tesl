@@ -1,6 +1,5 @@
 h1 weakly precedes h2
 @minstep 2
 @run
-@print
 @select 1
 @output tikz select h1 h2

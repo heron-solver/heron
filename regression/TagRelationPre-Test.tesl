@@ -9,5 +9,4 @@ tag relation h0 = [-1.0] -> h1
 @step
 @step
 @step
-@print
 @output tikz select h2 h1 h0

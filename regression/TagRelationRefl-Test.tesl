@@ -1,5 +1,4 @@
 tag relation h1 = 1.0
 tag relation h2 = h1
 @step
-@print
 @output tikz select h1 h2
