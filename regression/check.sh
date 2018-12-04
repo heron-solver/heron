@@ -26,9 +26,10 @@ does_output_exists () {
 
 # From TESL file, generates output
 generate () {
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]]
+    OS_NAME="$(uname -m)"
+    if [ "$OS_NAME" = "linux" ]
     then /usr/bin/time -f "  -> Time:   %E\n  -> Memory: %M kB" ./heron --use $1  >/dev/null
-    else ./heron --use $1  >/dev/null
+    else /usr/bin/time ./heron --use $1  >/dev/null
     fi
     mv output.tex $1.out
 }
