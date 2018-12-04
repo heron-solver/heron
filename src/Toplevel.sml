@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.58.3-alpha+20181202"
+val RELEASE_VERSION = "0.58.4-alpha+20181204"
 
 open OS.Process
 
@@ -73,6 +73,7 @@ fun action (stmt: TESL_atomic) =
         val n = (case step_index of NowPos  => if (!current_step) = 1 then 1 else (!current_step) - 1
 				      | NextPos => !current_step
 				      | Pos n   => n)
+	 val () = writeln (BOLD_COLOR ^ MAGENTA_COLOR ^ "### Scenario [" ^ (string_of_int n) ^ "] ###" ^ RESET_COLOR)
 	 val _ = List.app (fn (c, otag) =>
 				 (scenario <>> (Ticks (c, n)) ;
 				  case otag of NoneTag    => ()
@@ -95,8 +96,9 @@ fun action (stmt: TESL_atomic) =
 						 end) (!snapshots)
 	 val () = snapshots := List.filter (fn (G, _, _, _) => SAT (!declared_clocks_quantities) G) (!snapshots)
 	 val end_time = Time.now()
-	 val _ = writeln ("--> Consistent premodels: " ^ string_of_int (List.length (!snapshots)))
-	 val _ = writeln ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec")
+	 val _ = clear_line ()
+	 val _ = writeln ("\r -> Consistent premodels: " ^ string_of_int (List.length (!snapshots)))
+	 val _ = writeln (" -> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
 	 val _ = case (!snapshots) of
 		      [] =>
 		      (writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;

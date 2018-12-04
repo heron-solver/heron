@@ -10,12 +10,14 @@
 *)
 
 (* Constraint solver for the ARS used in reducing TESL *)
-(* The logic structure contains
-   1. Booleans fixed-predicates [C ⇑_σ] and [C \<not>⇑_σ]
+(* The logic structure contains TESL primitives
+   1. Booleans fixed-predicates [C ⇑_σ] and [C ¬⇑_σ]
    2. Affine relations
-     - Over integers (ℤ, +, ×)
+     - Over mathematical integers (ℤ, +, ×)
+     - Over rationals (ℚ, +, ×)
      - With constants [C_1], [C_2],... and variables [V_1], [V_2], ...
      - Of the kind [X_1 = α × X_2 + β], where [X_1] and [X_2] can be constants or variables
+     - Or the kind [X_1 = X_2 × X_3 + X_4], where [X_1]..[X_4] can be constants or variables
    3. Tag assignments [C ⇓_σ τ] where [τ] is a constant
    4. Conjunction
 *)
@@ -200,10 +202,9 @@ fun schematic_elim (G: system) (evar: tag) : system =
           Affine (_, Rat a', x3, Rat b') =>
             Affine (x1, Rat ( */ (a, a')), x3, Rat (+/ ( */ (a, b'), b)))
         | aff => aff (* TWEAK, check for well-foundedness *)
-        | _ => raise UnexpectedMatch_RunConsistency_16
         ) (left_occ @- [Affine (x1, Rat a, evar, Rat b)])
       | aff => [aff] (* TWEAK, check for well-foundedness *)
-      | _ => raise UnexpectedMatch_RunConsistency_17) right_occ)
+      ) right_occ)
   in
     eliminated @ no_occ
   end;

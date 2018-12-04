@@ -742,7 +742,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
   let val print = if rtprint then (fn _ => ()) else (print)
   in case pending of
       [] =>
-      (print "\b\b\b, done.         \n" ;
+      (print "\b\b\b, done.         " ;
 	last_reduced)
     | _  =>
       let
@@ -750,6 +750,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
 	   val next_pending = List.filter (fn (_, _, _, psi) => psi <> []) reduced
 	   val next_counter = List.length next_pending
 	   val next_reduced = List.filter (fn (_, _, _, psi) => psi = []) reduced
+	   val _ = clear_line ()
 	   val _ = print ("\rRemaining universes pending for constraint reduction: " ^ (Int.toString next_counter))
 	   val _ = if last_counter < next_counter
 		    then print (BOLD_COLOR ^ RED_COLOR ^ " \226\150\178 " ^ RESET_COLOR) (* Or use \226\134\145 *)
@@ -863,6 +864,7 @@ fun exec_step
   : TESL_ARS_conf list =
   let
       fun writeln_ifrun s = if rtprint then () else (writeln s)
+      fun write_ifrun s = if rtprint then () else (print s)
       (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
       val () = case cfs of
 		[] => raise Abort
@@ -870,11 +872,13 @@ fun exec_step
       val start_time = Time.now()
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
       val () = writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
-      val _ = writeln_ifrun "Initializing new instant..."
+      val _ = write_ifrun "Initializing new instant..."
       val introduced_cfs = new_instant_init declared_quantities cfs
-      val _ = writeln_ifrun "Preparing constraints..."
+      val _ = clear_line ()
+      val _ = write_ifrun "\rPreparing constraints..."
       val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs rtprint declared_quantities
-      val _ = writeln_ifrun "Simplifying premodels..."
+      val _ = clear_line ()
+      val _ = write_ifrun "\rSimplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) =>
 						    let 
 							 val G'   = (lfp reduce) G
@@ -888,14 +892,15 @@ fun exec_step
       (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
       val cfs_selected_by_heuristic = case heuristics of
 	    [] => cfs_no_deadlock
-	  | _	=> (writeln_ifrun "Keeping heuristics-compliant premodels..." ;
+	  | _	=> (clear_line () ; write_ifrun "\rKeeping heuristics-compliant premodels..." ;
 		       (heuristic_combine heuristics) cfs_no_deadlock)
 
       (* END OF SIMULATION *)
       val end_time = Time.now()
       val _ = step_index := (!step_index) + 1
-      val _ = writeln_ifrun ("--> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
-      val _ = writeln_ifrun ("--> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " sec")
+      val _ = clear_line ()
+      val _ = writeln_ifrun ("\r -> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
+      val _ = writeln_ifrun (" -> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
       val _ = case cfs_selected_by_heuristic of
 		    [] =>
 		    (writeln_ifrun (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;
@@ -941,7 +946,8 @@ fun exec
           then (writeln_ifrun ("# Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
                 writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
 		  writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING:" ^ RESET_COLOR) ;
-                writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length (!next_cfs)) ^ " premodels (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
+                writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length (!next_cfs)) ^ " premodels" ^ RESET_COLOR);
+                writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "    (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
                 raise Maxstep_reached (!next_cfs))
           else ()
         (* STOPS WHEN FINITE MODEL FOUND *)
