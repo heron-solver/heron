@@ -1,4 +1,7 @@
 #! /bin/sh
+# usage: ./check.sh [TESL SPECFICATION FILE]
+# WARNING: an expected output file must exist in the same directory
+#          in TikZ format
 
 does_file_exists () {
     if (!(cat $1 >/dev/null))
@@ -23,15 +26,15 @@ does_output_exists () {
 
 # From TESL file, generates output
 generate () {
-    ./heron --use $1  >/dev/null
+    /usr/bin/time -f "  -> Time:   %E\n  -> Memory: %M kB" ./heron --use $1  >/dev/null
     mv output.tex $1.out
 }
 
 # Checks output against expectation
 run_check () {
-    if (! (diff $1 $2  | grep -v % | grep tick)) && (! (diff $1 $2  | grep -v % | grep date)) && (! (diff $1 $2  | grep -v % | grep Cross)) && (! (diff $1 $2  | grep -v % | grep Skull))
-    then echo "  --> PASS" ; exit 0 # \e[1m\e[32mPASS\e[0m
-    else echo "  --> FAIL" ; exit 1 # \e[1m\e[31mFAIL\e[0m
+    if (! (diff $1 $2  | grep -v % | grep -w tick)) && (! (diff $1 $2  | grep -v % | grep -w date)) && (! (diff $1 $2  | grep -v % | grep -w Cross)) && (! (diff $1 $2  | grep -v % | grep -w Skull))
+    then echo "  -> PASS" ; exit 0 # \e[1m\e[32mPASS\e[0m
+    else echo "  -> FAIL" ; exit 1 # \e[1m\e[31mFAIL\e[0m
     fi
 }
 

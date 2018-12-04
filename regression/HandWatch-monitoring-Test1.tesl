@@ -1,0 +1,23 @@
+// HandWatch
+// Scenario monitoring
+
+rational-clock sec
+rational-clock min sporadic 0.0
+unit-clock move
+tag relation sec = 60.0 * min
+min implies move
+min time delayed by 1.0 on min implies min
+
+// The following directive gives the observation seen on the
+// system-under-test in order to drive the simulation accordingly.
+@scenario strict 1 (min -> 0.0) move
+@step
+@scenario strict 2 (min -> 1.0) move
+@step
+@scenario strict 3 (min -> 2.0) move
+@step
+@scenario strict 4 (min -> 3.0) move
+@step
+
+@select 1
+@output tikz select sec min move

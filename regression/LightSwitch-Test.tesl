@@ -1,0 +1,26 @@
+// A light switch and a fluorescent bulb
+// http://wwwdi.supelec.fr/software/TESL/GalleryLightSwitch
+
+tag relation ms = 1000.0 * s
+tag relation s = 60.0 * min
+button sporadic 500.0
+tag relation button = 1.0 * ms
+
+button implies switon
+
+switon time delayed by 1.0 on min implies switoff
+switon time delayed by 1.0 on s implies lgton
+switoff time delayed by 50.0 on ms implies lgtoff
+
+// You can use run prefixes as follows to drive the simulation
+// @scenario strict 1 button switon
+// @scenario strict 2 lgton
+// @scenario strict 3 switoff
+// @scenario strict 4 lgtoff
+
+// Or you can let the solver find its own way helped by some heuristics
+@policy asap
+
+@dumpres
+@run
+@output tikz select ms s min button switon switoff lgton lgtoff

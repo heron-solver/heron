@@ -1,0 +1,20 @@
+// HandWatch
+// Minimal fast simulation
+
+rational-clock sec
+rational-clock min sporadic 0.0
+unit-clock move
+tag relation sec = 60.0 * min
+min implies move
+min time delayed by 1.0 on min implies min
+
+// The policy `asap` drives the simulation where events are supposed
+// to occur as fast as possible and in mininimal number of occurrence.
+@policy asap
+
+@step
+@step
+@step
+@step
+
+@output tikz select sec min move

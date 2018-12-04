@@ -1,0 +1,9 @@
+Q-clock t periodic 0.1
+Q-quantity y
+tag relation y = tanh (t)
+
+@policy asap
+@maxstep 10
+@run
+@output tikz select t y
+

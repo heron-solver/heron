@@ -15,9 +15,9 @@ emstop implies stop
 
 start time delayed by 2.0 on gy implies stop
 
-// Additional scenario where emergency stop is triggered at 30 mn
-// emstop sporadic 0.5 on hr
+emstop sporadic 0.5 on hr
 
 @policy asap
 @run
 @print
+@output tikz select hr gy start stop emstop
