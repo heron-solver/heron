@@ -59,7 +59,8 @@ time-S periodic 2.5                              // Simulation step
 @scenario now (speed-KT-DECEL -> speed-KT)       // Sync speeds
 @maxstep 23					        
 @run                                             // Deceleration
-@output pdf select time-S speed-MPS speed-KT distance-M speed-MPS-DECEL speed-KT-DECEL distance-M-DECEL V1-reach RTO
+@print
+//@output pdf select time-S speed-MPS speed-KT distance-M speed-MPS-DECEL speed-KT-DECEL distance-M-DECEL V1-reach RTO
 
 // At the 23rd simulation step, speed has completely decelerated.
 // Approximated acceleration-stop distance is 1159 meters.

@@ -64,7 +64,7 @@ BRK-apply kills V1-reach
 //   (a) RTO before 72 kt, when AUTOBRK not yet active
 // RTO sporadic 15. on time-S
 //   (b) RTO after 72 kt, when AUTOBRK is active
-// RTO sporadic 25. on time-S
+ RTO sporadic 25. on time-S
 
 // (2) Input observation, brakes not applied at instant 3
 // @scenario strict 3 RTO
@@ -78,4 +78,4 @@ BRK-apply kills V1-reach
 @policy asap
 @run
 @print
-@output pdf select time-S speed-MPS speed-KT V1-reach VR-reach SPLR-arm AUTOBRK-arm AUTOBRK-on AUTOBRK-off RTO BRK-apply liftoff
+//@output pdf select time-S speed-MPS speed-KT V1-reach VR-reach SPLR-arm AUTOBRK-arm AUTOBRK-on AUTOBRK-off RTO BRK-apply liftoff
