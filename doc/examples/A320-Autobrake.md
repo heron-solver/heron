@@ -1,11 +1,11 @@
 Airbus A320 Autobrake System
 ===================
-:wrench: Try me with the latest version [![GitHub Version](https://img.shields.io/github/release/heron-solver/heron.svg?label=Heron&maxAge=2592000&colorB=46a4b8&style=flat-square)](https://github.com/EmptyStackExn/heron/releases/latest)
-```
-./heron --use examples/aviation/A320-Autobrake.tesl
-```
+> :wrench: Try me with the latest version of [![GitHub Version](https://img.shields.io/github/release/heron-solver/heron.svg?label=Heron&maxAge=2592000&colorB=46a4b8&style=flat-square)](https://github.com/EmptyStackExn/heron/releases/latest)
+> ```
+> ./heron --use examples/aviation/A320-Autobrake.tesl
+> ```
 
-The following specification describes a takeoff scenario of the transport-category aircraft Airbus A320. The default scenario describes a normal takeoff with no engine failure. It illustrates the purpose of mixing event-driven and time-driven behaviors.
+The following specification describes a takeoff scenario of the transport-category aircraft Airbus A320. The default scenario describes a normal takeoff with no engine failure. It illustrates the purpose of mixing event-driven and time-driven behaviors. In particular, we describe at high-level the behavior of the autobrake system.
 
 [Airbus Flight Crew Performance Course (A318/A319/A320/A321 Performance Training Manual)](A320-RTOW-PARIS-ORLY-RWY08.jpg):
 
@@ -18,7 +18,7 @@ The following specification describes a takeoff scenario of the transport-catego
  - Maximum takeoff thrust
 
 Performance speeds (IAS):
- - Decisions speed: V1 = 118 kt
+ - Decision speed: V1 = 118 kt
  - Rotate speed: VR = 126 kt
 
 In the following specification, we express three clocks `time-S`, `speed-MPS` and `speed-KT` which describe physical time and quantities for the case study. A tag relation is described to define unit conversions between m.s⁻¹ and kt, and uniform acceleration is defined by 4.5 kt/s. We define a race condition between brake application and reaching V1 speed.
@@ -62,13 +62,17 @@ BRK-apply kills V1-reach
 Go Situation
 ----------
 
-<img src="A320-Autobrake-TO.png" width="800">
+<p align="center">
+  <img src="A320-Autobrake-TO.png" width="600">
+</p>
 
 In the first simulation, takeoff occurs normally. In the first instant, ground spoilers and autobrake were armed. Acceleration begins. At 72 kt, autobrake becomes ready. Decision of whether continuing or aborting takeoff by the pilot-in-command occurs at 118 kt defines the V1 speed limit. Wheels rotates at VR = 126 kt and the aircraft is airborne 3 s after (liftoff).
 
 No Go Situation
 ----------
 
-<img src="A320-Autobrake-RTO-after72.png" width="800">
+<p align="center">
+  <img src="A320-Autobrake-RTO-after72.png" width="600">
+</p>
 
 An alternative satisfying run is possible when adding `RTO sporadic 25. on time-S` which specifies to reject takeoff at 25 s. In this case, it is not possible to reach V1, VR and hence aircraft lift off.
