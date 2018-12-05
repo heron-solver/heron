@@ -44,7 +44,7 @@ VR-reach time delayed by 3. on time-S implies liftoff
 
 Autobrake activates whenever it was previously armed along with ground spoilers, and airspeed has exceeded 72 kt. Should takeoff be rejected (clock `RTO`), brakes will be applied `BRK-apply` and V1 will not be reached in the future. Otherwise, reaching V1 prevents from rejecting takeoff.
 ```
-// Autobreak
+// Autobrake
 SPLR-arm strictly precedes AUTOBRK-on
 AUTOBRK-arm strictly precedes AUTOBRK-on
 AUTOBRK-on sporadic 72.0 on speed-KT

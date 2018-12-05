@@ -40,9 +40,9 @@ VR-reach sporadic 126.0 on speed-KT
 // Liftoff occurs 3s after reaching VR
 VR-reach time delayed by 3. on time-S implies liftoff
 
-// Autobreak is activated whenever:
+// Autobrake is activated whenever:
 // - Ground spoilers were previously armed
-// - Autobreak was previously armed
+// - Autobrake was previously armed
 // - Speed reaches 72 kt
 SPLR-arm strictly precedes AUTOBRK-on
 AUTOBRK-arm strictly precedes AUTOBRK-on
