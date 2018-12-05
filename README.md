@@ -20,6 +20,7 @@ The easiest way to start with Heron is to get the [latest binary release](https:
 ```
 
 ### Examples
+ - [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md)
  - [Airbus A320 Autobrake System](doc/examples/A320-Autobrake.md)
  - [Airbus A320 Acceleration-Stop Distance](doc/examples/A320-AccelerationStop.md)
 
@@ -35,7 +36,7 @@ References
 People
 -------------------
 
-The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It proudly uses [MLton](http://mlton.org) as its Standard ML compiler. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
+The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It uses [MLton](http://mlton.org) as its Standard ML compiler. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
 
 License
 -------------------
