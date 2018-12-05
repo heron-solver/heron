@@ -20,7 +20,7 @@ The easiest way to start with Heron is to get the [latest binary release](https:
 ```
 
 ### Examples
- - [Airbus A320 Autobrake System](examples/aviation/A320-Autobrake.tesl)
+ - [Airbus A320 Autobrake System](doc/examples/A320-Autobrake.md)
  - [Airbus A320 Acceleration-Stop Distance](examples/aviation/A320-AccelerationStop.tesl)
  - [Zeno Effect with Hyperbolic Tangent](examples/ZenoEffect.tesl)
  - [Distance Calculation with Time-Varying Integrals](examples/aviation/SpeedIntegral.tesl)

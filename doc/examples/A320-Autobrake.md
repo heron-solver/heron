@@ -62,13 +62,13 @@ BRK-apply kills V1-reach
 Go Situation
 ----------
 
-![Normal TO](A320-Autobrake-TO.png  | width=800)
+<img src="A320-Autobrake-TO.png" width="800">
 
 In the first simulation, takeoff occurs normally. In the first instant, ground spoilers and autobrake were armed. Acceleration begins. At 72 kt, autobrake becomes ready. Decision of whether continuing or aborting takeoff by the pilot-in-command occurs at 118 kt defines the V1 speed limit. Wheels rotates at VR = 126 kt and the aircraft is airborne 3 s after (liftoff).
 
 No Go Situation
 ----------
 
-![Reject TO](A320-Autobrake-RTO-after72.png  | width=800) 
+<img src="A320-Autobrake-RTO-after72.png" width="800">
 
 An alternative satisfying run is possible when adding `RTO sporadic 25. on time-S` which specifies to reject takeoff at 25 s. In this case, it is not possible to reach V1, VR and hence aircraft lift off.
