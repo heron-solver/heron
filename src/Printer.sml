@@ -69,6 +69,8 @@ print "                                      \u001B[1mminimize_floating_ticks\u0
 print "                                      \u001B[1mminimize_unsolved_affine\u001B[0m\n";
 print "                                      \u001B[1mno_empty_instants\u001B[0m\n";
 print "                                      \u001B[1mmaximize_reactiveness\u001B[0m\n";
+print "                                      \u001B[1mmaximize_absence\u001B[0m\n";
+print "                                      \u001B[1mminimize_absence\u001B[0m\n";
 print "  \u001B[1m@dumpres\u001B[0m                          option to display the results after @run\n"; 
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) [INT] [CLOCK]+ refine snapshots with instantaneous scenario\n"; 
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) \u001B[1mnow\u001B[0m [CLOCK]+   refine snapshots of last simulation step\n"; 

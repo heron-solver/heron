@@ -91,19 +91,6 @@ fun heuristic_minimize_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
 	  cfs
   end
 
-(* Policy 5. Minimizes the number of affine constraints containing variables. *)
-fun heuristic_minimize_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  let
-    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
-    fun nb_ticks (G: system) : int =
-      List.length (List.filter (fn Ticks _ => true | _ => false) G)
-    val min_ticks : int =
-      List.foldl (fn ((G, _, _, _), n) => Int.min(n, nb_ticks G)) MAXINT cfs
-  in List.filter
-	  (fn (G, _, _, _) => (nb_ticks G) <= min_ticks)
-	  cfs
-  end
-
 (*
 fun intlist_lexleq (l1, l2) = case (l1, l2) of
     ([], _) => true
@@ -213,11 +200,38 @@ fun heuristic_lexicographic_priority (cfs : TESL_ARS_conf list) : TESL_ARS_conf 
     in without_weight
     end
 
+(* Policy 8. Maximize reactiveness of clocks *)
+fun heuristic_maximize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  let
+    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
+    fun nb_absence (G: system) : int =
+      List.length (List.filter (fn NotTicks _ => true | _ => false) G)
+    val max_ticks : int =
+      List.foldl (fn ((G, _, _, _), n) => Int.max(n, nb_absence G)) MININT cfs
+  in List.filter
+	  (fn (G, _, _, _) => max_ticks <= (nb_absence G))
+	  cfs
+  end
+
+(* Policy 9. Minimizes the number of affine constraints containing variables. *)
+fun heuristic_minimize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+  let
+    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
+    fun nb_absence (G: system) : int =
+      List.length (List.filter (fn NotTicks _ => true | _ => false) G)
+    val min_ticks : int =
+      List.foldl (fn ((G, _, _, _), n) => Int.min(n, nb_absence G)) MAXINT cfs
+  in List.filter
+	  (fn (G, _, _, _) => (nb_absence G) <= min_ticks)
+	  cfs
+  end
+
 exception Unreferenced_heuristic
 fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf list) =
   case f of
     DirHeuristic "asap"                             => 
-      heuristic_lexicographic_priority
+      (* heuristic_minimize_absence
+    o *) heuristic_lexicographic_priority
     o heuristic_minimize_ticks
     o heuristic_speedup_event_occ
     o heuristic_minimize_floating_ticks
@@ -228,6 +242,8 @@ fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf 
   | DirHeuristic "minimize_unsolved_affine"         => heuristic_minimize_unsolved_affine
   | DirHeuristic "no_empty_instants"	          => heuristic_no_empty_instants
   | DirHeuristic "maximize_reactiveness"            => heuristic_maximize_reactiveness
+  | DirHeuristic "maximize_absence"                 => heuristic_maximize_absence
+  | DirHeuristic "minimize_absence"                 => heuristic_minimize_absence
   | DirHeuristic "lexicographic_priority"           => heuristic_lexicographic_priority
   | DirHeuristic _                                  => raise Unreferenced_heuristic
   | _                                               => raise UnexpectedMatch
