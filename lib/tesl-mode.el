@@ -77,7 +77,7 @@
     "minstep"
     "policy"
     "dumpres"
-    "trict"
+    "strict"
     "scenario"
     "exit"
     "run"
