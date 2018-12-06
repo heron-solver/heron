@@ -5,9 +5,9 @@ Airbus A320 Autobrake System
 > ./heron --use examples/aviation/A320-Autobrake.tesl
 > ```
 
-The following specification describes a takeoff scenario of the transport-category aircraft Airbus A320. The default scenario describes a normal takeoff with no engine failure. It illustrates the purpose of mixing event-driven and time-driven behaviors. In particular, we describe at high-level the behavior of the autobrake system.
+The following specification describes a takeoff scenario of the transport-category aircraft Airbus A320. The default scenario describes a normal takeoff with no engine failure. It illustrates the purpose of mixing event-driven and time-driven behaviors with some asynchronous extensions. In this study case, we describe at high-level the behavior of the [autobrake system](https://pdfs.semanticscholar.org/7095/958b414fb0e01a552abdc351f70272457909.pdf) as specified in the A320 Flight Crew Operating Manual.
 
-[Airbus Flight Crew Performance Course (A318/A319/A320/A321 Performance Training Manual)](A320-RTOW-PARIS-ORLY-RWY08.jpg):
+From the [A318/A319/A320/A321 Performance Training Manual](A320-RTOW-PARIS-ORLY-RWY08.jpg):
 
  - Paris Orly (ORY/LFPO)
  - T/O RWY 08
@@ -21,7 +21,7 @@ Performance speeds (IAS):
  - Decision speed: V1 = 118 kt
  - Rotate speed: VR = 126 kt
 
-In the following specification, we express three clocks `time-S`, `speed-MPS` and `speed-KT` which describe physical time and quantities for the case study. A tag relation is described to define unit conversions between m.s⁻¹ and kt, and uniform acceleration is defined by 4.5 kt/s. We define a race condition between brake application and reaching V1 speed.
+First, we express three clocks `time-S`, `speed-MPS` and `speed-KT` which denote physical time and quantities for the case study. A tag relation is described to define unit conversions between m.s⁻¹ and kt, and uniform acceleration is defined by 4.5 kt/s. Reaching V1 and VR speeds will triggers their corresponding clocks `V1-reach` and `VR-reach`. These clocks serve as a discrete observation of the continuous system. Lastly, aircraft lift off occurs 3 s after reaching VR speed.
 ```
 rational-clock time-S     // in [s]
 rational-clock speed-MPS  // in [m.s^-1]
@@ -42,7 +42,7 @@ VR-reach sporadic 126.0 on speed-KT
 VR-reach time delayed by 3. on time-S implies liftoff
 ```
 
-Autobrake activates whenever it was previously armed along with ground spoilers, and airspeed has exceeded 72 kt. Should takeoff be rejected (clock `RTO`), brakes will be applied `BRK-apply` and V1 will not be reached in the future. Otherwise, reaching V1 prevents from rejecting takeoff.
+Autobrake activates whenever it was previously armed along with ground spoilers, and airspeed has exceeded 72 kt. We define a race condition between brake application and reaching V1 speed: should takeoff be rejected (clock `RTO`), brakes will be applied `BRK-apply` and V1 will not be reached in the future; otherwise, reaching V1 prevents from rejecting takeoff.
 ```
 // Autobrake
 SPLR-arm strictly precedes AUTOBRK-on
@@ -66,7 +66,7 @@ Go Situation
   <img src="A320-Autobrake-TO.png" width="600">
 </p>
 
-In the first simulation, takeoff occurs normally. In the first instant, ground spoilers and autobrake were armed. Acceleration begins. At 72 kt, autobrake becomes ready. Decision of whether continuing or aborting takeoff by the pilot-in-command occurs at 118 kt defines the V1 speed limit. Wheels rotates at VR = 126 kt and the aircraft is airborne 3 s after (liftoff).
+In the first simulation, takeoff occurs normally. In the first instant, ground spoilers and autobrake were armed. Acceleration begins. At 72 kt, autobrake becomes ready. Decision of whether continuing or aborting takeoff by the pilot-in-command occurs before the speed limit V1 = 118 kt. Then the aircraft rotates on its main wheels at VR = 126 kt, and is airborne 3 s after (clock `liftoff`).
 
 No Go Situation
 ----------
@@ -75,4 +75,4 @@ No Go Situation
   <img src="A320-Autobrake-RTO-after72.png" width="600">
 </p>
 
-An alternative satisfying run is possible when adding `RTO sporadic 25. on time-S` which specifies to reject takeoff at 25 s. In this case, it is not possible to reach V1, VR and hence aircraft lift off.
+An alternative satisfying run is possible when adding `RTO sporadic 25. on time-S` to the specification, which specifies to reject takeoff at 25 s. For instance, this may happen when warnings or dangerous situations are observed by the pilot-in-command. In this case, it is not possible to reach V1, VR and hence aircraft will not lift off.
