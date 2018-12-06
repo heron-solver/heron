@@ -1,0 +1,21 @@
+// Concurrent computations and time islands
+// http://wwwdi.supelec.fr/software/TESL/GalleryConcurrent
+
+compA sporadic 10
+tag relation compA = 1 * CPU1t + 0
+compA time delayed by 5 on CPU1t implies Aavail
+
+compB sporadic 20
+tag relation compB = 1 * CPU2t + 0
+compB time delayed by 15 on CPU2t implies Bavail
+
+Aavail sustained immediately from Bavail to compAB implies compAB
+Bavail sustained immediately from Aavail to compAB implies compAB
+ 
+compAB time delayed by 10 on CPU1t implies ABavail
+
+@policy asap
+@run
+@output tikz select compA CPU1t Aavail compB CPU2t Bavail compAB ABavail
+
+
