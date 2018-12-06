@@ -41,7 +41,6 @@ neutral_scenario implies btn_neutral
 
 // Output options
 // @tagref realtime
-@dumpres
 @maxstep 14
 @policy asap
 @run

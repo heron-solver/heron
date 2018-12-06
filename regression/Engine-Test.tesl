@@ -21,6 +21,5 @@ exhaust_tdc time delayed by <11/500> on realtime implies ignition
 
 @policy asap
 @maxstep 5
-@dumpres
 @run
 @output tikz select realtime crankshaft camshaft top_dead_center exhaust_tdc compress_tdc ignition

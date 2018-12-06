@@ -4,7 +4,6 @@ tag relation m1 = 1 * m2
 
 await m1 m2 implies slave
 
-@dumpres
 @run
 @select 3
 @output tikz select m1 m2 slave

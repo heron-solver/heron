@@ -17,5 +17,3 @@ compAB time delayed by 10 on CPU1t implies ABavail
 @policy asap
 @run
 @output tikz select compA CPU1t Aavail compB CPU2t Bavail compAB ABavail
-
-
