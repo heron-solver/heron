@@ -326,7 +326,7 @@ fun string_of_expr e = case e of
   | TagRelationClk (c1, ca, c2, cb)                         => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk ca) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_clk cb)
   | TagRelationPre (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = pre " ^ (string_of_clk c2)
   | TagRelationFby (c1, tags, c2)                           => "time relation " ^ (string_of_clk c1) ^ " = [" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk c2)
-  | TagRelationFun (c, Fun(fname), clist)                   => "time relation " ^ (string_of_clk c) ^ " = " ^ fname ^ " (" ^ (string_of_clks clist) ^ ")"
+  | TagRelationFun (c, Fun(fname), clist)                   => "time relation " ^ (string_of_clk c) ^ " = " ^ fname ^ " (" ^ (string_of_clks_comma clist) ^ ")"
   | TagRelationDer (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = der " ^ (string_of_clk c2)
   | TagRelationReflImplies (c1, c2, c3)                     => (string_of_clk c1) ^ " implies time relation " ^ (string_of_clk c2) ^ " = " ^ (string_of_clk c3)
   | TimeDelayedBy (master, t, measuring, NONE, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)

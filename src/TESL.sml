@@ -351,6 +351,9 @@ fun string_of_clk c = case c of
 fun string_of_clks clist =
     String.concatWith " " (List.map (string_of_clk) clist)
 
+fun string_of_clks_comma clist =
+    String.concatWith ", " (List.map (string_of_clk) clist)
+
 fun string_of_tag_type ty = case ty of
     Unit_t => "unit"
   | Int_t =>  "int"
