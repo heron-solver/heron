@@ -30,7 +30,7 @@ rational-quantity speed-KT-DECEL
 rational-quantity distance-M-DECEL
 
 // Unit conversion between [kt] and [m.s⁻¹]
-tag relation speed-KT = <3600/1852> * speed-MPS
+tag relation speed-KT       = <3600/1852> * speed-MPS
 tag relation speed-KT-DECEL = <3600/1852> * speed-MPS-DECEL
 
 // V1 threshold
@@ -43,25 +43,16 @@ First, we define how speed is gained by uniform acceleration of 4.5 kt/s with an
 tag relation speed-KT = 4.5 * time-S
 
 // Compute run distance with time-variant integration: dx = v.dt
-tag relation zero = 0.0
-tag relation ddistance-M = der distance-M
-tag relation dtime-S = der time-S
-tag relation speed-MPS_dtime-S = speed-MPS * dtime-S + zero
-tag relation ddistance-M = speed-MPS_dtime-S
+tag relation (der distance-M) = speed-MPS * (der time-S)
 ```
 
-The second part of the specification describes the decelerating process similarly as above. Acceleration or deceleration can be expressed by affine tag relations, or also again differential equations. To illustrate this, we define that deceleration rate is -3.0 kt/s with the differential equation `dv = ad.dt`:
+The second part of the specification describes the decelerating process similarly as above. Acceleration or deceleration can be expressed by affine tag relations, or also again differential equations. To illustrate this, we define that deceleration rate is -3.0 kt/s with the differential equation `dv' = -3.0.dt`:
 ```
-// 2. Uniform deceleration of -3 kt/s with ODE dv = ad.dt
-tag relation ad = -3.0
-tag relation dspeed-KT-DECEL = der speed-KT-DECEL
-tag relation ad-dtime-S = ad * dtime-S + zero
-tag relation dspeed-KT-DECEL = ad-dtime-S
+// 2. Uniform deceleration of -3 kt/s with ODE dv' = -3.0.dt
+tag relation (der speed-KT-DECEL) = -3.0 * (der time-S)
 
-// Again, compute run distance when decelerating: dx = v.dt
-tag relation ddistance-M-DECEL = der distance-M-DECEL
-tag relation speed-MPS_dtime-S-DECEL = speed-MPS-DECEL * dtime-S + zero
-tag relation ddistance-M-DECEL = speed-MPS_dtime-S-DECEL
+// Again, compute run distance when decelerating: dx' = v'.dt
+tag relation (der distance-M-DECEL) = speed-MPS-DECEL * (der time-S)
 ```
 
 Finally, we define our scenario and how the solver unrolls the execution of the specification. We chose to reject takeoff at 20 s and defined a simulation step of 2.5 s:
@@ -72,8 +63,8 @@ time-S periodic 2.5                              // Simulation step
 @policy asap                                     // Execute ASAP
 @scenario 1 (distance-M -> 0.0)                  // Initial condition of ODE
 @run until RTO                                   // Acceleration until RTO
-@scenario now (distance-M-DECEL -> distance-M)   // Sync distances
-@scenario now (speed-KT-DECEL -> speed-KT)       // Sync speeds
+@scenario next (distance-M-DECEL -> distance-M)  // Sync distances
+@scenario next (speed-KT-DECEL -> speed-KT)      // Sync speeds
 @maxstep 23					        
 @run                                             // Deceleration
 ```

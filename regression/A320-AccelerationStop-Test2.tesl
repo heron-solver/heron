@@ -22,7 +22,7 @@ rational-quantity speed-KT-DECEL
 rational-quantity distance-M-DECEL
 
 // Unit conversion between [kt] and [m.s⁻¹]
-tag relation speed-KT       = <3600/1852> * speed-MPS
+tag relation speed-KT = <3600/1852> * speed-MPS
 tag relation speed-KT-DECEL = <3600/1852> * speed-MPS-DECEL
 
 // V1 threshold

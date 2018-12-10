@@ -7,24 +7,19 @@
 // Velocity v (in m.s⁻¹)
 
 rational-quantity x
-tag relation zero = 0.0
 
 // Fixed simulation step
 t periodic 5.0
 tag relation v = 1.5 * t
 
-tag relation dt = der t
-tag relation dx = der x
-
 // From dx = v.dt
-tag relation v_dt = v * dt + zero
-tag relation dx = v_dt
+tag relation (der x) = v * (der t)
 
 // Initial condition (x₀ = 0.0)
 @scenario 1 (x -> 0.0)
 
 @policy asap
-@maxstep 100
+@maxstep 30
 @run
 @print select t v x
 @output pdf select t v x
