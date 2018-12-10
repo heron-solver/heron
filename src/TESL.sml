@@ -97,12 +97,26 @@ datatype tag_scenario =
   | CstTag  of tag
   | SymbTag of clock
 
+datatype clk_rel =
+  ClkExprEqual
+
+datatype clk_expr =
+    ClkCst  of tag
+  | ClkName of clock
+  | ClkDer  of clk_expr
+  | ClkPre  of clk_expr
+  | ClkFby  of tag list * clk_expr
+  | ClkPlus of clk_expr * clk_expr
+  | ClkMult of clk_expr * clk_expr
+  | ClkFun  of func * clk_expr list
+
 datatype TESL_atomic =
   True
   | TypeDecl                       of clock * tag_t * bool
   | Sporadic                       of clock * tag
   | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
   | TypeDeclSporadics              of tag_t * clock * (tag list) * bool   (* Syntactic sugar *)
+  | TagRelation                    of clk_rel * clk_expr * clk_expr
   | TagRelationAff                 of clock * tag * clock * tag
   | TagRelationCst                 of clock * tag
   | TagRelationRefl                of clock * clock
@@ -251,6 +265,61 @@ fun SelfModifyingSubs f = List.filter (fn f' => case f' of
 exception UnsupportedTESLOperator
 exception UnitTagRelationFault
 
+val counter = ref 0
+fun fresh_clk () =
+    let val new_name = "clk" ^ (string_of_int (!counter))
+	 val _ = counter := (!counter) + 1
+    in new_name
+    end
+
+fun unsugar_clk_expr (current_clk: clock) (cexp: clk_expr) = case cexp of
+    ClkCst t  => (print "HERECst \n" ; [TagRelationCst (current_clk, t)])
+  | ClkName c => (print "HEREName \n" ; [TagRelationCst (Clk "one", Rat rat_one),
+						 TagRelationCst (Clk "zero", Rat rat_zero),
+						 TagRelationClk (current_clk, Clk "one", c, Clk "zero")])
+  | ClkDer cexp'  =>
+    let val new_clk1 = Clk (fresh_clk ())
+	 val c2_name = fresh_clk ()
+    in [TagRelationRefl (new_clk1, Clk c2_name),
+	 TagRelationCst (Clk "one", Rat rat_one),
+	 TagRelationPre (Clk ("_pre_" ^ c2_name), Clk c2_name),
+	 TagRelationAff (Clk ("_mpre_" ^ c2_name), Rat (~/ rat_one), Clk ("_pre_" ^ c2_name), Rat rat_zero),
+	 TagRelationClk (current_clk, Clk "one", Clk c2_name, Clk ("_mpre_" ^ c2_name))]
+	@ (unsugar_clk_expr new_clk1 cexp')
+    end
+  | ClkPre cexp'  => 
+    let val new_clk = Clk (fresh_clk ())
+    in TagRelationPre (current_clk, new_clk)
+	:: (unsugar_clk_expr new_clk cexp')
+    end
+  | ClkFby (tags, cexp')  => 
+    let val new_clk = Clk (fresh_clk ())
+    in TagRelationFby (current_clk, tags, new_clk)
+	:: (unsugar_clk_expr new_clk cexp')
+    end
+  (* WARNING: only works with rational quantities and clocks... How about int ? *)
+  | ClkPlus (cexp1, cexp2)  =>
+    let val new_clk1 = Clk (fresh_clk ())
+	 val new_clk2 = Clk (fresh_clk ())
+    in [TagRelationCst (Clk "one", Rat rat_one),
+	 TagRelationClk (current_clk, Clk "one", new_clk1, new_clk2)]
+	@ (unsugar_clk_expr new_clk1 cexp1)
+	@ (unsugar_clk_expr new_clk2 cexp2)
+    end    
+  | ClkMult (cexp1, cexp2)  =>
+    let val new_clk1 = Clk (fresh_clk ())
+	 val new_clk2 = Clk (fresh_clk ())
+    in [TagRelationCst (Clk "zero", Rat rat_zero),
+	 TagRelationClk (current_clk, new_clk1, new_clk2, Clk "zero")]
+	@ (unsugar_clk_expr new_clk1 cexp1)
+	@ (unsugar_clk_expr new_clk2 cexp2)
+    end
+  | ClkFun (func, cexplist)  =>
+    let val new_clks = List.map (fn cexp => (Clk (fresh_clk ()), cexp)) cexplist
+    in TagRelationFun (current_clk, func, List.map (fn (clk, _) => clk) new_clks)
+	:: List.concat ((List.map (fn (new_clk, clk_expr) => unsugar_clk_expr new_clk clk_expr) new_clks))
+    end
+
 (* Eliminate TESL syntactic sugars *)
 fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
   List.concat (List.map (fn
@@ -266,6 +335,54 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 							 TagRelationPre (Clk ("_pre_" ^ c2_name), Clk c2_name),
 							 TagRelationAff (Clk ("_mpre_" ^ c2_name), Rat (~/ rat_one), Clk ("_pre_" ^ c2_name), Rat rat_zero),
 							 TagRelationClk (c1, Clk "one", Clk c2_name, Clk ("_mpre_" ^ c2_name))]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkName c2) =>
+	        [TagRelationRefl (c1, c2)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkFby (tags, ClkName c2)) =>
+	        [TagRelationFby (c1, tags, c2)]
+	    | TagRelation (ClkExprEqual, ClkName c, ClkCst t) =>
+	        [TagRelationCst (c, t)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkPlus (ClkMult (ClkName c2, ClkName c3), ClkName c4)) =>
+	        [TagRelationClk (c1, c2, c3, c4)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkPlus (ClkName c4, ClkMult (ClkName c2, ClkName c3))) =>
+	        [TagRelationClk (c1, c2, c3, c4)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkPlus (ClkMult (ClkCst (Int a), ClkName c2), ClkCst (Int b))) =>
+	        [TagRelationAff (c1, Int a, c2, Int b)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkPlus (ClkMult (ClkCst (Rat a), ClkName c2), ClkCst (Rat b))) =>
+	        [TagRelationAff (c1, Rat a, c2, Rat b)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkMult (ClkCst (Int t_n), ClkName c2)) =>
+	        [TagRelationAff (c1, Int t_n, c2, Int 0)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkMult (ClkCst (Rat t_r), ClkName c2)) =>
+	        [TagRelationAff (c1, Rat t_r, c2, Rat rat_zero)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkPlus (ClkCst (Int t_n), ClkName c2)) =>
+	        [TagRelationAff (c1, Int 1, c2, Int t_n)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkPlus (ClkCst (Rat t_r), ClkName c2)) =>
+	        [TagRelationAff (c1, Rat rat_one, c2, Rat t_r)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkPre (ClkName c2)) =>
+	        [TagRelationPre (c1, c2)]
+	    | TagRelation (ClkExprEqual, ClkName c1, ClkDer (ClkName c2)) =>
+	        [TagRelationDer (c1, c2)]
+	    | TagRelation (ClkExprEqual, ClkName c, ClkFun (func, [])) =>
+	        [TagRelationFun (c, func, [])]
+	    | TagRelation (ClkExprEqual, ClkName c, ClkFun (func, [ClkName carg])) =>
+	        [TagRelationFun (c, func, [carg])]
+	    | TagRelation (ClkExprEqual, ClkName clk_left, cexp2) =>
+	      let
+		 val _ = print "unsugar \n"
+		 val new_clk_right = Clk (fresh_clk ())
+	      in (TagRelationRefl (clk_left, new_clk_right))
+		  :: (unsugar_clk_expr new_clk_right cexp2)
+	      end
+	    | TagRelation (ClkExprEqual, cexp1, ClkName clk_right) =>
+	        unsugar clock_types [TagRelation (ClkExprEqual, ClkName clk_right, cexp1)]
+	    | TagRelation (ClkExprEqual, cexp1, cexp2) =>
+	      let
+		 val _ = print "unsugar \n"
+		 val new_clk_left  = Clk (fresh_clk ())
+		 val new_clk_right = Clk (fresh_clk ())
+	      in (TagRelationRefl (new_clk_left, new_clk_right))
+		  :: ((unsugar_clk_expr new_clk_left cexp1)
+		      @  (unsugar_clk_expr new_clk_right cexp2))
+	      end
 	    | DirMinstep _          => []
 	    | DirMaxstep _          => []
 	    | DirHeuristic _        => []
@@ -359,6 +476,17 @@ fun string_of_tag_type ty = case ty of
   | Int_t =>  "int"
   | Rat_t =>  "rational"
 
+fun clocks_of_clk_expr e = case e of
+    ClkCst (t)                     => []
+  | ClkName (c)       		=> [c]
+  | ClkDer (e')			=> clocks_of_clk_expr e'
+  | ClkPre (e')			=> clocks_of_clk_expr e'
+  | ClkFby (_, e')			=> clocks_of_clk_expr e'
+  | ClkPlus (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
+  | ClkMult (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
+  | ClkFun (Fun (fname), exp_list) =>
+      List.concat (List.map (clocks_of_clk_expr) exp_list)
+
 fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   uniq (List.concat (List.map (fn
     TypeDecl (c, _, _)                     => [c]
@@ -366,7 +494,8 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | Sporadics (c, _)                          => [c]
   | WhenTickingOn (c1, _, c2)                 => [c1, c2]
   | TypeDeclSporadics (_, c, _, _)            => [c]
-  | TagRelationAff (c1, _, c2, _)                => [c1, c2]
+  | TagRelation  (_, cexp1, cexp2)            => uniq ((clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2))
+  | TagRelationAff (c1, _, c2, _)             => [c1, c2]
   | TagRelationCst (c, _)                     => [c]
   | TagRelationRefl (c1, c2)                  => [c1, c2]
   | TagRelationReflImplies (c1, c2, c3)       => [c1, c2, c3]

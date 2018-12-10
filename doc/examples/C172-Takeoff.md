@@ -39,7 +39,7 @@ To achieve best performance, the pilot-in-command controls climb rate by aiming 
 ```
 // Controling Vy in IAS ensures vertical speed of 1200 ft/min approx.
 // -100 is to arbitrarily set the altimeter with local QNH on 144 ft AMSL
-tag relation altitude-FT = 1200.0 * time-MIN - 100.0
+tag relation altitude-FT = 1200.0 * time-MIN + -100.0
 ```
 
 Finally, takeoff phase ends when the lowest safe altitude (LSALT) is reached, i.e., 300 ft above ground. The `time delayed` implication specifies that if `liftoff` occurs, then the event `LSALT-reach` will also occur at the instantaneous measured value on `altitude-FT` delayed by `300.0`.

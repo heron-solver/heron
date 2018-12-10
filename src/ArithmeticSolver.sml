@@ -261,6 +261,11 @@ fun apply_tag_substition ((t_old, t_new): tag * tag) (G: system) =
 (* TODO: Deperecated, needs to be updated with latest changes *)
 fun constants_propagation_candidates_int (G: system) =
   let
+    (**  Rearranged similar equation cases **)
+    (* - Affine relation [C = X * a + b] --> [C = a * X + b] where [X] is a variable *)
+    val G = List.map (fn Affine (Int n1, Schematic s, Int n2, Int n3) => Affine (Int n1, Int n2, Schematic s, Int n3) | g => g) G
+    (* - Affine relation [C = a * a' + X] --> [C = 1 * X + (a * a')] where [X] is a variable *)
+    val G = List.map (fn Affine (Int c, Int a, Int a', Schematic x) => Affine (Int c, Int 1, Schematic x, Int (a * a')) | g => g) G
     (* - Two timestamps [H ⇓_σ C] and [H ⇓_σ X], where [X] a variable and [C] is a constant (by injectivity) *)
     val timestamp_var_right = (List.filter (fn cstr => case cstr of Timestamp (_, _, Schematic _) => true | _ => false) G)
     val timestamp_cst_right = (List.filter (fn cstr => case cstr of Timestamp (_, _, Int _) => true | _ => false) G)

@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.58.7-alpha+20181210"
+val RELEASE_VERSION = "0.59.0-alpha+20181210"
 
 open OS.Process
 
@@ -170,13 +170,8 @@ fun action (stmt: TESL_atomic) =
      )
   | DirExit               => quit()
   | DirHelp               => print_help()
-  | Precedes (c1, c2, _)  =>
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
-  | Excludes (c1, c2)  =>
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
-  | Kills (c1, c2)  =>
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   | _                     =>
+    (* TODO: lfp loop to unsgar... *)
     snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
   end
   handle

@@ -14,6 +14,7 @@ fun opposite_tag t = case t of
   | Rat pq => Rat (~/ pq)
   | _      => t
 
+
 %%
 
 %eop EOF SEMI
@@ -55,7 +56,7 @@ fun opposite_tag t = case t of
       | PRE 
       | DER
 
-%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag_scenario) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list
+%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag_scenario) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list | CLK_EXPR of clk_expr | CLKEXPRARGS of clk_expr list
 
 %name Calc
 
@@ -64,6 +65,8 @@ fun opposite_tag t = case t of
 
 %noshift EOF
 %verbose
+%left PLUS MINUS
+%left TIMES
 %%
 
 (* the parser returns the value associated with the expression *)
@@ -89,6 +92,20 @@ fun opposite_tag t = case t of
         | LPAR ID ARROW TAG RPAR TCLKS                                         ((Clk ID, CstTag TAG) :: TCLKS)
 	 | LPAR ID ARROW ID RPAR                                                ([(Clk ID1, SymbTag (Clk ID2))])
         | LPAR ID ARROW ID RPAR TCLKS                                          ((Clk ID1, SymbTag (Clk ID2)) :: TCLKS)
+  CLK_EXPR: LPAR CLK_EXPR RPAR                                                 (CLK_EXPR)
+          | TAG                                                                (ClkCst (TAG))
+          | CLK                                                                (ClkName (CLK))
+          | DER CLK_EXPR                                                       (ClkDer (CLK_EXPR))
+          | PRE CLK_EXPR                                                       (ClkPre (CLK_EXPR))
+          | LBRACK TAGS RBRACK ARROW CLK_EXPR                                  (ClkFby (TAGS, CLK_EXPR))
+          | CLK_EXPR PLUS CLK_EXPR                                             (ClkPlus (CLK_EXPR1, CLK_EXPR2))
+          | CLK_EXPR TIMES CLK_EXPR                                            (ClkMult (CLK_EXPR1, CLK_EXPR2))
+          | ID UNIT_VAL                                                        (ClkFun(Fun ID, []))
+          | ID LPAR CLKEXPRARGS						         (ClkFun(Fun ID, CLKEXPRARGS))
+  CLKEXPRARGS : RPAR                                                           ([])
+          | CLK_EXPR RPAR                                                      ([CLK_EXPR])
+          | CLK_EXPR COMMA CLKEXPRARGS                                         (CLK_EXPR :: CLKEXPRARGS)
+
   EXP : 
 	 TYPEDECL CLK                                                           (case TYPEDECL of (tt, mb) => TypeDecl (CLK, tt, mb))
       | LET INT ID EQ TAG                                                      (raise UnsupportedParsedTerm) 
@@ -105,6 +122,7 @@ fun opposite_tag t = case t of
 											     | _ => raise UnsupportedParsedTerm)
       | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
       | CLK IMPLIES NOT CLK						                (ImpliesNot (CLK1, CLK2))
+(*
       | TAGREL CLK EQ TAG TIMES CLK PLUS TAG                                   (TagRelationAff (CLK1, TAG1, CLK2, TAG2))
       | TAGREL CLK EQ TAG TIMES CLK MINUS TAG                                  (TagRelationAff (CLK1, TAG1, CLK2, opposite_tag TAG2))
       | TAGREL CLK EQ TAG TIMES CLK                                            (case TAG of Int _ => TagRelationAff (CLK1, TAG, CLK2, Int (0))
@@ -118,6 +136,8 @@ fun opposite_tag t = case t of
       | TAGREL CLK EQ DER CLK                                                  (TagRelationDer (CLK1, CLK2))
       | TAGREL CLK EQ ID UNIT_VAL                                              (TagRelationFun (CLK, Fun ID, []))
       | TAGREL CLK EQ ID LPAR CLKARGS                                          (TagRelationFun (CLK, Fun ID, CLKARGS))
+*)
+      | TAGREL CLK_EXPR EQ CLK_EXPR                                            (TagRelation (ClkExprEqual, CLK_EXPR1, CLK_EXPR2))
       | CLK IMPLIES TAGREL CLK EQ CLK                                          (TagRelationReflImplies (CLK1, CLK2, CLK3))
       | CLK TIME DELAYED BY TAG ON CLK IMPLIES CLK                             (TimeDelayedBy (CLK1, TAG, CLK2, NONE, CLK3))
       | CLK TIME DELAYED BY TAG ON CLK WITH RESET ON CLK IMPLIES CLK		   (TimeDelayedBy (CLK1, TAG, CLK2, SOME (CLK3), CLK4))

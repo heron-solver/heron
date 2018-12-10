@@ -18,9 +18,19 @@ print "Copyright (c) 2018, A\195\169ropyr\195\169n\195\169es Flight Center, Univ
 print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
 print "             Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334.\n";
 print "\n";
+print (BOLD_COLOR ^ "Tag and clock expressions (for time relations):\n" ^ RESET_COLOR); 
+print "  [CLOCK EXPR] = \u001B[1m(\u001B[0m[CLOCK EXPR]\u001B[1m)\u001B[0m\n";
+print "  [CLOCK EXPR] = [TAG]\n"; 
+print "  [CLOCK EXPR] = [FUNCTION NAME] \u001B[1m(\u001B[0m[CLOCK], [CLOCK]...\u001B[1m)\u001B[0m\n"; 
+print "  [CLOCK EXPR] = [CLOCK EXPR] + [CLOCK EXPR]\n"; 
+print "  [CLOCK EXPR] = [CLOCK EXPR] * [CLOCK EXPR]\n"; 
+print "  [CLOCK EXPR] = \u001B[1mpre\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK EXPR] = \u001B[1m[\u001B[0m [TAG]+ \u001B[1m] ->\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK EXPR] = \u001B[1mder\u001B[0m [CLOCK]\n"; 
+print "\n"; 
 print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
 print "  [\u001B[1mint\u001B[0m | \u001B[1mrational\u001B[0m | \u001B[1munit\u001B[0m]\u001B[1m-clock\u001B[0m [CLOCK]\n"; 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [TAG] * [CLOCK] + [TAG]\n"; 
+print "  \u001B[1mtime relation\u001B[0m [CLOCK EXPR] \u001B[1m=\u001B[0m [CLOCK EXPR]\n"; 
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG]+\n"; 
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mperiodic\u001B[0m [TAG] (\u001B[1moffset\u001B[0m [TAG])\n"; 
@@ -37,23 +47,12 @@ print "\n";
 print "  For more information about the TESL language:\n"; 
 print "  http://wdi.supelec.fr/software/TESL/\n"; 
 print "\n";
-print (BOLD_COLOR ^ "Extensions in CCSL-style:\n" ^ RESET_COLOR); 
+print (BOLD_COLOR ^ "Extensions:\n" ^ RESET_COLOR); 
+print "  \u001B[1mrational-quantity\u001B[0m [CLOCK]\n";
 print "  [CLOCK] \u001B[1m[strictly | weakly] precedes\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mexcludes\u001B[0m [CLOCK]\n"; 
-print "  [CLOCK] \u001B[1mkills\u001B[0m [CLOCK]\n"; 
-print "\n"; 
-print (BOLD_COLOR ^ "Extensions in Lustre-style:\n" ^ RESET_COLOR); 
-print "  \u001B[1mrational-quantity\u001B[0m [CLOCK]\n"; 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [TAG]\n"; 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK]\n"; 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [CLOCK] * [CLOCK] + [CLOCK]\n"; 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1m[\u001B[0m [TAG]+ \u001B[1m] ->\u001B[0m [CLOCK]\n"; 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1mpre\u001B[0m [CLOCK]\n"; 
-print "\n"; 
-print (BOLD_COLOR ^ "Extensions in hybrid style:\n" ^ RESET_COLOR); 
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = \u001B[1mder\u001B[0m [CLOCK]\n";
+print "  [CLOCK] \u001B[1mkills\u001B[0m [CLOCK]\n";
 print "  [CLOCK] \u001B[1mimplies time relation\u001B[0m [CLOCK] = [CLOCK]\n";
-print "  \u001B[1mtime relation\u001B[0m [CLOCK] = [FUNCTION NAME] \u001B[1m(\u001B[0m[CLOCK] [CLOCK]...\u001B[1m)\u001B[0m\n";
 print "\n"; 
 print "  Real functions interpreted as in ISO C's math.h:\n"; 
 print "  pi, e, sqrt, sin, cos, tan, asin, acos, atan, atan2, exp, pow, ln, log10, sinh, cosh, tanh\n"; 
@@ -307,6 +306,19 @@ fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = cas
        writeln "## End") end) () cfs
   end
 
+fun string_of_clk_rel symb = case symb of
+  ClkExprEqual => "="
+
+fun string_of_clk_expr e = case e of
+    ClkCst (t)                     => string_of_tag t
+  | ClkName (Clk cname)            => cname
+  | ClkDer (e')                    => "der (" ^ (string_of_clk_expr e') ^ ")"
+  | ClkPre (e')                    => "pre (" ^ (string_of_clk_expr e') ^ ")"
+  | ClkFby (tags, e')               => "[" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk_expr e')
+  | ClkPlus (cexp1, cexp2)         => "(" ^ (string_of_clk_expr cexp1) ^ " + " ^ (string_of_clk_expr cexp2) ^ ")"
+  | ClkMult (cexp1, cexp2)         => "(" ^ (string_of_clk_expr cexp1) ^ " * " ^ (string_of_clk_expr cexp2) ^ ")"
+  | ClkFun (Fun (fname), exp_list) => fname ^ " (" ^ (String.concatWith ", " (List.map (string_of_clk_expr) exp_list)) ^ ")"
+
 fun string_of_expr e = case e of
     TypeDecl (c, ty, mono)                                  => (string_of_tag_type ty)
 									^ (if mono then "-clock " else "-quantity ")
@@ -320,7 +332,8 @@ fun string_of_expr e = case e of
 									^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
   | ImpliesNot (master, slave)                              => (string_of_clk master) ^ " implies not " ^ (string_of_clk slave)
-  | TagRelationAff (c1, a, c2, b)                              => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
+  | TagRelation (relsymb, cexp1, cexp2)                     => "time relation " ^ (string_of_clk_expr cexp1) ^ " " ^ (string_of_clk_rel relsymb) ^ " " ^ (string_of_clk_expr cexp2)
+  | TagRelationAff (c1, a, c2, b)                           => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)
   | TagRelationCst (c, t)                                   => "time relation " ^ (string_of_clk c) ^ " = " ^ (string_of_tag t)
   | TagRelationRefl (c1, c2)                                => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk c2)
   | TagRelationClk (c1, ca, c2, cb)                         => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_clk ca) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_clk cb)

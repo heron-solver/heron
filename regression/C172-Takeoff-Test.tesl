@@ -38,7 +38,7 @@ VR-reach implies liftoff
 
 // Controling Vy in IAS ensures vertical speed of 1200 ft/min approx.
 // -100 is to arbitrarily set the altimeter with local QNH on 144 ft AMSL
-tag relation altitude-FT = 1200.0 * time-MIN - 100.0
+tag relation altitude-FT = 1200.0 * time-MIN + -100.0
 
 // Takeoff phase ends when the lowest safe altitude (LSALT) is reached
 // At Perpignan, LSALT is 300 ft AGL, i.e. approximately 444 ft AMSL
