@@ -265,18 +265,28 @@ fun SelfModifyingSubs f = List.filter (fn f' => case f' of
 exception UnsupportedTESLOperator
 exception UnitTagRelationFault
 
+(*
 val counter = ref 0
-fun fresh_clk () =
+fun fresh_clk e =
     let val new_name = "clk" ^ (string_of_int (!counter))
 	 val _ = counter := (!counter) + 1
     in new_name
     end
+*)
+val counter = ref []
+fun fresh_clk (e: clk_expr) =
+  case (List.find (fn (_, e') => e = e') (!counter)) of
+      SOME (tmp_clk_id, _) => "tmp" ^ (string_of_int tmp_clk_id)
+    | NONE		      => 
+      let val new_name = "tmp" ^ (string_of_int (List.length (!counter)))
+	   val _ = counter := (List.length (!counter), e) :: (!counter)
+      in new_name
+      end
 
 fun unsugar_clk_expr (current_clk: clock) (cexp: clk_expr) = case cexp of
-    ClkCst t  => (print "HERECst \n" ; [TagRelationCst (current_clk, t)])
-  | ClkName c => (print "HEREName \n" ; [TagRelationCst (Clk "one", Rat rat_one),
-						 TagRelationCst (Clk "zero", Rat rat_zero),
-						 TagRelationClk (current_clk, Clk "one", c, Clk "zero")])
+    ClkCst t  => [TagRelationCst (current_clk, t)]
+  | ClkName c => [TagRelationRefl (current_clk, c)]
+(*
   | ClkDer cexp'  =>
     let val new_clk1 = Clk (fresh_clk ())
 	 val c2_name = fresh_clk ()
@@ -287,35 +297,44 @@ fun unsugar_clk_expr (current_clk: clock) (cexp: clk_expr) = case cexp of
 	 TagRelationClk (current_clk, Clk "one", Clk c2_name, Clk ("_mpre_" ^ c2_name))]
 	@ (unsugar_clk_expr new_clk1 cexp')
     end
+*)
+  | ClkDer cexp'  => 
+    let val c2_name = fresh_clk (cexp')
+    in [TagRelationCst (Clk "one", Rat rat_one),
+	 TagRelationPre (Clk ("_pre_" ^ c2_name), Clk c2_name),
+	 TagRelationAff (Clk ("_mpre_" ^ c2_name), Rat (~/ rat_one), Clk ("_pre_" ^ c2_name), Rat rat_zero),
+	 TagRelationClk (current_clk, Clk "one", Clk c2_name, Clk ("_mpre_" ^ c2_name))]
+	@ (unsugar_clk_expr (Clk c2_name) cexp')
+    end
   | ClkPre cexp'  => 
-    let val new_clk = Clk (fresh_clk ())
+    let val new_clk = Clk (fresh_clk (cexp'))
     in TagRelationPre (current_clk, new_clk)
 	:: (unsugar_clk_expr new_clk cexp')
     end
   | ClkFby (tags, cexp')  => 
-    let val new_clk = Clk (fresh_clk ())
+    let val new_clk = Clk (fresh_clk (cexp'))
     in TagRelationFby (current_clk, tags, new_clk)
 	:: (unsugar_clk_expr new_clk cexp')
     end
   (* WARNING: only works with rational quantities and clocks... How about int ? *)
   | ClkPlus (cexp1, cexp2)  =>
-    let val new_clk1 = Clk (fresh_clk ())
-	 val new_clk2 = Clk (fresh_clk ())
+    let val new_clk1 = Clk (fresh_clk (cexp1))
+	 val new_clk2 = Clk (fresh_clk (cexp2))
     in [TagRelationCst (Clk "one", Rat rat_one),
 	 TagRelationClk (current_clk, Clk "one", new_clk1, new_clk2)]
 	@ (unsugar_clk_expr new_clk1 cexp1)
 	@ (unsugar_clk_expr new_clk2 cexp2)
     end    
   | ClkMult (cexp1, cexp2)  =>
-    let val new_clk1 = Clk (fresh_clk ())
-	 val new_clk2 = Clk (fresh_clk ())
+    let val new_clk1 = Clk (fresh_clk (cexp1))
+	 val new_clk2 = Clk (fresh_clk (cexp2))
     in [TagRelationCst (Clk "zero", Rat rat_zero),
 	 TagRelationClk (current_clk, new_clk1, new_clk2, Clk "zero")]
 	@ (unsugar_clk_expr new_clk1 cexp1)
 	@ (unsugar_clk_expr new_clk2 cexp2)
     end
   | ClkFun (func, cexplist)  =>
-    let val new_clks = List.map (fn cexp => (Clk (fresh_clk ()), cexp)) cexplist
+    let val new_clks = List.map (fn cexp => (Clk (fresh_clk (cexp)), cexp)) cexplist
     in TagRelationFun (current_clk, func, List.map (fn (clk, _) => clk) new_clks)
 	:: List.concat ((List.map (fn (new_clk, clk_expr) => unsugar_clk_expr new_clk clk_expr) new_clks))
     end
@@ -367,8 +386,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	        [TagRelationFun (c, func, [carg])]
 	    | TagRelation (ClkExprEqual, ClkName clk_left, cexp2) =>
 	      let
-		 val _ = print "unsugar \n"
-		 val new_clk_right = Clk (fresh_clk ())
+		 val new_clk_right = Clk (fresh_clk (cexp2))
 	      in (TagRelationRefl (clk_left, new_clk_right))
 		  :: (unsugar_clk_expr new_clk_right cexp2)
 	      end
@@ -376,9 +394,8 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	        unsugar clock_types [TagRelation (ClkExprEqual, ClkName clk_right, cexp1)]
 	    | TagRelation (ClkExprEqual, cexp1, cexp2) =>
 	      let
-		 val _ = print "unsugar \n"
-		 val new_clk_left  = Clk (fresh_clk ())
-		 val new_clk_right = Clk (fresh_clk ())
+		 val new_clk_left  = Clk (fresh_clk (cexp1))
+		 val new_clk_right = Clk (fresh_clk (cexp2))
 	      in (TagRelationRefl (new_clk_left, new_clk_right))
 		  :: ((unsugar_clk_expr new_clk_left cexp1)
 		      @  (unsugar_clk_expr new_clk_right cexp2))
