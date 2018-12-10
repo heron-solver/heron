@@ -52,7 +52,7 @@ fun ARS_rule_implies_2
 
 (* 5. Tag relation elimination *)
 fun ARS_rule_tagrel_elim
-  (G, n, frun, finst) (fsubst as TagRelation (c1, tag1, c2, tag2)) =
+  (G, n, frun, finst) (fsubst as TagRelationAff (c1, tag1, c2, tag2)) =
     (G @ [Timestamp (c1, n, Schematic (c1, n)), Timestamp (c2, n, Schematic (c2, n)), Affine (Schematic (c1, n), tag1, Schematic (c2, n), tag2)], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_elim _ _ = raise Assert_failure;
 
@@ -546,7 +546,7 @@ fun lawyer_e
                  [(fatom, ARS_rule_whentickingon_with_reset_on_1),
                   (fatom, ARS_rule_whentickingon_with_reset_on_2),
                   (fatom, ARS_rule_whentickingon_with_reset_on_3)]
-			 | TagRelation _ =>
+			 | TagRelationAff _ =>
 			     [(fatom, ARS_rule_tagrel_elim)]
 			 | TagRelationCst _ =>
 			     [(fatom, ARS_rule_tagrel_cst_elim)]

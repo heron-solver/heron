@@ -20,7 +20,7 @@ fun clk_type_declare (stmt: TESL_atomic) (clock_types: (clock * tag_t) list ref)
      | Sporadic (clk, t)                 => [(clk, type_of_tag t)]
      | Sporadics (clk, tlist)            => [(clk, type_of_tags clk tlist)]
      | TypeDeclSporadics (ty, clk, tags, _) => (clk, ty) :: (List.map (fn t => (clk, type_of_tag t)) tags)
-     | TagRelation (c1, t1, c2, t2)      => [(c1, type_of_tags c1 [t1, t2]), (c2, type_of_tags c2 [t1, t2])]
+     | TagRelationAff (c1, t1, c2, t2)   => [(c1, type_of_tags c1 [t1, t2]), (c2, type_of_tags c2 [t1, t2])]
      | TagRelationCst (c, t)             => [(c, type_of_tags c [t])]
      | TagRelationRefl (c1, c2)          =>
 	([(c1, clk_type_lookup (!clock_types) c2), (c2, clk_type_lookup (!clock_types) c1)]

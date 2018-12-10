@@ -103,7 +103,7 @@ datatype TESL_atomic =
   | Sporadic                       of clock * tag
   | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
   | TypeDeclSporadics              of tag_t * clock * (tag list) * bool   (* Syntactic sugar *)
-  | TagRelation                    of clock * tag * clock * tag
+  | TagRelationAff                 of clock * tag * clock * tag
   | TagRelationCst                 of clock * tag
   | TagRelationRefl                of clock * clock
   | TagRelationClk                 of clock * clock * clock * clock
@@ -169,7 +169,7 @@ type TESL_ARS_conf = system * instant_index * TESL_formula * TESL_formula
 fun ConstantlySubs f = List.filter (fn f' => case f' of
     Implies _        => true
   | ImpliesNot _     => true
-  | TagRelation _    => true
+  | TagRelationAff _    => true
   | TagRelationRefl _    => true
   | TagRelationReflImplies _ => true
   | TagRelationCst _ => true
@@ -264,7 +264,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | TypeDeclPeriodic (ty, clk, period, offset) => unsugar clock_types [Periodic (clk, period, offset)]
            | TagRelationDer (c1, Clk c2_name) => [TagRelationCst (Clk "one", Rat rat_one),
 							 TagRelationPre (Clk ("_pre_" ^ c2_name), Clk c2_name),
-							 TagRelation (Clk ("_mpre_" ^ c2_name), Rat (~/ rat_one), Clk ("_pre_" ^ c2_name), Rat rat_zero),
+							 TagRelationAff (Clk ("_mpre_" ^ c2_name), Rat (~/ rat_one), Clk ("_pre_" ^ c2_name), Rat rat_zero),
 							 TagRelationClk (c1, Clk "one", Clk c2_name, Clk ("_mpre_" ^ c2_name))]
 	    | DirMinstep _          => []
 	    | DirMaxstep _          => []
@@ -366,7 +366,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | Sporadics (c, _)                          => [c]
   | WhenTickingOn (c1, _, c2)                 => [c1, c2]
   | TypeDeclSporadics (_, c, _, _)            => [c]
-  | TagRelation (c1, _, c2, _)                => [c1, c2]
+  | TagRelationAff (c1, _, c2, _)                => [c1, c2]
   | TagRelationCst (c, _)                     => [c]
   | TagRelationRefl (c1, c2)                  => [c1, c2]
   | TagRelationReflImplies (c1, c2, c3)       => [c1, c2, c3]
