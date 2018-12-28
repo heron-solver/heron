@@ -73,7 +73,7 @@ Simulation
 ----------
 
 <p align="center">
-  <img src="A320-AccelerationStop.png">
+  <img src="A320-AccelerationStop.svg">
 </p>
 
 The execution trace starts with time, distance and speed all set to 0.0. Acceleration occurs until takeoff rejection (clock `RTO`), where speed and distance are synced with their corresponding clocks for the deceleration part. Finally, the moving object decelerates until approximately 1159 m (as shown on `distance-M-DECEL` at 23rd instant). Note that distance value is accurate with respect to the simulation step size which is here set to 2.5 s: a lower value yields a more accurate computation but slowers the solver.

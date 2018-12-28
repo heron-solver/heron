@@ -5,6 +5,8 @@ Airbus A320 Autobrake System
 > ./heron --use examples/aviation/A320-Autobrake.tesl
 > ```
 
+![A320 Flight Deck. Extracted from Airbus A319/A320/A321 Flight deck and systems. Briefing for pilots. Sept, 1998](A320-Autobrake-Flight-Deck.svg)
+
 The following specification describes a takeoff scenario of the transport-category aircraft Airbus A320. The default scenario describes a normal takeoff with no engine failure. It illustrates the purpose of mixing event-driven and time-driven behaviors with some asynchronous extensions. In this study case, we describe at high-level the behavior of the [autobrake system](https://pdfs.semanticscholar.org/7095/958b414fb0e01a552abdc351f70272457909.pdf) as specified in the A320 Flight Crew Operating Manual.
 
 From the [A318/A319/A320/A321 Performance Training Manual](A320-RTOW-PARIS-ORLY-RWY08.jpg):

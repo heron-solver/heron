@@ -6,9 +6,9 @@ Cessna C172 Takeoff
 > ```
 
 <p align="center">
-  <img src="airspeed-indicator.png" width="250">
-  <img src="altimeter.png" width="250">
-  <img src="vsi.png" width="250">
+  <img title="Cessna 172SP Airspeed Indicator. Courtesy of Laminar Research" src="airspeed-indicator.png" width="250">
+  <img title="Cessna 172SP Altimeter. Courtesy of Laminar Research" src="altimeter.png" width="250">
+  <img title="Cessna 172SP Vertical Speed Indicator. Courtesy of Laminar Research" src="vsi.png" width="250">
 </p>
 
 This specification illustrates the TESL language with a simple takeoff scenario. It depicts the computation of quantities and units for time, speed and altitude. Performance speeds (IAS) of the Cessna 172 are determined for a takeoff at Perpignan-Rivesaltes Airport (PGF/LFMP) with altitude set on local QNH:
