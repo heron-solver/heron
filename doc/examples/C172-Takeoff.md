@@ -42,9 +42,9 @@ To achieve best performance, the pilot-in-command controls climb rate by aiming 
 tag relation altitude-FT = 1200.0 * time-MIN + -100.0
 ```
 
-Finally, takeoff phase ends when the lowest safe altitude (LSALT) is reached, i.e., 300 ft above ground. The `time delayed` implication specifies that if `liftoff` occurs, then the event `LSALT-reach` will also occur at the instantaneous measured value on `altitude-FT` delayed by `300.0`.
+Finally, takeoff phase ends when the minimum safe altitude (MSA) is reached, i.e., 300 ft above ground. The `time delayed` implication specifies that if `liftoff` occurs, then the event `MSA-reach` will also occur at the instantaneous measured value on `altitude-FT` delayed by `300.0`.
 ```
-liftoff time delayed by 300. on altitude-FT implies LSALT-reach
+liftoff time delayed by 300. on altitude-FT implies MSA-reach
 ```
 
 Simulation

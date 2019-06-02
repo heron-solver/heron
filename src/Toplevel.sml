@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.59.2-alpha+20181210"
+val RELEASE_VERSION = "0.59.3-alpha+20190603"
 
 open OS.Process
 
@@ -151,10 +151,10 @@ fun action (stmt: TESL_atomic) =
 	   if pdf
 	   then (
 	     print ("## Calling pdflatex on " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n") ;
-	     let val return_st = OS.Process.system ("TEXINPUTS=$TEXINPUTS:\"./lib\" pdflatex -interaction=nonstopmode " ^ (OS.FileSys.getDir ()) ^ "/output.tex >/dev/null")
+	     let val return_st = OS.Process.system ("TEXINPUTS=$TEXINPUTS:\"./lib\" pdflatex -interaction=nonstopmode \"" ^ (OS.FileSys.getDir ()) ^ "/output.tex\" >/dev/null")
 	     in if isSuccess return_st
 		 then ()
-		 else (print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Failed at generating PDF output.\n          Check for pdflatex or TESL style file in ./lib/\n          > TEXINPUTS=$TEXINPUTS:\"./lib\" pdflatex " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n" ^ RESET_COLOR) ;
+		 else (print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Failed at generating PDF output.\n          Check for pdflatex or TESL style file in ./lib/\n          > TEXINPUTS=$TEXINPUTS:\"./lib\" pdflatex \"" ^ (OS.FileSys.getDir ()) ^ "/output.tex\"\n" ^ RESET_COLOR) ;
 			OS.Process.exit OS.Process.failure)
 	     end
 	   )
@@ -241,7 +241,7 @@ val _ = (
         [] =>
      if (!file_to_open) = ""
      then
-       (print "Copyright (c) 2018, A\195\169ropyr\195\169n\195\169es Flight Center, Universit\195\169 Paris-Sud / CNRS\n";
+       (print "Copyright (c) 2019, Universit\195\169 Paris-Sud / CNRS, A\195\169ropyr\195\169n\195\169es Flight Center\n";
 	    print "Type @help for assistance. Please cite:\n" ;
 	    print "  H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
 	    print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";

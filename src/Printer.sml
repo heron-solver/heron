@@ -14,7 +14,7 @@ print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR);
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
 print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl] [--runtime-print]");
 print "\n\n";
-print "Copyright (c) 2018, A\195\169ropyr\195\169n\195\169es Flight Center, Universit\195\169 Paris-Sud / CNRS\n";
+print "Copyright (c) 2019, Universit\195\169 Paris-Sud / CNRS, A\195\169ropyr\195\169n\195\169es Flight Center\n";
 print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
 print "             Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334.\n";
 print "\n";

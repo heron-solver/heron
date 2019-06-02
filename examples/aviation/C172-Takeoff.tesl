@@ -40,9 +40,9 @@ VR-reach implies liftoff
 // -100 is to arbitrarily set the altimeter with local QNH on 144 ft AMSL
 tag relation altitude-FT = 1200.0 * time-MIN + -100.0
 
-// Takeoff phase ends when the lowest safe altitude (LSALT) is reached
-// At Perpignan, LSALT is 300 ft AGL, i.e. approximately 444 ft AMSL
-liftoff time delayed by 300. on altitude-FT implies LSALT-reach
+// Takeoff phase ends when the minimum safe altitude (MSA) is reached
+// At Perpignan, MSA is 300 ft AGL, i.e. approximately 444 ft AMSL
+liftoff time delayed by 300. on altitude-FT implies MSA-reach
 
 @scenario 1 (time-S -> 0.0)
 @policy asap
