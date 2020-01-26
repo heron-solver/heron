@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.59.4-alpha+20200126"
+val RELEASE_VERSION = "0.59.5-alpha+20200126"
 
 open OS.Process
 
@@ -241,7 +241,7 @@ val _ = (
         [] =>
      if (!file_to_open) = ""
      then
-       (print "Copyright (c) 2020, Universit\195\169 Paris-Sud / CNRS\n";
+       (print "Copyright (c) 2020, Universit\195\169 Paris-Saclay / CNRS\n";
 	    print "Type @help for assistance. Please cite:\n" ;
 	    print "  H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
 	    print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";
