@@ -963,7 +963,7 @@ fun exec
           if List.length cfs_sat > 0
           then (writeln_ifrun ("# Stopping simulation when finite model found") ;
                 writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
-                writeln_ifrun (BOLD_COLOR ^ GREEN_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models" ^ RESET_COLOR);
+                writeln_ifrun (BOLD_COLOR ^ GREEN_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ (case (List.length cfs_sat) of 0 => " model" | 1 => " model" | _ => " models") ^ RESET_COLOR);
                 raise Model_found cfs_sat)
           else () end
 	 (* STOPS WHENEVER A CLOCK HAS *EXPLICITLY* TICKED *)
@@ -977,7 +977,7 @@ fun exec
 	     in if List.length cfs_sat > 0
 		 then (writeln_ifrun ("# Stopping simulation as some stop clock has explicitly reacted") ;
 			writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
-			writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ " models" ^ RESET_COLOR);
+			writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ (case (List.length cfs_sat) of 0 => " model" | 1 => " model" | _ => " models") ^ RESET_COLOR);
                 raise Stopclock_ticked (!next_cfs))
 		 else () end
         (* INSTANT SOLVING *)
