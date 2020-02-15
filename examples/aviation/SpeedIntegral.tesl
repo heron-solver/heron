@@ -13,7 +13,7 @@ t periodic 5.0
 tag relation v = 1.5 * t
 
 // From dx = v.dt
-tag relation (der x) = v * (der t)
+tag relation (d x) = v * (d t)
 
 // Initial condition (x₀ = 0.0)
 @scenario 1 (x -> 0.0)

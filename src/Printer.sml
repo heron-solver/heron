@@ -26,7 +26,7 @@ print "  [CLOCK EXPR] = [CLOCK EXPR] + [CLOCK EXPR]\n";
 print "  [CLOCK EXPR] = [CLOCK EXPR] * [CLOCK EXPR]\n"; 
 print "  [CLOCK EXPR] = \u001B[1mpre\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK EXPR] = \u001B[1m[\u001B[0m [TAG]+ \u001B[1m] ->\u001B[0m [CLOCK]\n"; 
-print "  [CLOCK EXPR] = \u001B[1mder\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK EXPR] = \u001B[1md\u001B[0m [CLOCK]\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "TESL language expressions:\n" ^ RESET_COLOR); 
 print "  [\u001B[1mint\u001B[0m | \u001B[1mrational\u001B[0m | \u001B[1munit\u001B[0m]\u001B[1m-clock\u001B[0m [CLOCK]\n"; 
@@ -312,7 +312,7 @@ fun string_of_clk_rel symb = case symb of
 fun string_of_clk_expr e = case e of
     ClkCst (t)                     => string_of_tag t
   | ClkName (Clk cname)            => cname
-  | ClkDer (e')                    => "der (" ^ (string_of_clk_expr e') ^ ")"
+  | ClkDer (e')                    => "d (" ^ (string_of_clk_expr e') ^ ")"
   | ClkPre (e')                    => "pre (" ^ (string_of_clk_expr e') ^ ")"
   | ClkFby (tags, e')               => "[" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk_expr e')
   | ClkPlus (cexp1, cexp2)         => "(" ^ (string_of_clk_expr cexp1) ^ " + " ^ (string_of_clk_expr cexp2) ^ ")"
@@ -340,7 +340,7 @@ fun string_of_expr e = case e of
   | TagRelationPre (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = pre " ^ (string_of_clk c2)
   | TagRelationFby (c1, tags, c2)                           => "time relation " ^ (string_of_clk c1) ^ " = [" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk c2)
   | TagRelationFun (c, Fun(fname), clist)                   => "time relation " ^ (string_of_clk c) ^ " = " ^ fname ^ " (" ^ (string_of_clks_comma clist) ^ ")"
-  | TagRelationDer (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = der " ^ (string_of_clk c2)
+  | TagRelationDer (c1, c2)                                 => "time relation " ^ (string_of_clk c1) ^ " = d " ^ (string_of_clk c2)
   | TagRelationReflImplies (c1, c2, c3)                     => (string_of_clk c1) ^ " implies time relation " ^ (string_of_clk c2) ^ " = " ^ (string_of_clk c3)
   | TimeDelayedBy (master, t, measuring, NONE, slave)             => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " implies " ^ (string_of_clk slave)
   | TimeDelayedBy (master, t, measuring, SOME (reset), slave)     => (string_of_clk master) ^ " time delayed by " ^ (string_of_tag t) ^ " on " ^ (string_of_clk measuring) ^ " with reset on " ^ (string_of_clk reset) ^ " implies " ^ (string_of_clk slave)

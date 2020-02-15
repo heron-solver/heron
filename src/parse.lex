@@ -86,7 +86,7 @@ ws = [\ \t];
 "excludes"                   => (Tokens.EXCLUDES(!pos,!pos));
 "kills"                      => (Tokens.KILLS(!pos,!pos));
 "pre"                        => (Tokens.PRE(!pos,!pos));
-"der"                        => (Tokens.DER(!pos,!pos));
+"d"                          => (Tokens.DER(!pos,!pos));
 "->"                         => (Tokens.ARROW(!pos,!pos));
 "="                          => (Tokens.EQ(!pos,!pos));
 "+"                          => (Tokens.PLUS(!pos,!pos));

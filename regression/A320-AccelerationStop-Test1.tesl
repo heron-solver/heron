@@ -33,19 +33,19 @@ tag relation speed-KT = 4.5 * time-S
 
 // Compute run distance with time-variant integration: dx = v.dt
 tag relation zero = 0.0
-tag relation ddistance-M = der distance-M
-tag relation dtime-S = der time-S
+tag relation ddistance-M = d distance-M
+tag relation dtime-S = d time-S
 tag relation speed-MPS_dtime-S = speed-MPS * dtime-S + zero
 tag relation ddistance-M = speed-MPS_dtime-S
 
 // 2. Uniform deceleration of -3 kt/s with ODE dv = ad.dt
 tag relation ad = -3.0
-tag relation dspeed-KT-DECEL = der speed-KT-DECEL
+tag relation dspeed-KT-DECEL = d speed-KT-DECEL
 tag relation ad-dtime-S = ad * dtime-S + zero
 tag relation dspeed-KT-DECEL = ad-dtime-S
 
 // Again, compute run distance when decelerating: dx = v.dt
-tag relation ddistance-M-DECEL = der distance-M-DECEL
+tag relation ddistance-M-DECEL = d distance-M-DECEL
 tag relation speed-MPS_dtime-S-DECEL = speed-MPS-DECEL * dtime-S + zero
 tag relation ddistance-M-DECEL = speed-MPS_dtime-S-DECEL
 

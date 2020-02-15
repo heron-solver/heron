@@ -43,16 +43,16 @@ First, we define how speed is gained by uniform acceleration of 4.5 kt/s with an
 tag relation speed-KT = 4.5 * time-S
 
 // Compute run distance with time-variant integration: dx = v.dt
-tag relation (der distance-M) = speed-MPS * (der time-S)
+tag relation (d distance-M) = speed-MPS * (d time-S)
 ```
 
 The second part of the specification describes the decelerating process similarly as above. Acceleration or deceleration can be expressed by affine tag relations, or also again differential equations. To illustrate this, we define that deceleration rate is -3.0 kt/s with the differential equation `dv' = -3.0.dt`:
 ```
 // 2. Uniform deceleration of -3 kt/s with ODE dv' = -3.0.dt
-tag relation (der speed-KT-DECEL) = -3.0 * (der time-S)
+tag relation (d speed-KT-DECEL) = -3.0 * (d time-S)
 
 // Again, compute run distance when decelerating: dx' = v'.dt
-tag relation (der distance-M-DECEL) = speed-MPS-DECEL * (der time-S)
+tag relation (d distance-M-DECEL) = speed-MPS-DECEL * (d time-S)
 ```
 
 Finally, we define our scenario and how the solver unrolls the execution of the specification. We chose to reject takeoff at 20 s and defined a simulation step of 2.5 s:

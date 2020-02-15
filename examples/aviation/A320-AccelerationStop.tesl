@@ -32,13 +32,13 @@ V1-reach sporadic 118.0 on speed-KT
 tag relation speed-KT = 4.5 * time-S
 
 // Compute run distance with time-variant integration: dx = v.dt
-tag relation (der distance-M) = speed-MPS * (der time-S)
+tag relation (d distance-M) = speed-MPS * (d time-S)
 
 // 2. Uniform deceleration of -3 kt/s with ODE dv' = -3.0.dt
-tag relation (der speed-KT-DECEL) = -3.0 * (der time-S)
+tag relation (d speed-KT-DECEL) = -3.0 * (d time-S)
 
 // Again, compute run distance when decelerating: dx' = v'.dt
-tag relation (der distance-M-DECEL) = speed-MPS-DECEL * (der time-S)
+tag relation (d distance-M-DECEL) = speed-MPS-DECEL * (d time-S)
 
 RTO sporadic 20.0 on time-S                      // Reject takeoff at 20 s
 time-S periodic 2.5                              // Simulation step

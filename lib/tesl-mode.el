@@ -59,7 +59,7 @@
     "precedes"
     "excludes"
     "kills"
-    "der"
+    "d"
     "until"
     "->"
     "="
