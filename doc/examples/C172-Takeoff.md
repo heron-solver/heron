@@ -11,9 +11,9 @@ Cessna C172 Takeoff
   <img title="Cessna 172SP Vertical Speed Indicator. Courtesy of Laminar Research" src="vsi.png" width="250">
 </p>
 
-This specification illustrates the TESL language with a simple takeoff scenario. It depicts the computation of quantities and units for time, speed and altitude. Performance speeds (IAS) of the Cessna 172 are determined for a takeoff at Perpignan-Rivesaltes Airport (PGF/LFMP) with altitude set on local QNH:
+This specification illustrates the TESL language with a simple takeoff scenario. It depicts the computation of quantities and units for time, speed and altitude. Performance speeds (IAS) of a light aircraft such as Cessna 172 are given as:
  - VR = 55 kt
- - Vy = 74 kt (corresponds to 1200 ft/min in vertical speed)
+ - Vertical speed in climb: 1200 ft/min
 
 The TESL language allows to define arithmetic relations between clock timeframes. These are called tag relations and allow to describe unit conversions:
 ```
@@ -37,14 +37,13 @@ VR-reach implies liftoff
 
 To achieve best performance, the pilot-in-command controls climb rate by aiming its target airspeed to Vy. To keep this model simple, we assume in a general physical model that this corresponds to a vertical speed of 1200 ft/min. Again, tag relations serve our purpose:
 ```
-// Controling Vy in IAS ensures vertical speed of 1200 ft/min approx.
-// -100 is to arbitrarily set the altimeter with local QNH on 144 ft AMSL
-tag relation altitude-FT = 1200.0 * time-MIN + -100.0
+// Climbing with vertical speed of 1200 ft/min
+tag relation altitude-FT = 1200.0 * time-MIN + -244.4
 ```
 
-Finally, takeoff phase ends when the minimum safe altitude (MSA) is reached, i.e., 300 ft above ground. The `time delayed` implication specifies that if `liftoff` occurs, then the event `MSA-reach` will also occur at the instantaneous measured value on `altitude-FT` delayed by `300.0`.
+Finally, flaps retraction must occur when altitude reaches 400 ft. The `time delayed` implication specifies that if `liftoff` occurs, then the event `flaps-retract` will also occur at the instantaneous measured value on `altitude-FT` delayed by `400.0`.
 ```
-liftoff time delayed by 300. on altitude-FT implies MSA-reach
+liftoff time delayed by 400. on altitude-FT implies flaps-retract
 ```
 
 Simulation
@@ -54,4 +53,4 @@ Simulation
   <img src="C172-Takeoff.png" width="450">
 </p>
 
-This execution trace depicts a satisfying run starting when time is 0 s. During acceleration at 12 s, speed has reached VR = 55 kt. Consequently, clock `VR-reach` is triggered and hence `liftoff`. At that point, ground height is still 0 ft but QNH altitude is 144 ft (as the runway is 144 ft above mean sea level). The aircraft finally reaches the lowest safe altitude at 444 ft AMSL.
+This execution trace depicts a satisfying run starting when time is 0 s. During acceleration at 12 s, speed has reached VR = 55 kt. Consequently, clock `VR-reach` is triggered and hence `liftoff`. The aircraft finally reaches the altitude for flaps retraction at 400 ft.

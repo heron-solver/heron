@@ -1,22 +1,13 @@
 // Airplane takeoff of a Cessna 172
 
-// The following specification illustrates the TESL language with a
-// simple takeoff scenario. It depicts the computation of quantities
-// and units with respect to time, speed and altitude.
+// The following specification illustrates the TESL language with the
+// simple takeoff scenario of a light aircraft. It depicts the
+// computation of quantities and units with respect to time, speed and
+// altitude.
 
-// Physical assumptions:
-//   Perpignan-Rivesaltes (PGF/LFMP)
-//   T/O RWY 31
-//   CAVOK, WIND 00000KT
-//   Altitude set on local QNH
-//   WEIGHT 2000 lbs
-//   Flaps retracted 0°
-//   Rich mixture
-//   Full engine
-
-// Performance speeds (IAS):
+// Performance speeds:
 //   VR = 55 kt
-//   Vy = 74 kt (corresponds to 1200 ft/min)
+//   Vertical speed in climb: 1200 ft/min
 
 rational-clock time-S       // in [s]
 rational-clock time-MIN     // in [min]
@@ -36,13 +27,11 @@ tag relation speed-KT = 4.5 * time-S
 VR-reach sporadic 55.0 on speed-KT
 VR-reach implies liftoff
 
-// Controling Vy in IAS ensures vertical speed of 1200 ft/min approx.
-// -100 is to arbitrarily set the altimeter with local QNH on 144 ft AMSL
-tag relation altitude-FT = 1200.0 * time-MIN + -100.0
+// Climbing with vertical speed of 1200 ft/min
+tag relation altitude-FT = 1200.0 * time-MIN + -244.4
 
-// Takeoff phase ends when the minimum safe altitude (MSA) is reached
-// At Perpignan, MSA is 300 ft AGL, i.e. approximately 444 ft AMSL
-liftoff time delayed by 300. on altitude-FT implies MSA-reach
+// Flaps retracting occurs at altitude 400 ft
+liftoff time delayed by 400. on altitude-FT implies flaps-retract
 
 @scenario 1 (time-S -> 0.0)
 @policy asap

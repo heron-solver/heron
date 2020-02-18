@@ -2,7 +2,7 @@
 // Data extracted from Airbus Flight Crew Performance Course
 // A318/A319/A320/A321 Performance Training Manual
 
-// The following specification describes a takeoff scenario of the
+// The following specification describes the takeoff scenario of the
 // transport-category aircraft Airbus A320. The default scenario
 // describes a normal takeoff with no engine failure. Several
 // scenarios are proposed to simulate a takeoff rejection with respect
@@ -18,7 +18,7 @@
 //   Flaps 1 (CONF 1+F)
 //   Maximum takeoff thrust
 
-// Performance speeds (IAS):
+// Performance speeds:
 //   V1 = 118 kt
 //   VR = 126 kt
 
@@ -44,13 +44,13 @@ VR-reach time delayed by 3. on time-S implies liftoff
 // - Ground spoilers were previously armed
 // - Autobrake was previously armed
 // - Speed reaches 72 kt
-SPLR-arm strictly precedes AUTOBRK-on
-AUTOBRK-arm strictly precedes AUTOBRK-on
-AUTOBRK-on sporadic 72.0 on speed-KT
+SPLR-arm strictly precedes AUTOBRK-active
+AUTOBRK-arm strictly precedes AUTOBRK-active
+AUTOBRK-active sporadic 72.0 on speed-KT
 
 // In the event of takeoff rejection (RTO), the system applies brakes
 // as long as autobrakes were in active state
-RTO sustained from AUTOBRK-on to AUTOBRK-off implies BRK-apply
+RTO sustained from AUTOBRK-active to AUTOBRK-inactive implies BRK-apply
 
 // RTO is forbidden after reaching V1
 // Conversely, applying brakes prevents from reaching takeoff speeds
@@ -78,4 +78,4 @@ BRK-apply kills V1-reach
 @policy asap
 @run
 @print
-//@output pdf select time-S speed-MPS speed-KT V1-reach VR-reach SPLR-arm AUTOBRK-arm AUTOBRK-on AUTOBRK-off RTO BRK-apply liftoff
+//@output pdf select time-S speed-MPS speed-KT V1-reach VR-reach SPLR-arm AUTOBRK-arm AUTOBRK-active AUTOBRK-inactive RTO BRK-apply liftoff

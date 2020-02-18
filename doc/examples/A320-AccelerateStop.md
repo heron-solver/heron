@@ -1,25 +1,18 @@
-Airbus A320 Acceleration-Stop Distance
+
+Airbus A320 Accelerate-Stop
 ===================
 > :wrench: Try me with the latest version of [![GitHub Version](https://img.shields.io/github/release/heron-solver/heron.svg?label=Heron&maxAge=2592000&colorB=46a4b8&style=flat-square)](https://github.com/EmptyStackExn/heron/releases/latest)
 > ```
-> ./heron --use examples/aviation/A320-AccelerationStop.tesl
+> ./heron --use examples/aviation/A320-AccelerateStop.tesl
 > ```
 
-This specification describes an acceleration-stop scenario of the transport-category aircraft Airbus A320. It depicts how the language also allows to express physical time and quantities with differential equations.
+This specification describes an accelerate-stop scenario of the transport-category aircraft Airbus A320. It depicts how the language also allows to express physical time and quantities with differential equations.
 
-From the [A318/A319/A320/A321 Performance Training Manual](A320-RTOW-PARIS-ORLY-RWY08.jpg):
+From the Airbus A320 Performance Training Manual, we extract the [V-speeds](https://www.skybrary.aero/index.php/V1) to be specified:
 
- - Paris Orly (ORY/LFPO)
- - T/O RWY 08
- - DRY conditions
- - TAILWIND -10 kt
- - WEIGHT 55.8 tons
- - Flaps 1 (CONF 1+F)
- - Maximum takeoff thrust
- - Decision speed: V1 = 118 kt
- - Acceleration-Stop Distance Available (ASDA): 1500 m
+![A318/A319/A320/A321 Performance Training Manual](A320-RTOW-PARIS-ORLY-RWY08.jpg "A318/A319/A320/A321 Performance Training Manual")
 
-In the following specification, we declare clocks: time in s, speed in m.s⁻¹, speed in kt, and distance in m. Likewise, we declare additional quantity-clocks for the deceleration stage. Note that a clock is a quantity where tags are **monotone**. We def
+In the following specification, we declare clocks: time in s, speed in m.s⁻¹, speed in kt, and distance in m. Likewise, we declare additional quantity-clocks for the deceleration stage. Note that a clock is a quantity where tags are **monotone**. We define
 ```
 rational-clock time-S              // in [s]
 rational-clock speed-MPS           // in [m.s⁻¹]
@@ -73,7 +66,7 @@ Simulation
 ----------
 
 <p align="center">
-  <img src="A320-AccelerationStop.svg">
+  <img src="A320-AccelerateStop.svg">
 </p>
 
 The execution trace starts with time, distance and speed all set to 0.0. Acceleration occurs until takeoff rejection (clock `RTO`), where speed and distance are synced with their corresponding clocks for the deceleration part. Finally, the moving object decelerates until approximately 1159 m (as shown on `distance-M-DECEL` at 23rd instant). Note that distance value is accurate with respect to the simulation step size which is here set to 2.5 s: a lower value yields a more accurate computation but slowers the solver.

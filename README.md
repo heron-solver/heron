@@ -21,8 +21,8 @@ The easiest way to start with Heron is to get the [latest binary release](https:
 
 ### Examples
  - [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md)
- - [Airbus A320 Autobrake System](doc/examples/A320-Autobrake.md)
- - [Airbus A320 Acceleration-Stop Distance](doc/examples/A320-AccelerationStop.md)
+ - [Airbus A320 Autobrake](doc/examples/A320-Autobrake.md)
+ - [Airbus A320 Accelerate-Stop](doc/examples/A320-AccelerateStop.md)
 
 For more information, please refer to the [Heron Reference Manual](doc/README.md).
 
