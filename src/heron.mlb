@@ -23,5 +23,5 @@ in
  TEX.sml
  Policy.sml
  Engine.sml
- Toplevel.sml
+ _Toplevel.sml
 end

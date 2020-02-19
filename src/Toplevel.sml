@@ -10,7 +10,8 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.59.6-alpha+20200215"
+val RELEASE_VERSION = "0.59.7-alpha+20200219"
+val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process
 
@@ -235,7 +236,7 @@ fun run_from_file s =
 
 (* Entry-point *)
 val _ = (
-  print ("\u001B[1mHeron " ^ RELEASE_VERSION ^" Release\u001B[0m\n");
+  print ("\u001B[1mHeron " ^ RELEASE_VERSION ^ " [" ^ COMPILER_CMD ^  "] Release\u001B[0m\n");
   let fun arg_loop args =
     case args of
         [] =>

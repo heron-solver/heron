@@ -3,6 +3,7 @@ CC=mlton
 all:
 	cd src && mllex parse.lex
 	cd src && mlyacc parse.grm
+	sed 's/_COMPILER_CMD_/${CC}/g' src/Toplevel.sml > src/_Toplevel.sml
 	${CC} -verbose 1 -output heron src/heron.mlb
 
 binary-release: all
@@ -25,7 +26,7 @@ test:
 
 clean:
 	rm -f regression/*.out regression/_results.log
-	rm -f src/parse.grm.desc src/parse.grm.sig src/parse.grm.sml src/parse.lex.sml
+	rm -f src/parse.grm.desc src/parse.grm.sig src/parse.grm.sml src/parse.lex.sml src/_Toplevel.sml
 
 # with_polyml:
 #  	cd src && mllex parse.lex
