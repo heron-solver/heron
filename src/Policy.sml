@@ -43,7 +43,7 @@ fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list 
 (* Policy 3. Maximize reactiveness of clocks *)
 fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
+    val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
     fun nb_ticks (G: system) : int =
       List.length (List.filter (fn Ticks _ => true | _ => false) G)
     val max_ticks : int =
@@ -57,7 +57,7 @@ fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf l
    variables. *)
 fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
+    val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
     fun nb_unsolved_affine (G: system) : int =
       List.length (List.filter (fn
 					Affine (x1, _, x2, _) =>
@@ -81,7 +81,7 @@ fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_con
 (* Policy 5. Minimizes the number of affine constraints containing variables. *)
 fun heuristic_minimize_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
+    val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
     fun nb_ticks (G: system) : int =
       List.length (List.filter (fn Ticks _ => true | _ => false) G)
     val min_ticks : int =
@@ -203,7 +203,7 @@ fun heuristic_lexicographic_priority (cfs : TESL_ARS_conf list) : TESL_ARS_conf 
 (* Policy 8. Maximize reactiveness of clocks *)
 fun heuristic_maximize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
+    val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
     fun nb_absence (G: system) : int =
       List.length (List.filter (fn NotTicks _ => true | _ => false) G)
     val max_ticks : int =
@@ -216,7 +216,7 @@ fun heuristic_maximize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
 (* Policy 9. Minimizes the number of affine constraints containing variables. *)
 fun heuristic_minimize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   let
-    val cfs = List.map (fn (G, n, frun, finst) => (reduce G, n, frun, finst)) cfs
+    val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
     fun nb_absence (G: system) : int =
       List.length (List.filter (fn NotTicks _ => true | _ => false) G)
     val min_ticks : int =
