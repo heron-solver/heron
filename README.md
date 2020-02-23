@@ -1,5 +1,4 @@
 Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/heron-solver/heron) [![GitHub Version](https://img.shields.io/github/release/heron-solver/heron.svg?maxAge=2592000&colorB=46a4b8)](https://github.com/EmptyStackExn/heron/releases/latest) [![Try with Docker](https://img.shields.io/badge/docker-emptystackexn/heron-blueviolet)](https://hub.docker.com/repository/docker/emptystackexn/heron)
-
 ===================
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
