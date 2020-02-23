@@ -1,4 +1,5 @@
-Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/heron-solver/heron) [![GitHub Version](https://img.shields.io/github/release/heron-solver/heron.svg?maxAge=2592000&colorB=46a4b8)](https://github.com/EmptyStackExn/heron/releases/latest)
+Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/heron-solver/heron) [![GitHub Version](https://img.shields.io/github/release/heron-solver/heron.svg?maxAge=2592000&colorB=46a4b8)](https://github.com/EmptyStackExn/heron/releases/latest) [![Try with Docker](https://img.shields.io/badge/docker-emptystackexn/heron-blueviolet)](https://hub.docker.com/repository/docker/emptystackexn/heron)
+
 ===================
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
@@ -13,11 +14,15 @@ Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=maste
 Getting started
 -------------------
 
-### Binary distribution
-The easiest way to start with Heron is to get the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems). To solve an example, you can simply type
+### Try me with Docker
+The easiest way to start with Heron is to get Docker and then simply type
 ```bash
-./heron --use examples/basic/FirstExample.tesl
+$ docker run -it emptystackexn/heron
+$ ./heron --use examples/basic/FirstExample.tesl
 ```
+
+### Binary distribution
+You can also fetch the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems).
 
 ### Examples
  - [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md)
