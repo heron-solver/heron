@@ -713,14 +713,6 @@ fun lawyer_e
 fun new_instant_init (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   List.map (ARS_rule_instant_intro declared_quantities) cfs
 
-(*
-fun shy_adventurer_step_e (c : TESL_ARS_conf) : TESL_ARS_conf list =
-  let val choices = lawyer_e c in
-  case choices of
-      [] => [] (* [c] *)
-    | _  => List.filter (context_SAT) ((List.map (fn (focus, redrule) => redrule c focus) choices))
-  end
-*)
 fun shy_adventurer_step_e (declared_quantities: clock list) (c : TESL_ARS_conf) : TESL_ARS_conf list =
   let val choices = lawyer_e declared_quantities c
   in
@@ -729,15 +721,17 @@ fun shy_adventurer_step_e (declared_quantities: clock list) (c : TESL_ARS_conf) 
 	 | _  => List.foldl
 		      (fn ((focus, redrule), l) =>
 			   let val cf = redrule c focus
-				val cf_reduced = (fn (G, n, phi, psi) => ((* (lfp reduce) *) G, n, phi, psi)) cf in
-				if context_SAT declared_quantities cf_reduced
-				then cf_reduced :: l
-				else l
+			   in
+			     if context_SAT declared_quantities cf
+			     then cf :: l
+			     else l
 			   end
 		      ) [] choices
   end
 
-
+(* Unrolls the elimination rules until future is emptied while keeping
+   configurations with consistent Γ.
+*)
 fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list) (rtprint:bool) (declared_quantities: clock list): TESL_ARS_conf list =
   let val print = if rtprint then (fn _ => ()) else (print)
   in case pending of
@@ -863,22 +857,28 @@ fun exec_step
   )
   : TESL_ARS_conf list =
   let
-      fun writeln_ifrun s = if rtprint then () else (writeln s)
-      fun write_ifrun s = if rtprint then () else (print s)
+      val writeln = fn s => (if rtprint then () else (writeln s))
+      val write   = fn s => (if rtprint then () else (print s))
       (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
       val () = case cfs of
 		[] => raise Abort
 	     | _  => ()
       val start_time = Time.now()
+
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
-      val () = writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
-      val _ = write_ifrun "Initializing new instant..."
+      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
+      (*  -- 1a. APPLYING INTRODUCTION RULES -- *)
+      (*   (Γ, n ⊨ [] ▷ Φ) →i (_, _ ⊨ Φ ▷ Φ) *)
+      val _ = write "Initializing new instant..."
       val introduced_cfs = new_instant_init declared_quantities cfs
       val _ = clear_line ()
-      val _ = write_ifrun "\rPreparing constraints..."
+      (*  -- 1b. APPLYING ELIMINATION RULES UNTIL EMPTY FUTURE -- *)
+      (*   (Γ, n ⊨ Ψ ▷ Φ) →e ... →e (_, _ ⊨ [] ▷ _) *)
+      val _ = write "\rPreparing constraints..."
       val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs rtprint declared_quantities
       val _ = clear_line ()
-      val _ = write_ifrun "\rSimplifying premodels..."
+      (*  -- 1c. SIMPLIFYING Γ-CONTEXTS -- *)
+      val _ = write "\rSimplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) =>
 						    let 
 							 val G'   = (lfp reduce) G
@@ -892,19 +892,19 @@ fun exec_step
       (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
       val cfs_selected_by_heuristic = case heuristics of
 	    [] => cfs_no_deadlock
-	  | _	=> (clear_line () ; write_ifrun "\rKeeping heuristics-compliant premodels..." ;
+	  | _	=> (clear_line () ; write "\rKeeping heuristics-compliant premodels..." ;
 		       (heuristic_combine heuristics) cfs_no_deadlock)
 
       (* END OF SIMULATION *)
       val end_time = Time.now()
       val _ = step_index := (!step_index) + 1
       val _ = clear_line ()
-      val _ = writeln_ifrun ("\r -> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
-      val _ = writeln_ifrun (" -> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
+      val _ = writeln ("\r -> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
+      val _ = writeln (" -> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
       val _ = case cfs_selected_by_heuristic of
 		    [] =>
-		    (writeln_ifrun (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;
-		     writeln_ifrun ("           Simulation is now stuck in inconsistent mode." ^ RESET_COLOR))
+		    (writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;
+		     writeln ("           Simulation is now stuck in inconsistent mode." ^ RESET_COLOR))
 		  | _ => ()  
   in cfs_selected_by_heuristic
   end
@@ -928,12 +928,12 @@ fun exec
   )
   : TESL_ARS_conf list =
   let
-    fun writeln_ifrun s = if rtprint then () else (writeln s)
-    val () = writeln_ifrun "Solving simulation..."
-    val () = writeln_ifrun ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
-    val () = writeln_ifrun ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
-    val () = writeln_ifrun ("Policy: " ^ (case heuristics of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch_Engine_2) "" heuristics))
-    val () = writeln_ifrun ("Stop clocks: " ^ (case stop_clks of [] => "null"
+    val writeln = (fn s => if rtprint then () else (writeln s))
+    val () = writeln "Solving simulation..."
+    val () = writeln ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
+    val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
+    val () = writeln ("Policy: " ^ (case heuristics of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch_Engine_2) "" heuristics))
+    val () = writeln ("Stop clocks: " ^ (case stop_clks of [] => "null"
 									| _ => String.concatWith " " (List.map (fn Clk cname => cname) stop_clks)))
     val next_cfs = ref cfs
     (* MAIN SIMULATION LOOP *)
@@ -943,11 +943,11 @@ fun exec
         (* STOPS WHEN MAXSTEP REACHED *)
         val () =
           if ((!step_index) = maxstep + 1)
-          then (writeln_ifrun ("# Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
-                writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
-		  writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING:" ^ RESET_COLOR) ;
-                writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length (!next_cfs)) ^ (case (!next_cfs) of [] => " premodel" | [_] => " premodel" | _ => " premodels") ^ RESET_COLOR);
-                writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "    (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
+          then (writeln ("# Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
+                writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
+		  writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING:" ^ RESET_COLOR) ;
+                writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length (!next_cfs)) ^ (case (!next_cfs) of [] => " premodel" | [_] => " premodel" | _ => " premodels") ^ RESET_COLOR);
+                writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "    (partially satisfying and potentially future-spurious models)" ^ RESET_COLOR);
                 raise Maxstep_reached (!next_cfs))
           else ()
         (* STOPS WHEN FINITE MODEL FOUND *)
@@ -961,9 +961,9 @@ fun exec
             andalso (minstep < (!step_index))
             ) (!next_cfs) in
           if List.length cfs_sat > 0
-          then (writeln_ifrun ("# Stopping simulation when finite model found") ;
-                writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
-                writeln_ifrun (BOLD_COLOR ^ GREEN_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ (case cfs_sat of [] => " model" | [_] => " model" | _ => " models") ^ RESET_COLOR);
+          then (writeln ("# Stopping simulation when finite model found") ;
+                writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
+                writeln (BOLD_COLOR ^ GREEN_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ (case cfs_sat of [] => " model" | [_] => " model" | _ => " models") ^ RESET_COLOR);
                 raise Model_found cfs_sat)
           else () end
 	 (* STOPS WHENEVER A CLOCK HAS *EXPLICITLY* TICKED *)
@@ -975,9 +975,9 @@ fun exec
 						   (List.exists (fn Ticks (c, _) => c = stopc | _ => false) G)) stop_clks))
 			   (!next_cfs)
 	     in if List.length cfs_sat > 0
-		 then (writeln_ifrun ("# Stopping simulation as some stop clock has explicitly reacted") ;
-			writeln_ifrun (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
-			writeln_ifrun (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ (case cfs_sat of [] => " model" | [_] => " model" | _ => " models") ^ RESET_COLOR);
+		 then (writeln ("# Stopping simulation as some stop clock has explicitly reacted") ;
+			writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
+			writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has successfully returned " ^ string_of_int (List.length cfs_sat) ^ (case cfs_sat of [] => " model" | [_] => " model" | _ => " models") ^ RESET_COLOR);
                 raise Stopclock_ticked (!next_cfs))
 		 else () end
         (* INSTANT SOLVING *)

@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.59.7-alpha+20200219"
+val RELEASE_VERSION = "0.59.8-alpha+20200221"
 val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process
