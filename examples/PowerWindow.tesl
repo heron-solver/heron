@@ -45,4 +45,4 @@ neutral_scenario implies btn_neutral
 @maxstep 14
 @policy asap
 @run
-// @output tikz standalone xscale 20 select btn_up, btn_neutral, up, stop, power, update_power, react
+//@output tex select btn_up btn_neutral up stop power update_power react

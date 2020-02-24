@@ -559,3 +559,9 @@ fun has_no_floating_ticks (f : TESL_formula) =
   (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
   (* Stop condition 2. No pending whenticking *)
   andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
+
+(* This is a safe over-approximation. In theory, it should be
+necessary to construct a dependency graph and measure the longest
+dependent segment of tag relations containing the pre operator *)
+fun pre_depth_formula (phi: TESL_formula): int =
+  List.length (List.filter (fn TagRelationPre _ => true | _ => false) phi)

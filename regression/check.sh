@@ -36,9 +36,17 @@ generate () {
 
 # Checks output against expectation
 run_check () {
-    if (! (diff $1 $2  | grep -v % | grep -w tick)) && (! (diff $1 $2  | grep -v % | grep -w date)) && (! (diff $1 $2  | grep -v % | grep -w Cross)) && (! (diff $1 $2  | grep -v % | grep -w Skull))
-    then echo "  -> PASS" ; exit 0 # \e[1m\e[32mPASS\e[0m
-    else echo "  -> FAIL" ; exit 1 # \e[1m\e[31mFAIL\e[0m
+    #if (! (diff $1 $2  | grep -v % | grep -w tick)) && (! (diff $1 $2  | grep -v % | grep -w date)) && (! (diff $1 $2  | grep -v % | grep -w Cross)) && (! (diff $1 $2  | grep -v % | grep -w Skull))
+    cat $1 | egrep "\[tick\]|\[date\]|Cross|Skull" | grep -v % | sort -u > $1.sorted
+    sort -u $2 > $2.sorted
+    INCLUSION_DIFF1=`comm -13 $1.sorted $2.sorted` # $2.sorted ⊆ $1.sorted
+    INCLUSION_DIFF2=`comm -13 $2.sorted $1.sorted` # $1.sorted ⊆ $2.sorted
+    if [ -z "$INCLUSION_DIFF1" ]
+    then if [ -z "$INCLUSION_DIFF2" ]
+	  then echo "  -> PASS" ; exit 0 # \e[1m\e[32mPASS\e[0m
+	  else echo "  -> FAIL" ; echo $INCLUSION_DIFF2 ; exit 1 # \e[1m\e[31mFAIL\e[0m
+	  fi
+    else echo "  -> FAIL" ; echo $INCLUSION_DIFF1 ; exit 1 # \e[1m\e[31mFAIL\e[0m
     fi
 }
 

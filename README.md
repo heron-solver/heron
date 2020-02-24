@@ -14,7 +14,7 @@ Getting started
 -------------------
 
 ### Try me with Docker
-The easiest way to start with Heron is to get Docker and then simply type
+The easiest way to start with Heron is to get [Docker](https://www.docker.com) and then simply type
 ```bash
 $ docker run -it emptystackexn/heron
 $ ./heron --use examples/basic/FirstExample.tesl

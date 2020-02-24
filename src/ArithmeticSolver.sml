@@ -700,13 +700,58 @@ fun decide (declared_quantities: clock list) (G: system) : bool =
   (* andalso check_no_shared_var_affeqns G *)
   andalso check_varright_affeqns G;
 
+(* Applies constant propagation and various simplifications *)
 fun reduce (G: system) =
   no_trivial_schem_timestamp (constant_funrel_eqns_elim (constant_affine_eqns_elim (all_schematic_elim (constants_propagation (uniq G)))))
 
+(* Decides SAT on context G *)
 fun SAT (declared_quantities: clock list) (G: system) : bool =
   let val G_prop_and_elim_until_fp = lfp (reduce) G (* Keep reducing *)
   in decide declared_quantities G_prop_and_elim_until_fp                 (* Then decide! *)
   end
 
+(* Decides SAT on the context of configuration *)
 fun context_SAT (declared_quantities: clock list) ((G, _, _, _) : TESL_ARS_conf) =
   SAT declared_quantities G
+
+(* Considers that all primitives indexing before [n] are SAT and than
+any primitives above [n] will not affect those before: there is no
+need to check prior.
+
+   This trick aims at a constant-time context resolution but is limited
+by the numerous calls of List.filter. A better optimization would be
+seperating the context [G] into two parts: resolution-fixed and
+resolution-non-fixed. *)
+structure ContextSplit =
+struct
+fun indx_geq_tag n t = case t of
+   Schematic (_, n') => n <= n'
+ | Add (t1, t2)      => (indx_geq_tag n t1) orelse (indx_geq_tag n t2)
+ | _                 => false
+fun indx_geq n prim = case prim of
+    Ticks (_, n') => n <= n'
+  | NotTicks (_, n') => n <= n'
+  | NotTicksUntil (_, n') => n <= n'
+  | NotTicksFrom (_, n') => n <= n'
+  | Timestamp (_, n', t) => (n <= n') orelse (indx_geq_tag n t)
+  | Affine (t1, t2, t3, t4) => (indx_geq_tag n t1) orelse 
+  			    (indx_geq_tag n t2) orelse 
+  			    (indx_geq_tag n t3) orelse 
+  			    (indx_geq_tag n t4)
+  | AffineRefl (t1, t2) => (indx_geq_tag n t1) orelse 
+  			(indx_geq_tag n t2)
+  | FunRel (t1, _, tlist) => (indx_geq_tag n t1) orelse
+  			  List.foldl (fn (t, res) => (indx_geq_tag n t) orelse res)
+  				      false
+  				      tlist
+end
+
+fun context_SAT_from (n: int) (declared_quantities: clock list) ((G, _, _, _) : TESL_ARS_conf) =
+  let 
+  in SAT declared_quantities (List.filter (fn prim => ContextSplit.indx_geq n prim) G)
+  end
+
+fun reduce_from (n: int) (G: system) =
+  let val (G_tosolve, G_solved) = List.partition (ContextSplit.indx_geq n) G
+  in G_solved @ (reduce G_tosolve)
+  end

@@ -22,6 +22,7 @@ test:
 	rm -f regression/*.out regression/_results.log
 	chmod +x regression/check.sh
 	for var in $(shell ls regression/*.tesl) ; do regression/check.sh $${var} ; done | tee regression/_results.log
+	rm -f regression/*.sorted
 	if (! (grep "FAIL" regression/_results.log >/dev/null)) ; then echo "\e[1m\e[32mCongrats! ALL REGRESSION TESTS PASSED.\e[0m" ; else echo "\e[1m\e[31mSorry! SOME REGRESSION TESTS HAVE FAILED.\e[0m" ; exit 1 ; fi
 
 clean:

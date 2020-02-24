@@ -713,7 +713,7 @@ fun lawyer_e
 fun new_instant_init (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   List.map (ARS_rule_instant_intro declared_quantities) cfs
 
-fun shy_adventurer_step_e (declared_quantities: clock list) (c : TESL_ARS_conf) : TESL_ARS_conf list =
+fun shy_adventurer_step_e (step_index: int) (declared_quantities: clock list) (c : TESL_ARS_conf) : TESL_ARS_conf list =
   let val choices = lawyer_e declared_quantities c
   in
       case choices of
@@ -722,7 +722,9 @@ fun shy_adventurer_step_e (declared_quantities: clock list) (c : TESL_ARS_conf) 
 		      (fn ((focus, redrule), l) =>
 			   let val cf = redrule c focus
 			   in
-			     if context_SAT declared_quantities cf
+			     (* Instead of using [context_SAT], this function restricts the working set of
+			        the SAT-Arithmetics solver. *)
+			     if context_SAT_from step_index declared_quantities cf
 			     then cf :: l
 			     else l
 			   end
@@ -732,7 +734,7 @@ fun shy_adventurer_step_e (declared_quantities: clock list) (c : TESL_ARS_conf) 
 (* Unrolls the elimination rules until future is emptied while keeping
    configurations with consistent Γ.
 *)
-fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list) (rtprint:bool) (declared_quantities: clock list): TESL_ARS_conf list =
+fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list) (rtprint:bool) (declared_quantities: clock list) (step_index: int): TESL_ARS_conf list =
   let val print = if rtprint then (fn _ => ()) else (print)
   in case pending of
       [] =>
@@ -740,7 +742,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
 	last_reduced)
     | _  =>
       let
-	   val reduced = List.concat (List.map (shy_adventurer_step_e declared_quantities) pending)
+	   val reduced = List.concat (List.map (shy_adventurer_step_e step_index declared_quantities) pending)
 	   val next_pending = List.filter (fn (_, _, _, psi) => psi <> []) reduced
 	   val next_counter = List.length next_pending
 	   val next_reduced = List.filter (fn (_, _, _, psi) => psi = []) reduced
@@ -750,7 +752,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
 		    then print (BOLD_COLOR ^ RED_COLOR ^ " \226\150\178 " ^ RESET_COLOR) (* Or use \226\134\145 *)
 		    else print (BOLD_COLOR ^ GREEN_COLOR ^ " \226\150\188 " ^ RESET_COLOR) (* Or use \226\134\147 *)
       in 
-	   psi_reduce next_counter (next_reduced @ last_reduced) next_pending rtprint declared_quantities
+	   psi_reduce next_counter (next_reduced @ last_reduced) next_pending rtprint declared_quantities step_index
       end
   end
 
@@ -868,21 +870,23 @@ fun exec_step
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
       val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
       (*  -- 1a. APPLYING INTRODUCTION RULES -- *)
-      (*   (Γ, n ⊨ [] ▷ Φ) →i (_, _ ⊨ Φ ▷ Φ) *)
+      (*     (Γ, n ⊨ [] ▷ Φ) →i (_, _ ⊨ Φ ▷ Φ) *)
       val _ = write "Initializing new instant..."
       val introduced_cfs = new_instant_init declared_quantities cfs
       val _ = clear_line ()
-      (*  -- 1b. APPLYING ELIMINATION RULES UNTIL EMPTY FUTURE -- *)
-      (*   (Γ, n ⊨ Ψ ▷ Φ) →e ... →e (_, _ ⊨ [] ▷ _) *)
+      (*  -- 1b. APPLYING ELIMINATION RULES UNTIL EMPTY PRESENT -- *)
+      (*     (Γ, n ⊨ Ψ ▷ Φ) →e ... →e (_, _ ⊨ [] ▷ _) *)
+      (*     NB. This is the heaviest part of the solver... Optimization is necessary. *)
       val _ = write "\rPreparing constraints..."
-      val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs rtprint declared_quantities
+      val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs rtprint declared_quantities (!step_index)
       val _ = clear_line ()
       (*  -- 1c. SIMPLIFYING Γ-CONTEXTS -- *)
       val _ = write "\rSimplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) =>
 						    let 
-							 val G'   = (lfp reduce) G
-							 val phi' = simplify_whentickings G' phi
+						   (* val G'   = (lfp reduce) G *)
+						      val G'   = (lfp (reduce_from ((!step_index) - (pre_depth_formula phi)))) G
+						      val phi' = simplify_whentickings G' phi
 						    in (G', n, phi', psi)
 						    end) reduce_psi_formulae
 
