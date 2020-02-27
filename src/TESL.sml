@@ -565,3 +565,19 @@ necessary to construct a dependency graph and measure the longest
 dependent segment of tag relations containing the pre operator *)
 fun pre_depth_formula (phi: TESL_formula): int =
   List.length (List.filter (fn TagRelationPre _ => true | _ => false) phi)
+
+(* Definitions for the toplevel solver *)
+type solver_params = {
+  maxstep: int ref,
+  minstep: int ref,
+  heuristics: TESL_atomic list ref,
+  dumpres: bool ref,
+  rtprint: bool ref,
+  file_to_open: string ref,
+  declared_clocks: clock list ref,
+  declared_clocks_driving: clock list ref,
+  declared_quantities: clock list ref,
+  current_step: int ref,
+  clock_types: (clock * tag_t) list ref
+}
+type solver_state = TESL_ARS_conf list ref

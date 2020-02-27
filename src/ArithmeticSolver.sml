@@ -711,7 +711,9 @@ fun SAT (declared_quantities: clock list) (G: system) : bool =
   end
 
 (* Decides SAT on the context of configuration *)
-fun context_SAT (declared_quantities: clock list) ((G, _, _, _) : TESL_ARS_conf) =
+fun context_SAT
+  (declared_quantities: clock list)
+  ((G, _, _, _) : TESL_ARS_conf) =
   SAT declared_quantities G
 
 (* Considers that all primitives indexing before [n] are SAT and than
@@ -746,9 +748,12 @@ fun indx_geq n prim = case prim of
   				      tlist
 end
 
-fun context_SAT_from (n: int) (declared_quantities: clock list) ((G, _, _, _) : TESL_ARS_conf) =
+fun context_SAT_from
+  (sp: solver_params)
+  (declared_quantities: clock list)
+  ((G, _, _, _) : TESL_ARS_conf) =
   let 
-  in SAT declared_quantities (List.filter (fn prim => ContextSplit.indx_geq n prim) G)
+  in SAT declared_quantities (List.filter (fn prim => ContextSplit.indx_geq (!(#current_step sp)) prim) G)
   end
 
 fun reduce_from (n: int) (G: system) =

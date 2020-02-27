@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.60.0-alpha+20200224"
+val RELEASE_VERSION = "0.60.1-alpha+20200227"
 val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process
@@ -34,22 +34,24 @@ fun invoke lexstream =
      in CalcParser.parse(0,lexstream,print_error,())
     end
 
-(* Solver context variables *)
-val maxstep                          = ref ~1
-val minstep                          = ref ~1
-val heuristics: TESL_atomic list ref = ref []
-val dumpres                          = ref false
-val rtprint                          = ref false
-val file_to_open                     = ref ""
-
-val declared_clocks: clock list ref = ref []
-val declared_driving_clocks: clock list ref = ref []
-val declared_clocks_quantities: clock list ref = ref [] (* included in declared_clocks *)
-
-val snapshots: TESL_ARS_conf list ref = ref [([], 0, [], [])]
-val current_step: int ref = ref 1
-
-val clock_types: (clock * tag_t) list ref = ref []
+(* Variables specific to the solver *)
+(* Parameters *)
+val sp0: solver_params = {
+  maxstep                 = ref ~1,
+  minstep                 = ref ~1,
+  heuristics              = ref [],
+  dumpres                 = ref false,
+  rtprint                 = ref false,
+  file_to_open            = ref "",
+  declared_clocks         = ref [],
+  declared_quantities     = ref [], (* included in declared_clocks *)
+  declared_clocks_driving = ref [],
+  clock_types             = ref [],
+  current_step            = ref 1
+}
+(* Snapshots (also called configurations) *)
+val snapshots: solver_state =
+  ref [([], 0, [], [])]
 
 fun quit () = case (!snapshots) of
     [] => OS.Process.exit OS.Process.failure
@@ -59,84 +61,36 @@ fun action (stmt: TESL_atomic) =
   (* On-the-fly clock identifiers declaration *)
   let
     exception Toplevel_Action_Cannot_Happen
-    val _ = declared_clocks := uniq ((!declared_clocks) @ (clocks_of_tesl_formula [stmt]))
-    val _ = declared_clocks_quantities := uniq ((!declared_clocks_quantities) @ (quantities_of_tesl_formula [stmt]))
-    val _ = clk_type_declare stmt clock_types
-    val _ = type_check (!clock_types)
+    val _ = #declared_clocks sp0 := uniq (!(#declared_clocks sp0) @ (clocks_of_tesl_formula [stmt]))
+    val _ = #declared_quantities sp0 := uniq (!(#declared_quantities sp0) @ (quantities_of_tesl_formula [stmt]))
+    val _ = clk_type_declare sp0 stmt
+    val _ = type_check sp0
   in
   case stmt of
-    DirMinstep n	     => minstep := n
-  | DirMaxstep n	     => maxstep := n
-  | DirHeuristic _	     => heuristics <>> stmt
-  | DirDumpres	     => dumpres := true
-  | DirScenario (strictness, step_index, tclks) =>
-    let val scenario: system ref = ref []
-        val n = (case step_index of NowPos  => if (!current_step) = 1 then 1 else (!current_step) - 1
-				      | NextPos => !current_step
-				      | Pos n   => n)
-	 val () = writeln (BOLD_COLOR ^ MAGENTA_COLOR ^ "### Scenario [" ^ (string_of_int n) ^ "] ###" ^ RESET_COLOR)
-	 val _ = List.app (fn (c, otag) =>
-				 (scenario <>> (Ticks (c, n)) ;
-				  case otag of NoneTag    => ()
-					      | CstTag tag => scenario <>> (Timestamp (c, n, tag))
-					      | SymbTag c_to_retrieve => (scenario <>> (Timestamp (c, n, Schematic (c, n))) ;
-									      scenario <>> (AffineRefl (Schematic (c, n), Schematic (c_to_retrieve, n))))
-			    )) tclks
-	 val _ = if strictness
-		  then List.app (fn c => if List.exists (fn (x, _) => x = c) tclks
-					    then ()
-					    else scenario <>> NotTicks (c, n)) (!declared_clocks)
-		  else ()
-	 val start_time = Time.now()
-	 val () = snapshots := List.map (fn (G, n, phi, psi) => (G @ (!scenario), n, phi, psi)) (!snapshots)
-	 val () = snapshots := List.map (fn (G, n, phi, psi) =>
-						 let 
-						   val G'   = (lfp reduce) G
-						   val phi' = simplify_whentickings G' phi
-						 in (G', n, phi', psi)
-						 end) (!snapshots)
-	 val () = snapshots := List.filter (fn (G, _, _, _) => SAT (!declared_clocks_quantities) G) (!snapshots)
-	 val end_time = Time.now()
-	 val _ = clear_line ()
-	 val _ = writeln ("\r -> Consistent premodels: " ^ string_of_int (List.length (!snapshots)))
-	 val _ = writeln (" -> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
-	 val _ = case (!snapshots) of
-		      [] =>
-		      (writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;
-			writeln ("           Simulation is now stuck in inconsistent mode." ^ RESET_COLOR))
-		    | _ => ()  
-				 
-    in ()
-    end
-  | DirDrivingClock c     => declared_driving_clocks <>>> c
-  | DirEventConcretize index => snapshots := event_concretize (!declared_driving_clocks) (!clock_types) index (!snapshots)
+    DirMinstep n	     => #minstep sp0 := n
+  | DirMaxstep n	     => #maxstep sp0 := n
+  | DirHeuristic _	     => (#heuristics sp0) <>> stmt
+  | DirDumpres	     => #dumpres sp0 := true
+  | DirScenario sc_params => 
+      scenario_add sp0 sc_params snapshots
+  | DirDrivingClock c     => (#declared_clocks_driving sp0) <>>> c
+  | DirEventConcretize index =>
+      snapshots := event_concretize sp0 index (!snapshots)
   | DirRun stop_clks	     =>
-      snapshots := exec
-			  (!snapshots)
-			  current_step
-			  (!declared_clocks)
-			  (!declared_clocks_quantities)
-			  (!minstep, !maxstep, !dumpres, !heuristics, !rtprint, stop_clks)
+      snapshots := exec sp0 stop_clks (!snapshots)
   | DirRunStep	     =>
-      snapshots := exec_step
-			  (!snapshots)
-			  current_step
-			  (!declared_clocks)
-			  (!declared_clocks_quantities)
-			  (!minstep, !maxstep, !dumpres, !heuristics, !rtprint)
+      snapshots := exec_step sp0 (!snapshots)
   | DirStutter	     =>
-      snapshots := stutter_step
-			  (!snapshots)
-			  current_step
+      snapshots := stutter_step sp0 (!snapshots)
   | DirPrint selected_clocks => (case selected_clocks of
-					  [] => print_dumpres (!declared_clocks) (!snapshots)
+					  [] => print_dumpres (!(#declared_clocks sp0)) (!snapshots)
 				      |  _  => print_dumpres selected_clocks (!snapshots))
   | DirOutputVCD          =>
     (case !snapshots of
 	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)
       | [s] => 
 	 (print ("## Writing vcd output to " ^ (OS.FileSys.getDir ()) ^ "/output.vcd\n");
-	  writeFile "output.vcd" (VCD_toString RELEASE_VERSION (!current_step - 1) (!declared_clocks) s))
+	  writeFile "output.vcd" (VCD_toString RELEASE_VERSION (!(#current_step sp0) - 1) (!(#declared_clocks sp0)) s))
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
   | DirOutputTEX (stdal, pdf, sel_clks)    =>
     (case !snapshots of
@@ -144,11 +98,11 @@ fun action (stmt: TESL_atomic) =
       | [s] =>
         let
 	   val output_clks = if sel_clks = []
-	   	     	then !declared_clocks
+	   	     	then (!(#declared_clocks sp0))
 			else sel_clks
 	 in
 	  (print ("## Writing tex output to " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n") ;
-	   writeFile "output.tex" (TEX_toString stdal RELEASE_VERSION (!current_step - 1) (output_clks) s) ;
+	   writeFile "output.tex" (TEX_toString stdal RELEASE_VERSION (!(#current_step sp0) - 1) (output_clks) s) ;
 	   if pdf
 	   then (
 	     print ("## Calling pdflatex on " ^ (OS.FileSys.getDir ()) ^ "/output.tex\n") ;
@@ -172,7 +126,7 @@ fun action (stmt: TESL_atomic) =
   | DirExit               => quit()
   | DirHelp               => print_help()
   | _                     =>
-    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!clock_types) (phi @ [stmt]), psi)) (!snapshots)
+    snapshots := List.map (fn (G, n, phi, psi) => (G, n, unsugar (!(#clock_types sp0)) (phi @ [stmt]), psi)) (!snapshots)
   end
   handle
   TagTypeInconsistency (Clk cname, ty, ty') =>
@@ -240,7 +194,7 @@ val _ = (
   let fun arg_loop args =
     case args of
         [] =>
-     if (!file_to_open) = ""
+     if !(#file_to_open sp0) = ""
      then
        (print "Copyright (c) 2020, Universit\195\169 Paris-Saclay / CNRS\n";
 	    print "Type @help for assistance. Please cite:\n" ;
@@ -248,12 +202,12 @@ val _ = (
 	    print "  Formal Modeling and Analysis of Timed Systems (LNCS, volume 10419), pp 318-334\n";
 	    toplevel())
      else
-       (print ("## Opening " ^ (!file_to_open) ^ "\n") ;
-        run_from_file (!file_to_open))
+       (print ("## Opening " ^ (!(#file_to_open sp0)) ^ "\n") ;
+        run_from_file (!(#file_to_open sp0)))
       | "-h" :: _ => print_help ()
       | "--help" :: _ => print_help ()
-      | "--runtime-print" :: args' => (rtprint := true; arg_loop args')
-      | "--use" :: filename :: args' => (file_to_open := filename; arg_loop args')
+      | "--runtime-print" :: args' => (#rtprint sp0 := true; arg_loop args')
+      | "--use" :: filename :: args' => (#file_to_open sp0 := filename; arg_loop args')
       | x :: _ =>
         (print ("Unknown option '" ^ x ^ "'.\n") ;
 	  print_help () ;

@@ -285,7 +285,9 @@ fun print_step_runtime (declared_clocks : clock list) (cfs: TESL_ARS_conf list) 
       | (G, step, phi, _) => (print_system_step current_step declared_clocks G))
   end
 
-fun print_dumpres (declared_clocks : clock list) (cfs: TESL_ARS_conf list) = case cfs of
+fun print_dumpres
+  (declared_clocks: clock list)
+  (cfs: TESL_ARS_conf list) = case cfs of
     [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
   | _ =>

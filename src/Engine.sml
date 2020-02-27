@@ -18,12 +18,12 @@
 (** Rules used for reduction *)
 (* 1. New instant introduction *)
 fun ARS_rule_instant_intro
-  (declared_quantities: clock list)
+  (sp: solver_params)
   (G, n, f, []) =
     (G,
      n + 1,
-     (((f @- (SelfModifyingSubs f)) @- (ConsumingSubs f)) @- (SporadicNowSubs f)) @- (SporadicQuantitiesSubs declared_quantities f),
-     (ConsumingSubs f) @ (SporadicNowSubs f) @ (SporadicQuantitiesSubs declared_quantities f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
+     (((f @- (SelfModifyingSubs f)) @- (ConsumingSubs f)) @- (SporadicNowSubs f)) @- (SporadicQuantitiesSubs (!(#declared_quantities sp)) f),
+     (ConsumingSubs f) @ (SporadicNowSubs f) @ (SporadicQuantitiesSubs (!(#declared_quantities sp)) f) @ (ConstantlySubs f) @ (ReproductiveSubs f) @ (SelfModifyingSubs f))
   | ARS_rule_instant_intro _ _ = raise Assert_failure;
 
 (* 2. Sporadic elimination when deciding to trigger tick sporadicaly *)
@@ -528,7 +528,7 @@ exception UnexpectedMatch_Engine_3
 exception UnexpectedMatch_Engine_4
 
 fun lawyer_e
-  (declared_quantities: clock list)
+  (sp: solver_params)
   ((G, n, _, f_present) : TESL_ARS_conf)
     : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
     case f_present of
@@ -623,7 +623,7 @@ fun lawyer_e
 			 | WhenNotClock _ =>
 			     [(fatom, ARS_rule_whennotclock_implies_1), (fatom, ARS_rule_whennotclock_implies_2), (fatom, ARS_rule_whennotclock_implies_3)]
 			 | Precedes (c1, c2, weakly_b) =>
-			   if not (SAT declared_quantities G)
+			   if not (SAT (!(#declared_quantities sp)) G)
 			   then (* (print "*** cntxt courant: nonsat!\n"; *) [] (* ) *)
 			   else
 			     (* (print "*** cntxt courant: sat!\n";  *)
@@ -710,11 +710,16 @@ fun lawyer_e
 			 | _ => raise UnspecifiedElimRule
 		      );
 
-fun new_instant_init (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  List.map (ARS_rule_instant_intro declared_quantities) cfs
+fun new_instant_init
+  (sp: solver_params)
+  (cfs : TESL_ARS_conf list)
+    : TESL_ARS_conf list =
+  List.map (ARS_rule_instant_intro sp) cfs
 
-fun shy_adventurer_step_e (step_index: int) (declared_quantities: clock list) (c : TESL_ARS_conf) : TESL_ARS_conf list =
-  let val choices = lawyer_e declared_quantities c
+fun shy_adventurer_step_e 
+  (sp: solver_params)
+  (c : TESL_ARS_conf) : TESL_ARS_conf list =
+  let val choices = lawyer_e sp c
   in
       case choices of
 	   [] => [] (* Removing [c] breaks empty specification simulation *)
@@ -724,7 +729,7 @@ fun shy_adventurer_step_e (step_index: int) (declared_quantities: clock list) (c
 			   in
 			     (* Instead of using [context_SAT], this function restricts the working set of
 			        the SAT-Arithmetics solver. *)
-			     if context_SAT_from step_index declared_quantities cf
+			     if context_SAT_from sp (!(#declared_quantities sp)) cf
 			     then cf :: l
 			     else l
 			   end
@@ -734,15 +739,19 @@ fun shy_adventurer_step_e (step_index: int) (declared_quantities: clock list) (c
 (* Unrolls the elimination rules until future is emptied while keeping
    configurations with consistent Γ.
 *)
-fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: TESL_ARS_conf list) (rtprint:bool) (declared_quantities: clock list) (step_index: int): TESL_ARS_conf list =
-  let val print = if rtprint then (fn _ => ()) else (print)
+fun psi_reduce 
+  (sp: solver_params)
+  (last_counter: int)
+  (last_reduced: TESL_ARS_conf list)
+  (pending: TESL_ARS_conf list) =
+  let val print = if !(#rtprint sp) then (fn _ => ()) else (print)
   in case pending of
       [] =>
       (print "\b\b\b, done.         " ;
 	last_reduced)
     | _  =>
       let
-	   val reduced = List.concat (List.map (shy_adventurer_step_e step_index declared_quantities) pending)
+	   val reduced = List.concat (List.map (shy_adventurer_step_e sp) pending)
 	   val next_pending = List.filter (fn (_, _, _, psi) => psi <> []) reduced
 	   val next_counter = List.length next_pending
 	   val next_reduced = List.filter (fn (_, _, _, psi) => psi = []) reduced
@@ -752,7 +761,7 @@ fun psi_reduce (last_counter: int) (last_reduced: TESL_ARS_conf list) (pending: 
 		    then print (BOLD_COLOR ^ RED_COLOR ^ " \226\150\178 " ^ RESET_COLOR) (* Or use \226\134\145 *)
 		    else print (BOLD_COLOR ^ GREEN_COLOR ^ " \226\150\188 " ^ RESET_COLOR) (* Or use \226\134\147 *)
       in 
-	   psi_reduce next_counter (next_reduced @ last_reduced) next_pending rtprint declared_quantities step_index
+	   psi_reduce sp next_counter (next_reduced @ last_reduced) next_pending
       end
   end
 
@@ -790,40 +799,46 @@ fun simplify_whentickings (G: system) (frun: TESL_formula) =
    for merge, the clock of this tick will never react! The tick will be delayed for merge forever, and never merged in
    the future.
    ... except for quantities *)
-fun policy_no_spurious_sporadics (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun policy_no_spurious_sporadics
+  (sp: solver_params)
+  (cfs : TESL_ARS_conf list)
+    : TESL_ARS_conf list =
   List.filter
     (fn (G, _, phi, _) =>
       List.all (fn
 		   Sporadic (clk, Int n1) =>
-		     (List.exists (fn qty => clk = qty) declared_quantities)
+		     (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
 		     orelse (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n2 <= n1) | _ => true) G)
                | Sporadic (clk, Rat q1) =>
-		     (List.exists (fn qty => clk = qty) declared_quantities)
+		     (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
 		     orelse (List.all (fn Timestamp (clk', _, Rat q2) => not (clk = clk') orelse (<=/ (q2, q1)) | _ => true) G)
                | _ => true) phi)
     cfs;
-fun policy_no_spurious_whentickings (declared_quantities: clock list) (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun policy_no_spurious_whentickings
+  (sp: solver_params)
+  (cfs : TESL_ARS_conf list)
+    : TESL_ARS_conf list =
   List.filter
     (fn (G, _, phi, _) =>
       List.all (fn
-        WhenTickingOn (clk, Int n1, _) => (List.exists (fn qty => clk = qty) declared_quantities)
+        WhenTickingOn (clk, Int n1, _) => (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
 						orelse (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
-      | WhenTickingOn (clk, Rat x1, _) => (List.exists (fn qty => clk = qty) declared_quantities)
+      | WhenTickingOn (clk, Rat x1, _) => (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
 						orelse (List.all (fn Timestamp (clk', _, Rat x2) => not (clk = clk') orelse (<=/ (x2, x1)) | _ => true) G)
       | _ => true) phi)
     cfs;
 
 (* Stutters the last instant *)
 fun stutter_step
+  (sp: solver_params)
   (cfs : TESL_ARS_conf list)
-  (step_index: int ref)
   : TESL_ARS_conf list =
     let
       (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
       val () = case cfs of
 		[] => raise Abort
 	     | _  => ()
-      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
+      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!(#current_step sp)) ^ "] #####" ^ RESET_COLOR)
       val _  = writeln "Stuttering the last instant..." 
 (*
       fun primitives_to_stutter G indx =
@@ -839,7 +854,7 @@ fun stutter_step
       fun stutter (G, n, phi, psi) =
 	   (G (*@ (primitives_to_stutter G n) *), n + 1, phi, psi)
       val stuttered_cfs = List.map (stutter) cfs
-      val _ = step_index := (!step_index) + 1
+      val _ = #current_step sp := !(#current_step sp) + 1
     in stuttered_cfs
     end
     handle
@@ -847,20 +862,12 @@ fun stutter_step
 
 (* Executes exactly one simulation step *)
 fun exec_step
+  (sp: solver_params)
   (cfs : TESL_ARS_conf list)
-  (step_index: int ref)
-  (declared_clocks : clock list)
-  (declared_quantities : clock list)
-  (minstep     : int,
-   maxstep     : int,
-   dumpres     : bool,
-   heuristics  : TESL_formula,
-   rtprint     : bool
-  )
   : TESL_ARS_conf list =
   let
-      val writeln = fn s => (if rtprint then () else (writeln s))
-      val write   = fn s => (if rtprint then () else (print s))
+      val writeln = fn s => (if !(#rtprint sp) then () else (writeln s))
+      val write   = fn s => (if !(#rtprint sp) then () else (print s))
       (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
       val () = case cfs of
 		[] => raise Abort
@@ -868,40 +875,40 @@ fun exec_step
       val start_time = Time.now()
 
       (* 1. COMPUTING THE NEXT SIMULATION STEP *)
-      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!step_index) ^ "] #####" ^ RESET_COLOR)
+      val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!(#current_step sp)) ^ "] #####" ^ RESET_COLOR)
       (*  -- 1a. APPLYING INTRODUCTION RULES -- *)
       (*     (Γ, n ⊨ [] ▷ Φ) →i (_, _ ⊨ Φ ▷ Φ) *)
       val _ = write "Initializing new instant..."
-      val introduced_cfs = new_instant_init declared_quantities cfs
+      val introduced_cfs = new_instant_init sp cfs
       val _ = clear_line ()
       (*  -- 1b. APPLYING ELIMINATION RULES UNTIL EMPTY PRESENT -- *)
       (*     (Γ, n ⊨ Ψ ▷ Φ) →e ... →e (_, _ ⊨ [] ▷ _) *)
       (*     NB. This is the heaviest part of the solver... Optimization is necessary. *)
       val _ = write "\rPreparing constraints..."
-      val reduce_psi_formulae = psi_reduce MININT [] introduced_cfs rtprint declared_quantities (!step_index)
+      val reduce_psi_formulae = psi_reduce sp MININT [] introduced_cfs
       val _ = clear_line ()
       (*  -- 1c. SIMPLIFYING Γ-CONTEXTS -- *)
       val _ = write "\rSimplifying premodels..."
       val reduced_haa_contexts = List.map (fn (G, n, phi, psi) =>
 						    let 
 						   (* val G'   = (lfp reduce) G *)
-						      val G'   = (lfp (reduce_from ((!step_index) - (pre_depth_formula phi)))) G
+						      val G'   = (lfp (reduce_from (!(#current_step sp) - (pre_depth_formula phi)))) G
 						      val phi' = simplify_whentickings G' phi
 						    in (G', n, phi', psi)
 						    end) reduce_psi_formulae
 
       (* 2. REMOVE CONFIGURATIONS IN DEADLOCK STATE DUE TO UNMERGEABLE SPORADICS *)
-      val cfs_no_deadlock = policy_no_spurious_sporadics declared_quantities (policy_no_spurious_whentickings declared_quantities reduced_haa_contexts)
+      val cfs_no_deadlock = policy_no_spurious_sporadics sp (policy_no_spurious_whentickings sp reduced_haa_contexts)
 
       (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
-      val cfs_selected_by_heuristic = case heuristics of
+      val cfs_selected_by_heuristic = case !(#heuristics sp) of
 	    [] => cfs_no_deadlock
 	  | _	=> (clear_line () ; write "\rKeeping heuristics-compliant premodels..." ;
-		       (heuristic_combine heuristics) cfs_no_deadlock)
+		       (heuristic_combine (!(#heuristics sp))) cfs_no_deadlock)
 
       (* END OF SIMULATION *)
       val end_time = Time.now()
-      val _ = step_index := (!step_index) + 1
+      val _ = #current_step sp := !(#current_step sp) + 1
       val _ = clear_line ()
       val _ = writeln ("\r -> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
       val _ = writeln (" -> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
@@ -913,41 +920,33 @@ fun exec_step
   in cfs_selected_by_heuristic
   end
   handle
-    Abort => (print_dumpres declared_clocks []; [])
+    Abort => (print_dumpres (!(#declared_clocks sp)) []; [])
 
 exception UnexpectedMatch_Engine_2
 (* Solves the specification until reaching a satisfying finite model *)
 (* If [maxstep] is -1, then the simulation will be unbounded *)
 fun exec
+  (sp: solver_params)
+  (stop_clks: clock list)
   (cfs : TESL_ARS_conf list)
-  (step_index : int ref)
-  (declared_clocks : clock list)
-  (declared_quantities : clock list)
-  (minstep     : int,
-   maxstep     : int,
-   dumpres     : bool,
-   heuristics  : TESL_formula,
-   rtprint     : bool,
-   stop_clks   : clock list
-  )
   : TESL_ARS_conf list =
   let
-    val writeln = (fn s => if rtprint then () else (writeln s))
+    val writeln = (fn s => if !(#rtprint sp) then () else (writeln s))
     val () = writeln "Solving simulation..."
-    val () = writeln ("Min. steps: " ^ (if minstep = ~1 then "null" else string_of_int minstep))
-    val () = writeln ("Max. steps: " ^ (if maxstep = ~1 then "null" else string_of_int maxstep))
-    val () = writeln ("Policy: " ^ (case heuristics of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch_Engine_2) "" heuristics))
+    val () = writeln ("Min. steps: " ^ (if !(#minstep sp) = ~1 then "null" else string_of_int (!(#minstep sp))))
+    val () = writeln ("Max. steps: " ^ (if !(#maxstep sp) = ~1 then "null" else string_of_int (!(#maxstep sp))))
+    val () = writeln ("Policy: " ^ (case !(#heuristics sp) of [] => "none (exhaustive paths)" | _ => List.foldr (fn (DirHeuristic s, s_cur) => s ^ ", " ^ s_cur | _ => raise UnexpectedMatch_Engine_2) "" (!(#heuristics sp))))
     val () = writeln ("Stop clocks: " ^ (case stop_clks of [] => "null"
 									| _ => String.concatWith " " (List.map (fn Clk cname => cname) stop_clks)))
     val next_cfs = ref cfs
     (* MAIN SIMULATION LOOP *)
     val _ = (while (true) do
       let
-        val () = if rtprint then print_step_runtime declared_clocks (!next_cfs) (!step_index - 1) else ()
+        val () = if !(#rtprint sp) then print_step_runtime (!(#declared_clocks sp)) (!next_cfs) (!(#current_step sp) - 1) else ()
         (* STOPS WHEN MAXSTEP REACHED *)
         val () =
-          if ((!step_index) = maxstep + 1)
-          then (writeln ("# Stopping simulation at step " ^ string_of_int maxstep ^ " as requested") ;
+          if (!(#current_step sp) = !(#maxstep sp) + 1)
+          then (writeln ("# Stopping simulation at step " ^ string_of_int (!(#maxstep sp)) ^ " as requested") ;
                 writeln (BOLD_COLOR ^ BLUE_COLOR ^ "### End of simulation ###" ^ RESET_COLOR);
 		  writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING:" ^ RESET_COLOR) ;
                 writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### Solver has returned " ^ string_of_int (List.length (!next_cfs)) ^ (case (!next_cfs) of [] => " premodel" | [_] => " premodel" | _ => " premodels") ^ RESET_COLOR);
@@ -962,7 +961,7 @@ fun exec
             (* Stop condition 2. No pending whenticking *)
             andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0)
             (* Stop condition 3. Minstep has already been overheaded *)
-            andalso (minstep < (!step_index))
+            andalso (!(#minstep sp) < !(#current_step sp))
             ) (!next_cfs) in
           if List.length cfs_sat > 0
           then (writeln ("# Stopping simulation when finite model found") ;
@@ -985,7 +984,7 @@ fun exec
                 raise Stopclock_ticked (!next_cfs))
 		 else () end
         (* INSTANT SOLVING *)
-        val _ = next_cfs := exec_step (!next_cfs) step_index declared_clocks declared_quantities (minstep, maxstep, dumpres, heuristics, rtprint)
+        val _ = next_cfs := exec_step sp (!next_cfs)
 	 in case (!next_cfs) of
 	     [] => raise EmptySnapshots
 	   | _  => ()
@@ -994,18 +993,18 @@ fun exec
   end
   handle
   Maxstep_reached   cfs =>
-  (if dumpres
-   then print_dumpres declared_clocks cfs
+  (if !(#dumpres sp)
+   then print_dumpres (!(#declared_clocks sp)) cfs
    else writeln "# No output format requested" ;
    cfs)
   | Model_found       cfs =>
-    (if dumpres
-     then print_dumpres declared_clocks cfs
+    (if !(#dumpres sp)
+     then print_dumpres (!(#declared_clocks sp)) cfs
      else writeln "# No output format requested" ;
      cfs)
   | Stopclock_ticked       cfs =>
-    (if dumpres
-     then print_dumpres declared_clocks cfs
+    (if !(#dumpres sp)
+     then print_dumpres (!(#declared_clocks sp)) cfs
      else writeln "# No output format requested" ;
      cfs)
   | EmptySnapshots => []

@@ -23,5 +23,6 @@ in
  TEX.sml
  Policy.sml
  Engine.sml
+ Testing.sml
  _Toplevel.sml
 end
