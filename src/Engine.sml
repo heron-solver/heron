@@ -744,7 +744,9 @@ fun psi_reduce
   (last_counter: int)
   (last_reduced: TESL_ARS_conf list)
   (pending: TESL_ARS_conf list) =
-  let val print = if !(#rtprint sp) then (fn _ => ()) else (print)
+  let val print =
+	   (* if !(#rtprint sp) then (fn _ => ()) else (print) *)
+	   fn _ => ()
   in case pending of
       [] =>
       (print "\b\b\b, done.         " ;
@@ -756,10 +758,12 @@ fun psi_reduce
 	   val next_counter = List.length next_pending
 	   val next_reduced = List.filter (fn (_, _, _, psi) => psi = []) reduced
 	   val _ = clear_line ()
+          (*
 	   val _ = print ("\rRemaining universes pending for constraint reduction: " ^ (Int.toString next_counter))
 	   val _ = if last_counter < next_counter
 		    then print (BOLD_COLOR ^ RED_COLOR ^ " \226\150\178 " ^ RESET_COLOR) (* Or use \226\134\145 *)
 		    else print (BOLD_COLOR ^ GREEN_COLOR ^ " \226\150\188 " ^ RESET_COLOR) (* Or use \226\134\147 *)
+	   *)
       in 
 	   psi_reduce sp next_counter (next_reduced @ last_reduced) next_pending
       end
@@ -885,17 +889,37 @@ fun exec_step
       (*     (Γ, n ⊨ Ψ ▷ Φ) →e ... →e (_, _ ⊨ [] ▷ _) *)
       (*     NB. This is the heaviest part of the solver... Optimization is necessary. *)
       val _ = write "\rPreparing constraints..."
-      val reduce_psi_formulae = psi_reduce sp MININT [] introduced_cfs
+      (* val reduce_psi_formulae = psi_reduce sp MININT [] introduced_cfs *)
+      (* --> Partition to enjoy multicore computation: *)
+      val ((introduced_cfs_part1, introduced_cfs_part2), (introduced_cfs_part3, introduced_cfs_part4)) =
+	 case ListMore.split_half introduced_cfs of
+	     (l, l') => (ListMore.split_half l, ListMore.split_half l')
+      val ((reduce_psi_formulae_part1, reduce_psi_formulae_part2), (reduce_psi_formulae_part3, reduce_psi_formulae_part4)) =
+	   ForkJoin.par (fn _ => ForkJoin.par (fn _ => psi_reduce sp MININT [] introduced_cfs_part1,
+						    fn _ => psi_reduce sp MININT [] introduced_cfs_part2),
+			   fn _ => ForkJoin.par (fn _ => psi_reduce sp MININT [] introduced_cfs_part3,
+						    fn _ => psi_reduce sp MININT [] introduced_cfs_part4))
+      val reduce_psi_formulae = reduce_psi_formulae_part1 @ reduce_psi_formulae_part2 @ reduce_psi_formulae_part3 @ reduce_psi_formulae_part4
       val _ = clear_line ()
       (*  -- 1c. SIMPLIFYING Γ-CONTEXTS -- *)
       val _ = write "\rSimplifying premodels..."
-      val reduced_haa_contexts = List.map (fn (G, n, phi, psi) =>
+      fun reduce_haa l = List.map (fn (G, n, phi, psi) =>
 						    let 
 						   (* val G'   = (lfp reduce) G *)
 						      val G'   = (lfp (reduce_from (!(#current_step sp) - (pre_depth_formula phi)))) G
 						      val phi' = simplify_whentickings G' phi
 						    in (G', n, phi', psi)
-						    end) reduce_psi_formulae
+						    end) l
+      (* val reduced_haa_contexts = reduce_haa reduce_psi_formulae *)
+      val ((reduce_psi_formulae_part1, reduce_psi_formulae_part2), (reduce_psi_formulae_part3, reduce_psi_formulae_part4)) =
+	   case ListMore.split_half reduce_psi_formulae of
+            (l, l') => (ListMore.split_half l, ListMore.split_half l')
+      val ((reduced_haa_contexts_part1, reduced_haa_contexts_part2), (reduced_haa_contexts_part3, reduced_haa_contexts_part4)) =
+	   ForkJoin.par (fn _ => ForkJoin.par (fn _ => reduce_haa reduce_psi_formulae_part1,
+							fn _ => reduce_haa reduce_psi_formulae_part2),
+			   fn _ => ForkJoin.par (fn _ => reduce_haa reduce_psi_formulae_part3,
+							fn _ => reduce_haa reduce_psi_formulae_part4))
+      val reduced_haa_contexts = reduced_haa_contexts_part1 @ reduced_haa_contexts_part2 @ reduced_haa_contexts_part3 @ reduced_haa_contexts_part4
 
       (* 2. REMOVE CONFIGURATIONS IN DEADLOCK STATE DUE TO UNMERGEABLE SPORADICS *)
       val cfs_no_deadlock = policy_no_spurious_sporadics sp (policy_no_spurious_whentickings sp reduced_haa_contexts)

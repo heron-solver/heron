@@ -114,3 +114,16 @@ fun largest [] = raise Empty
  | largest [x] = x
  | largest (x::xs) = max(x, largest xs)
  
+structure ListMore =
+struct
+
+(* Splits a list into 2 lists (linear time) *)
+fun split_half l =
+  let fun aux l (left, right) = case l of
+   []		    => (left, right)
+ | [x]		    => (x :: left, right)
+ | x1 :: x2 :: l' => aux l' (x1 :: left, x2 :: right)
+  in aux l ([], [])
+  end
+
+end
