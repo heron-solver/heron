@@ -8,15 +8,12 @@ This manual highlights specific features of the Heron solver that are undocument
 ./heron --help
 ```
 
-Compile from sources
+Compile from sources with Dockerized MPL
 -------------------
 ```bash
-sudo apt install mlton      #If Ubuntu
-brew install mlton          #If macOS
-
 git clone https://github.com/heron-solver/heron.git
 cd heron
-make
+docker run -v "$PWD":"$PWD" -w "$PWD" shwestrick/mpl make
 ```
 
 

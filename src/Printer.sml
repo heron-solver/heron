@@ -12,7 +12,7 @@
 fun print_help () = (
 print (BOLD_COLOR ^ "Heron\n" ^ RESET_COLOR); 
 print (BOLD_COLOR ^ "Simulation Solver for Timed Causality Models in the Tagged Events Specification Language\n" ^ RESET_COLOR); 
-print ("Usage: " ^ CommandLine.name () ^ " [--use FILE.tesl] [--runtime-print]");
+print ("Usage: " ^ CommandLine.name () ^ " [@mpl procs N --] [--use FILE.tesl] [--runtime-print]");
 print "\n\n";
 print "Copyright (c) 2020, Universit\195\169 Paris-Saclay / CNRS\n";
 print "Please cite: H. Nguyen Van, T. Balabonski, F. Boulanger, C. Keller, B. Valiron, B. Wolff.\n";
@@ -85,7 +85,13 @@ print "  \u001B[1m@stutter\u001B[0m                          stutters the last s
 print "  \u001B[1m@event-concretize\u001B[0m                 concretize ticks/tags of driving clocks\n"; 
 print "  \u001B[1m@print\u001B[0m                            display the current snapshots\n"; 
 print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m          export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
-print "  \u001B[1m@help\u001B[0m                             display the list of commands\n")
+print "  \u001B[1m@help\u001B[0m                             display the list of commands\n";
+print "\n"; 
+print (BOLD_COLOR ^ "Multicore support:\n" ^ RESET_COLOR);
+print "  To use the solver on multiple cores, you need to use MPL-level argument procs.\n";
+print "  For instance, with 4 cores:\n";
+print ("  $ " ^ (CommandLine.name ()) ^ " @mpl procs 4 -- -use examples/basic/FirstExample.tesl\n")
+)
 
 fun superscript_of_char (c : char) =
   case c of

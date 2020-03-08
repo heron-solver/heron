@@ -21,7 +21,7 @@ $ ./heron --use examples/basic/FirstExample.tesl
 ```
 
 ### Binary distribution
-You can also fetch the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) (Linux and macOS systems).
+You can also fetch the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest). For macOS, the latest supported version is [`0.60.0-alpha+20200224`](https://github.com/heron-solver/heron/releases/tag/0.60.0-alpha%2B20200224).
 
 ### Examples
  - [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md)
@@ -40,7 +40,7 @@ References
 People
 -------------------
 
-The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It uses [MLton](http://mlton.org) as its Standard ML compiler. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
+The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It uses [MPL](https://github.com/MPLLang/mpl)([MLton](http://mlton.org)) as its Standard ML compiler. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
 
 License
 -------------------

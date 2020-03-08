@@ -1,4 +1,4 @@
-CC=mlton
+CC=mpl
 
 all:
 	cd src && mllex parse.lex

@@ -126,4 +126,19 @@ fun split_half l =
   in aux l ([], [])
   end
 
+(* Splits a list into 2 lists (linear time) *)
+fun split_in_8 l =
+  let fun aux l (l1, l2, l3, l4, l5, l6, l7, l8) = case l of
+   []		                                        => (l1, l2, l3, l4, l5, l6, l7, l8)
+ | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: x8 :: l' => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, x7 :: l7, x8 :: l8)
+ | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: l'       => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, x7 :: l7, l8)
+ | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: l'             => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, l7, l8)
+ | x1 :: x2 :: x3 :: x4 :: x5 :: l'                   => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, l6, l7, l8)
+ | x1 :: x2 :: x3 :: x4 :: l'                         => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, l5, l6, l7, l8)
+ | x1 :: x2 :: x3 :: l'                               => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, l4, l5, l6, l7, l8)
+ | x1 :: x2 :: l'                                     => aux l' (x1 :: l1, x2 :: l2, l3, l4, l5, l6, l7, l8)
+ | x1 :: l'                                           => aux l' (x1 :: l1, l2, l3, l4, l5, l6, l7, l8)
+  in aux l ([], [], [], [], [], [], [], [])
+  end
+
 end

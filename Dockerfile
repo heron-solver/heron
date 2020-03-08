@@ -1,7 +1,7 @@
-FROM emptystackexn/multimlton
+FROM shwestrick/mpl
 WORKDIR /heron
 RUN git clone https://github.com/heron-solver/heron.git .
-RUN make CC=multimlton
+RUN make
 ENV PATH="/heron:${PATH}"
 
 
