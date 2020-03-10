@@ -1,4 +1,20 @@
   \node       at (1+0.1, -4+0.1)  {\Cross} ;
+  \node       at (2+0.1, -4+0.1)  {\Cross} ;
+  \node       at (2+0.1, -2+0.1)  {\Cross} ;
+  \node[tick] at (1, -2)  {} ;
+  \node[date] at (1, -2)  {0.} ;
+  \node[date] at (1, -1)  {0.} ;
+  \node[date] at (1, 0)  {0.} ;
+  \node[date] at (1, -3)  {0.} ;
+  \node[date] at (1, -4)  {0.} ;
+  \node[date] at (2, -1)  {2.} ;
+  \node[tick] at (2, -3)  {} ;
+  \node[date] at (2, 0)  {1.33333333333} ;
+  \node[date] at (2, -2)  {2.} ;
+  \node[date] at (2, -3)  {2.} ;
+  \node[date] at (2, -4)  {2.} ;
+
+  \node       at (1+0.1, -4+0.1)  {\Cross} ;
   \node       at (2+0.1, -2+0.1)  {\Cross} ;
   \node       at (3+0.1, -4+0.1)  {\Cross} ;
   \node       at (3+0.1, -2+0.1)  {\Cross} ;

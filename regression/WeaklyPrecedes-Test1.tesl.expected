@@ -1,4 +1,20 @@
+  \node[tick] at (1, -1)  {} ;
+  \node[tick] at (1, 0)  {} ;
+  \node[tick] at (2, -1)  {} ;
+  \node[tick] at (2, 0)  {} ;
+
+  \node       at (2+0.1, -1+0.1)  {\Cross} ;
+  \node[tick] at (1, -1)  {} ;
+  \node[tick] at (1, 0)  {} ;
+
   \node       at (1+0.1, -1+0.1)  {\Cross} ;
   \node       at (1+0.1, 0+0.1)  {\Cross} ;
   \node[tick] at (2, -1)  {} ;
   \node[tick] at (2, 0)  {} ;
+
+  \node       at (1+0.1, -1+0.1)  {\Cross} ;
+  \node[tick] at (1, 0)  {} ;
+  \node[tick] at (2, -1)  {} ;
+
+  \node       at (1+0.1, -1+0.1)  {\Cross} ;
+  \node       at (2+0.1, -1+0.1)  {\Cross} ;
