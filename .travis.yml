@@ -4,11 +4,9 @@ os:
   - osx
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes mlton ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install mlton ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes docker ; fi
 install:
-  - make
+  - docker run -v "$PWD":"$PWD" -w "$PWD" shwestrick/mpl make
 script:
   - make test
   
