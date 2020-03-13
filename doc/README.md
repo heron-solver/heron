@@ -8,14 +8,30 @@ This manual highlights specific features of the Heron solver that are undocument
 ./heron --help
 ```
 
-Compile from sources with Dockerized MPL
+Compile from sources
 -------------------
+
+Two compilers can be used to build from sources whether you wish you obtain a singlecore or a multicore version of Heron.
+
+### Linux (with Dockerized MPL)
+
+Both single and multi-core are supported. It is advisable to use Docker to provide the latest version of MPL. To build:
+
 ```bash
 git clone https://github.com/heron-solver/heron.git
 cd heron
 docker run -v "$PWD":"$PWD" -w "$PWD" shwestrick/mpl make
 ```
 
+### macOS
+
+Only single-core is supported in macOS by using the MLton compiler. The `make` command will simply detect your OS and use MLton accordingly:
+
+```bash
+git clone https://github.com/heron-solver/heron.git
+cd heron
+make
+```
 
 Emacs mode
 -------------------

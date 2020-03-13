@@ -87,7 +87,7 @@ print "  \u001B[1m@print\u001B[0m                            display the current
 print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m          export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
 print "  \u001B[1m@help\u001B[0m                             display the list of commands\n";
 print "\n"; 
-print (BOLD_COLOR ^ "Multicore support:\n" ^ RESET_COLOR);
+print (BOLD_COLOR ^ "Multicore support (only supported when compiled with MPL):\n" ^ RESET_COLOR);
 print "  To use the solver on multiple cores, you need to use MPL-level argument procs.\n";
 print "  For instance, with 4 cores:\n";
 print ("  $ " ^ (CommandLine.name ()) ^ " @mpl procs 4 -- -use examples/basic/FirstExample.tesl\n")

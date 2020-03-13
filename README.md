@@ -3,7 +3,7 @@ Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=maste
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
 
-**Heron** [1, 2] is a solver for the [Tagged Events Specification Language (TESL)](http://wdi.supelec.fr/software/TESL/), a declarative language for specifying synchronization of discrete events for simulation [3]. This prototype provides:
+**Heron** [1, 2] is a solver for the [Tagged Events Specification Language (TESL)](http://wdi.supelec.fr/software/TESL/) [3], a declarative language for specifying synchronization of discrete events for simulation. This prototype provides:
 
  1. Definition of TESL specifications for causality and time scale between events.
  2. Simulation by [sound and complete](https://github.com/heron-solver/hygge) generation of execution traces.
@@ -21,7 +21,7 @@ $ ./heron --use examples/basic/FirstExample.tesl
 ```
 
 ### Binary distribution
-You can also fetch the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest). For macOS, the latest supported version is [`0.60.0-alpha+20200224`](https://github.com/heron-solver/heron/releases/tag/0.60.0-alpha%2B20200224).
+You can also fetch the [latest binary release](https://github.com/EmptyStackExn/heron/releases/latest) for your operating system (Linux and macOS).
 
 ### Examples
  - [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md)

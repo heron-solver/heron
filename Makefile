@@ -1,13 +1,28 @@
-CC=mpl
+CC=mlton
+CC_multi=mpl
+ARCH=$(shell uname -m)
+OS=$(shell uname | tr A-Z a-z)
 
-all:
-	cd src && mllex parse.lex
-	cd src && mlyacc parse.grm
+all: clean
+	if [ "${OS}" = "linux" ]  ; then make multicore ; fi
+	if [ "${OS}" = "darwin" ] ; then make singlecore ; fi
+
+singlecore: parser
 	sed 's/_COMPILER_CMD_/${CC}/g' src/Toplevel.sml > src/_Toplevel.sml
+	cp src/heron-Singlecore.mlb src/heron.mlb
 	${CC} -verbose 1 -output heron src/heron.mlb
 
+multicore: parser
+	sed 's/_COMPILER_CMD_/${CC_multi}/g' src/Toplevel.sml > src/_Toplevel.sml
+	cp src/heron-Multicore.mlb src/heron.mlb
+	${CC_multi} -verbose 1 -output heron src/heron.mlb
+
+parser:
+	cd src && mllex parse.lex
+	cd src && mlyacc parse.grm
+
 binary-release: all
-	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-$(shell uname -m)-$(shell uname | tr A-Z a-z).tar.gz \
+	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-${ARCH}-${OS}.tar.gz \
 		heron \
 		lib \
 		examples/HandWatch* \
@@ -27,7 +42,7 @@ test:
 
 clean:
 	rm -f regression/*.out regression/_results.log
-	rm -f src/parse.grm.desc src/parse.grm.sig src/parse.grm.sml src/parse.lex.sml src/_Toplevel.sml
+	rm -f ./heron src/parse.grm.desc src/parse.grm.sig src/parse.grm.sml src/parse.lex.sml src/_Toplevel.sml src/heron.mlb
 
 # with_polyml:
 #  	cd src && mllex parse.lex

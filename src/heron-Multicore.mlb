@@ -24,6 +24,8 @@ in
  TEX.sml
  Policy.sml
  Engine.sml
+ ExecStep-Multicore.sml
+ Exec.sml
  Testing.sml
  _Toplevel.sml
 end
