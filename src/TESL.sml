@@ -108,6 +108,7 @@ datatype clk_expr =
   | ClkFby  of tag list * clk_expr
   | ClkPlus of clk_expr * clk_expr
   | ClkMult of clk_expr * clk_expr
+  | ClkDiv  of clk_expr * clk_expr
   | ClkFun  of func * clk_expr list
 
 datatype TESL_atomic =
@@ -333,6 +334,14 @@ fun unsugar_clk_expr (current_clk: clock) (cexp: clk_expr) = case cexp of
 	@ (unsugar_clk_expr new_clk1 cexp1)
 	@ (unsugar_clk_expr new_clk2 cexp2)
     end
+  | ClkDiv (cexp1, cexp2)  =>
+    let val new_clk1 = Clk (fresh_clk (cexp1))
+	 val new_clk2 = Clk (fresh_clk (cexp2))
+    in [TagRelationCst (Clk "zero", Rat rat_zero),
+	 TagRelationClk (new_clk1, current_clk, new_clk2, Clk "zero")]
+	@ (unsugar_clk_expr new_clk1 cexp1)
+	@ (unsugar_clk_expr new_clk2 cexp2)
+    end
   | ClkFun (func, cexplist)  =>
     let val new_clks = List.map (fn cexp => (Clk (fresh_clk (cexp)), cexp)) cexplist
     in TagRelationFun (current_clk, func, List.map (fn (clk, _) => clk) new_clks)
@@ -501,6 +510,7 @@ fun clocks_of_clk_expr e = case e of
   | ClkFby (_, e')			=> clocks_of_clk_expr e'
   | ClkPlus (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
   | ClkMult (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
+  | ClkDiv (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
   | ClkFun (Fun (fname), exp_list) =>
       List.concat (List.map (clocks_of_clk_expr) exp_list)
 

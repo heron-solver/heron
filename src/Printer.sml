@@ -24,6 +24,7 @@ print "  [CLOCK EXPR] = [TAG]\n";
 print "  [CLOCK EXPR] = [FUNCTION NAME] \u001B[1m(\u001B[0m[CLOCK], [CLOCK]...\u001B[1m)\u001B[0m\n"; 
 print "  [CLOCK EXPR] = [CLOCK EXPR] + [CLOCK EXPR]\n"; 
 print "  [CLOCK EXPR] = [CLOCK EXPR] * [CLOCK EXPR]\n"; 
+print "  [CLOCK EXPR] = [CLOCK EXPR] / [CLOCK EXPR]\n"; 
 print "  [CLOCK EXPR] = \u001B[1mpre\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK EXPR] = \u001B[1m[\u001B[0m [TAG]+ \u001B[1m] ->\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK EXPR] = \u001B[1md\u001B[0m [CLOCK]\n"; 
@@ -325,6 +326,7 @@ fun string_of_clk_expr e = case e of
   | ClkFby (tags, e')               => "[" ^ (List.foldl (fn (t, str) => str ^ (string_of_tag t) ^ " ") "" tags) ^ "] -> " ^ (string_of_clk_expr e')
   | ClkPlus (cexp1, cexp2)         => "(" ^ (string_of_clk_expr cexp1) ^ " + " ^ (string_of_clk_expr cexp2) ^ ")"
   | ClkMult (cexp1, cexp2)         => "(" ^ (string_of_clk_expr cexp1) ^ " * " ^ (string_of_clk_expr cexp2) ^ ")"
+  | ClkDiv (cexp1, cexp2)         => "(" ^ (string_of_clk_expr cexp1) ^ " / " ^ (string_of_clk_expr cexp2) ^ ")"
   | ClkFun (Fun (fname), exp_list) => fname ^ " (" ^ (String.concatWith ", " (List.map (string_of_clk_expr) exp_list)) ^ ")"
 
 fun string_of_expr e = case e of
