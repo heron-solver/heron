@@ -1,0 +1,30 @@
+// Cannonball trajectory
+
+// Readapted from Example 2.1 cannonball-1.c
+// in Allerton D., "Principles of Flight Simulation" (2009)
+
+rational-clock t periodic 1.0
+rational-clock Vz
+rational-clock g
+
+// Vertical
+tag relation g = 9.81
+tag relation Az = -9.81
+tag relation (d Vz) = Az * (d t)
+tag relation (d Pz) = Vz * (d t)
+
+// Horizontal
+tag relation Ax = 0.0
+tag relation (d Vx) = Ax * (d t)
+tag relation (d Px) = Vx * (d t)
+
+// Initial conditions
+@scenario 1 (Vz -> 0.0)
+@scenario 1 (Pz -> 100.0)
+@scenario 1 (Vx -> 500.0)
+@scenario 1 (Px -> 0.0)
+
+@policy asap
+@maxstep 5
+@run
+@print select t Vz Pz Vx Px

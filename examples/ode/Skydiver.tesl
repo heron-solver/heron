@@ -1,0 +1,29 @@
+// Skydiver
+
+// Readapted from Example 2.2 skydiver-1.c
+// in Allerton D., "Principles of Flight Simulation" (2009)
+
+rational-clock t periodic 1.0 // 0.01
+
+// Vertical
+//tag relation Az = -9.81
+tag relation Az = (D / m) + (-9.81)
+tag relation (d Vz) = (pre Az) * (d t)
+tag relation (d Pz) = Vz * (d t)
+
+// Drag D in [N]
+tag relation g = 9.81
+tag relation rho = 1.225
+tag relation S = 1.0
+tag relation Cd = 0.43
+tag relation m = 85.0
+tag relation D = <1/2> * rho * Vz * Vz * S * Cd
+
+// Initial conditions
+@scenario 1 (Vz -> 0.0)
+@scenario 1 (Pz -> 3000.0)
+
+@policy asap
+@maxstep 5
+@run
+@print select t Vz Pz

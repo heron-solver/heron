@@ -1,0 +1,47 @@
+// Atmospheric model
+// based on US Standard Atmosphere 1976
+
+// Readapted from Example 3.1 atmos-1.c
+// in Allerton D., "Principles of Flight Simulation" (2009)
+
+Q-quantity z periodic 300.0 // Geometric altitude [m]
+Q-quantity h			// Geopotential altitude [m]
+Q-quantity T                // Temperature [°K]
+Q-quantity P                // Pressure [Pa]
+Q-quantity rho              // Air density [kg/m³]
+Q-quantity a                // Speed of sound [m/s]
+
+// Constants
+
+// h = (r0 * z) / (r0 + z)
+// where r0 (Earth radius) = 6356766.0 m
+tag relation r0 = 6356766.0
+tag relation h = (r0 * z) / (r0 + z)
+
+// T = T0 - TL * H
+// where T0 (temperature at sea-level) = 288.15 °K
+//       TL (lapse rate) = -0.0065 °K/m
+tag relation T0 = 288.15
+tag relation TL = -0.0065
+tag relation T  = T0 + (TL * h)
+
+// P = P0 * exp (As * ln (T0 / T) / TL)
+// where As = g0 * M0 / Rs
+//       g0 is the acceleration of gravity at latitude 45°
+tag relation P  = 101325.0 * (exp ((As) * ((ln (T0 / T)) / TL)))
+tag relation g0 = 9.80665
+tag relation M0 = 28.9644
+tag relation Rs = 8314.32
+tag relation As = (g0 * M0) / Rs
+
+// rho = (P / T) * (M0 / Rs)
+tag relation rho = (P / T) * (M0 / Rs)
+
+// a = √(γ T (Rs / M0))
+// where γ = 1.4 is the ratio of specific heats for an ideal diatomic gas
+tag relation a = sqrt (1.4 * (T * (Rs / M0)))
+
+@policy asap
+@maxstep 38
+@run
+@print select z h T P rho a

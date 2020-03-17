@@ -7,11 +7,13 @@ all: clean
 	if [ "${OS}" = "linux" ]  ; then make multicore ; fi
 	if [ "${OS}" = "darwin" ] ; then make singlecore ; fi
 
+# To compile with MLton
 singlecore: parser
 	sed 's/_COMPILER_CMD_/${CC}/g' src/Toplevel.sml > src/_Toplevel.sml
 	cp src/heron-Singlecore.mlb src/heron.mlb
 	${CC} -verbose 1 -output heron src/heron.mlb
 
+# To compile with MPL
 multicore: parser
 	sed 's/_COMPILER_CMD_/${CC_multi}/g' src/Toplevel.sml > src/_Toplevel.sml
 	cp src/heron-Multicore.mlb src/heron.mlb
@@ -25,12 +27,7 @@ binary-release: all
 	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-${ARCH}-${OS}.tar.gz \
 		heron \
 		lib \
-		examples/HandWatch* \
-		examples/Radiotherapy.tesl \
-		examples/PowerWindow.tesl \
-		examples/basic \
-		examples/reference-gallery \
-		examples/aviation
+		examples/
 
 # Tests are done with TESL files and expected outputs available in ./regression
 test:

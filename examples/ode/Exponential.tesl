@@ -1,0 +1,19 @@
+// Exponential
+// dy = y.dt
+
+rational-quantity y
+
+// Integration step
+t periodic 0.01
+
+// From dy = y.dt
+tag relation (d y) = (pre y) * (d t)
+
+// Initial condition (x₀ = 1.0)
+@scenario 1 (y -> 1.0)
+
+@policy asap
+@maxstep 20
+@run
+@print // select t y
+@output pdf // select t y
