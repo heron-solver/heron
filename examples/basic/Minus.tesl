@@ -1,0 +1,6 @@
+tag relation h1 = h2 - h3
+trel h3 = 3.0
+trel h2 = 2.0
+
+@step
+@print
