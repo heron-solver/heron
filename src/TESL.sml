@@ -101,15 +101,16 @@ datatype clk_rel =
   ClkExprEqual
 
 datatype clk_expr =
-    ClkCst  of tag
-  | ClkName of clock
-  | ClkDer  of clk_expr
-  | ClkPre  of clk_expr
-  | ClkFby  of tag list * clk_expr
-  | ClkPlus of clk_expr * clk_expr
-  | ClkMult of clk_expr * clk_expr
-  | ClkDiv  of clk_expr * clk_expr
-  | ClkFun  of func * clk_expr list
+    ClkCst   of tag
+  | ClkName  of clock
+  | ClkDer   of clk_expr
+  | ClkPre   of clk_expr
+  | ClkFby   of tag list * clk_expr
+  | ClkPlus  of clk_expr * clk_expr
+  | ClkMinus of clk_expr * clk_expr
+  | ClkMult  of clk_expr * clk_expr
+  | ClkDiv   of clk_expr * clk_expr
+  | ClkFun   of func * clk_expr list
 
 datatype TESL_atomic =
   True
@@ -317,7 +318,8 @@ fun unsugar_clk_expr (current_clk: clock) (cexp: clk_expr) = case cexp of
     in TagRelationFby (current_clk, tags, new_clk)
 	:: (unsugar_clk_expr new_clk cexp')
     end
-  (* WARNING: only works with rational quantities and clocks... How about int ? *)
+  (* WARNING: Only works with rational quantities and clocks...
+              This is *not* supported for integers. *)
   | ClkPlus (cexp1, cexp2)  =>
     let val new_clk1 = Clk (fresh_clk (cexp1))
 	 val new_clk2 = Clk (fresh_clk (cexp2))
@@ -325,6 +327,15 @@ fun unsugar_clk_expr (current_clk: clock) (cexp: clk_expr) = case cexp of
 	 TagRelationClk (current_clk, Clk "one", new_clk1, new_clk2)]
 	@ (unsugar_clk_expr new_clk1 cexp1)
 	@ (unsugar_clk_expr new_clk2 cexp2)
+    end    
+  | ClkMinus (cexp1, cexp2)  =>
+    let val new_clk1 = Clk (fresh_clk (cexp1))
+	 val c2_name  = fresh_clk (cexp2)
+    in [TagRelationCst (Clk "one", Rat rat_one),
+	 TagRelationAff (Clk ("_m_" ^ c2_name), Rat (~/ rat_one), Clk c2_name, Rat rat_zero),
+	 TagRelationClk (current_clk, Clk "one", new_clk1, Clk ("_m_" ^ c2_name))]
+	@ (unsugar_clk_expr new_clk1 cexp1)
+	@ (unsugar_clk_expr (Clk c2_name) cexp2)
     end    
   | ClkMult (cexp1, cexp2)  =>
     let val new_clk1 = Clk (fresh_clk (cexp1))
@@ -509,6 +520,7 @@ fun clocks_of_clk_expr e = case e of
   | ClkPre (e')			=> clocks_of_clk_expr e'
   | ClkFby (_, e')			=> clocks_of_clk_expr e'
   | ClkPlus (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
+  | ClkMinus (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
   | ClkMult (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
   | ClkDiv (cexp1, cexp2)		=> (clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2)
   | ClkFun (Fun (fname), exp_list) =>

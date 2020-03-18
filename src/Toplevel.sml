@@ -2,7 +2,7 @@
    Module Toplevel
 
    Author : Hai Nguyen Van
-            LRI, Université Paris-Sud/CNRS
+            Université Paris-Saclay / CNRS
    
    The copyright to this code is held by Laboratoire de Recherche en
    Informatique, Université Paris-Sud/CNRS. All rights reserved. This
@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.61.2-alpha+20200316"
+val RELEASE_VERSION = "0.61.3-alpha+20200318"
 val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process

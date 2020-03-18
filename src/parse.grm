@@ -99,6 +99,7 @@ fun opposite_tag t = case t of
           | PRE CLK_EXPR                                                       (ClkPre (CLK_EXPR))
           | LBRACK TAGS RBRACK ARROW CLK_EXPR                                  (ClkFby (TAGS, CLK_EXPR))
           | CLK_EXPR PLUS CLK_EXPR                                             (ClkPlus (CLK_EXPR1, CLK_EXPR2))
+          | CLK_EXPR MINUS CLK_EXPR                                            (ClkMinus (CLK_EXPR1, CLK_EXPR2))
           | CLK_EXPR TIMES CLK_EXPR                                            (ClkMult (CLK_EXPR1, CLK_EXPR2))
           | CLK_EXPR DIV CLK_EXPR                                              (ClkDiv (CLK_EXPR1, CLK_EXPR2))
           | ID UNIT_VAL                                                        (ClkFun(Fun ID, []))

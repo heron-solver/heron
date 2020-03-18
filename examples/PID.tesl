@@ -1,0 +1,27 @@
+// Proportional-Integral-Derivative controller
+
+// Gains
+trel Kp = 0.2
+trel Ki = 0.0 
+trel Kd = 0.0
+trel dt = 1.0
+
+// Setpoint
+trel setpt = 50.0
+
+tag relation err = setpt - meas
+tag relation integr = (pre integr) + (err * dt)
+tag relation derivat  = (err - (pre err)) / dt
+tag relation out = (Kp * err) + (Ki * integr) + (Kd * derivat)
+
+// Simple actuation
+tag relation meas = (pre meas) + (pre out)
+
+// Initial values
+@scenario 1 (meas -> 0.0)
+@scenario 1 (integr -> 0.0)
+@scenario 1 (derivat -> 0.0)
+
+@minstep 15
+@run
+@print select setpt meas err integr derivat out
