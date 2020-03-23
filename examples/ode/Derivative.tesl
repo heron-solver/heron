@@ -1,0 +1,8 @@
+t periodic 1.0
+tag relation x = [ 1.0 ] -> (pre x) + (pre x)
+tag relation v = (d x) / (d t)
+
+@maxstep 10
+@policy asap
+@run
+@print select t x v
