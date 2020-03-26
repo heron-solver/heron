@@ -28,7 +28,7 @@ fun opposite_tag t = case t of
 %left IMPLIES
 
 %term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t * bool
-      | SEMI | EOF | EQ | PLUS | MINUS | TIMES | DIV | TAGREL | TIME | ON | DELAYED
+      | SEMI | EOF | EQ | PLUS | MINUS | TIMES | DIV | SHARP | TAGREL | TIME | ON | DELAYED
       | FILTERED | LPAR | RPAR | LBRACK | RBRACK | LDIP | RDIP | COMMA
       | SUSTAINED | IMMEDIATELY | TO | WEAKLY | STRICTLY
       | AWAIT | WEAK | STRONG
@@ -200,7 +200,8 @@ fun opposite_tag t = case t of
       | DIR_OUTPUT TEX                                                         (DirOutputTEX (true, false, []))
       | DIR_OUTPUT PDF                                                         (DirOutputTEX (true, true, []))
       | DIR_OUTPUT SVG                                                         (raise UnsupportedParsedTerm)
-      | DIR_SELECT NUM                                                         (DirSelect (NUM))
+      | DIR_SELECT SHARP NUM                                                   (DirSelect (Ordinal NUM))
+      | DIR_SELECT NUM                                                         (DirSelect (Hexadecimal NUM))
       | DIR_DRIVINGDECL CLKS                                                   (DirDrivingClock (CLKS))
       | DIR_EVENTCONCRETIZE								  (DirEventConcretize (NONE))
       | DIR_EVENTCONCRETIZE NUM							  (DirEventConcretize (SOME NUM))

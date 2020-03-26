@@ -76,7 +76,7 @@ print "  \u001B[1m@dumpres\u001B[0m                          option to display t
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) [INT] [CLOCK]+ refine snapshots with instantaneous scenario\n"; 
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) \u001B[1mnow\u001B[0m [CLOCK]+   refine snapshots of last simulation step\n"; 
 print "  \u001B[1m@scenario\u001B[0m (\u001B[1mstrict\u001B[0m) \u001B[1mnext\u001B[0m [CLOCK]+  refine snapshots of next simulation step\n"; 
-print "  \u001B[1m@select\u001B[0m [INT]                     select by keeping only one simulation state\n"; 
+print "  \u001B[1m@select\u001B[0m [#[INT] | 0x[INT]]        select by keeping only one simulation state\n"; 
 print "  \u001B[1m@driving-clock\u001B[0m [CLOCK]+           declare driving clocks\n"; 
 print "\n"; 
 print (BOLD_COLOR ^ "Interactive commands:\n" ^ RESET_COLOR);  
@@ -306,9 +306,9 @@ fun print_dumpres
       if (List.length cfs) = 1
       then ""
       else " [" ^ string_of_int ((snap_indx := !snap_indx + 1) ; (!snap_indx)) ^ "/" ^ number_of_snaps_str ^ "]"
-    in List.foldl (fn ((G, step, phi, _), _) =>
+    in List.foldl (fn ((G, step, phi, psi), _) =>
       let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
-      (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result" ^ snap_indx_now_str() ^ ":") ;
+      (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result" ^ snap_indx_now_str() ^ " [0x" ^ (Hash.str_hash_of_TESL_conf (G, step, phi, psi)) ^ "]:") ;
        print_context step declared_clocks G ;
        print RESET_COLOR ;
        print_affine_primitives G ;

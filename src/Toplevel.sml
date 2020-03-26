@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.61.4-alpha+20200326"
+val RELEASE_VERSION = "0.62.0-alpha+20200326"
 val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process
@@ -117,12 +117,22 @@ fun action (stmt: TESL_atomic) =
 	  )
  	 end
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
-  | DirSelect n           =>
-    (print ("## Selecting " ^ (Int.toString n) ^ "th simulation state\n");
-     if n < 1 orelse n > List.length (!snapshots)
-     then print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: State does not exist. Try again.\n" ^ RESET_COLOR)
-     else snapshots := [List.nth (!snapshots, n - 1)]
-     )
+  | DirSelect sel           => (case sel of
+      Ordinal n =>
+      (print ("## Selecting simulation state #" ^ (Int.toString n) ^ "\n");
+       if n < 1 orelse n > List.length (!snapshots)
+       then print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: State does not exist. Try again.\n" ^ RESET_COLOR)
+       else snapshots := [List.nth (!snapshots, n - 1)]
+      )
+    | Hexadecimal n =>
+      (print ("## Selecting simulation state 0x" ^ (Int.fmt StringCvt.HEX n) ^ "\n");
+	let val picked = List.find (fn cf => (Hash.str_hash_of_TESL_conf cf) = (Int.fmt StringCvt.HEX n)) (!snapshots)
+	in case picked of
+	  NONE    => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: State does not exist. Try again.\n" ^ RESET_COLOR)
+	| SOME cf => snapshots := [cf]
+	end
+      )
+  )
   | DirExit               => quit()
   | DirHelp               => print_help()
   | _                     =>

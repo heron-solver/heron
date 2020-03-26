@@ -100,6 +100,10 @@ datatype tag_scenario =
 datatype clk_rel =
   ClkExprEqual
 
+datatype run_selector =
+    Ordinal     of int
+  | Hexadecimal of int
+
 datatype clk_expr =
     ClkCst   of tag
   | ClkName  of clock
@@ -164,7 +168,7 @@ datatype TESL_atomic =
   | DirRunStep
   | DirStutter
   | DirRun                         of clock list
-  | DirSelect                      of int
+  | DirSelect                      of run_selector
   | DirDrivingClock                of clock list
   | DirEventConcretize             of int option
   | DirOutputVCD
