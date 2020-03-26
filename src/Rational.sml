@@ -79,6 +79,7 @@ fun string_of_rat ((p, q): rat) : string =
       if Real.== (frac, 0.0)
       then (Real.toString as_real) ^ "."
       else Real.toString as_real
+        (* Real.fmt (StringCvt.GEN (SOME 3)) as_real *)
   end
 
 (* WARNING: Using Real.fromString is dangerous.
