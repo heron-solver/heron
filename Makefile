@@ -32,10 +32,10 @@ binary-release: all
 # Tests are done with TESL files and expected outputs available in ./regression
 test:
 	rm -f regression/*.out regression/_results.log
-	chmod +x regression/check.sh
+	chmod +x regression/check.sh regression/decide.sh
 	for var in $(shell ls regression/*.tesl) ; do regression/check.sh $${var} ; done | tee regression/_results.log
 	rm -f regression/*.sorted
-	if (! (grep "FAIL" regression/_results.log >/dev/null)) ; then echo "\e[1m\e[32mCongrats! ALL REGRESSION TESTS PASSED.\e[0m" ; else echo "\e[1m\e[31mSorry! SOME REGRESSION TESTS HAVE FAILED.\e[0m" ; exit 1 ; fi
+	regression/decide.sh
 
 clean:
 	rm -f regression/*.out regression/_results.log
