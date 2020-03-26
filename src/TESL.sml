@@ -33,7 +33,7 @@ fun is_cst_tag t = case t of
   | Rat _ => true
   | _ => false
 
-datatype constr =
+datatype primitive =
     Timestamp of clock * instant_index * tag
   | Ticks     of clock * instant_index
   | NotTicks  of clock * instant_index
@@ -43,9 +43,9 @@ datatype constr =
   | AffineRefl of tag * tag                   (* X = Y *)
   | FunRel of tag * func * tag list           (* X = f (X1, X2...) *)
 
-type system = constr list
+type context = primitive list
 
-fun clocks_of_system (G: system) =
+fun clocks_of_context (G: context) =
   uniq (List.concat (List.map (fn
     Timestamp (c, _, _)  => [c]
   | Ticks (c, _)         => [c]
@@ -175,7 +175,7 @@ datatype TESL_atomic =
 
 type TESL_formula = TESL_atomic list
 
-type TESL_ARS_conf = system * instant_index * TESL_formula * TESL_formula
+type TESL_conf = context * instant_index * TESL_formula * TESL_formula
 
 (* *** WARNING ***
  * TESL formulae must be clearly stated in one the following categories:
@@ -267,14 +267,7 @@ fun SelfModifyingSubs f = List.filter (fn f' => case f' of
 exception UnsupportedTESLOperator
 exception UnitTagRelationFault
 
-(*
-val counter = ref 0
-fun fresh_clk e =
-    let val new_name = "clk" ^ (string_of_int (!counter))
-	 val _ = counter := (!counter) + 1
-    in new_name
-    end
-*)
+(* Returns a freshly created clock associated with the tag arithmetic expression [e] *)
 val counter = ref []
 fun fresh_clk (e: clk_expr) =
   case (List.find (fn (_, e') => e = e') (!counter)) of
@@ -461,7 +454,7 @@ fun op @-- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => not (@== (e1, e2)
 
 
 (* Decides if two configurations are structurally equivalent *)
-fun cfs_eq ((G1, s1, phi1, psi1) : TESL_ARS_conf) ((G2, s2, phi2, psi2) : TESL_ARS_conf) : bool =
+fun cfs_eq ((G1, s1, phi1, psi1) : TESL_conf) ((G2, s2, phi2, psi2) : TESL_conf) : bool =
            @== (G1, G2)
   andalso s1 = s2
   andalso @== (phi1, phi2)
@@ -482,8 +475,8 @@ fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
 	!x_
     end
 
-(* Removes redundants ARS configurations *)
-fun cfl_uniq (cfl : TESL_ARS_conf list) : TESL_ARS_conf list =
+(* Removes redundants configurations *)
+fun cfl_uniq (cfl : TESL_conf list) : TESL_conf list =
   let
     fun aux (cf :: cfl') acc =
           if List.exists (fn cf' => cfs_eq cf cf') acc
@@ -602,4 +595,4 @@ type solver_params = {
   current_step: int ref,
   clock_types: (clock * tag_t) list ref
 }
-type solver_state = TESL_ARS_conf list ref
+type solver_state = TESL_conf list ref

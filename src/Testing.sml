@@ -4,7 +4,7 @@ fun scenario_add
   (strictness, step_index, tclks)
   (snapshots : solver_state)
   : unit =
-    let val scenario: system ref = ref []
+    let val scenario: context ref = ref []
         val n = (case step_index of NowPos  => if !(#current_step sp) = 1 then 1 else !(#current_step sp) - 1
 				      | NextPos => !(#current_step sp)
 				      | Pos n   => n)

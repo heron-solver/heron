@@ -1,8 +1,8 @@
 (* Executes exactly one simulation step *)
 fun exec_step
   (sp: solver_params)
-  (cfs : TESL_ARS_conf list)
-  : TESL_ARS_conf list =
+  (cfs : TESL_conf list)
+  : TESL_conf list =
   let
       val writeln = fn s => (if !(#rtprint sp) then () else (writeln s))
       val write   = fn s => (if !(#rtprint sp) then () else (print s))
@@ -16,13 +16,13 @@ fun exec_step
       val () = writeln (BOLD_COLOR ^ BLUE_COLOR ^ "##### Solve [" ^ string_of_int (!(#current_step sp)) ^ "] #####" ^ RESET_COLOR)
       (*  -- 1a. APPLYING INTRODUCTION RULES -- *)
       (*     (Γ, n ⊨ [] ▷ Φ) →i (_, _ ⊨ Φ ▷ Φ) *)
-      val _ = write "Initializing new instant..."
+      val _ = write "Initializing new instant (i-rule)..."
       val introduced_cfs = new_instant_init sp cfs
       val _ = clear_line ()
       (*  -- 1b. APPLYING ELIMINATION RULES UNTIL EMPTY PRESENT -- *)
       (*     (Γ, n ⊨ Ψ ▷ Φ) →e ... →e (_, _ ⊨ [] ▷ _) *)
       (*     NB. This is the heaviest part of the solver... Optimization is necessary. *)
-      val _ = write "\rPreparing constraints..."
+      val _ = write "\rComputing branches (e-rules)..."
       (* val reduce_psi_formulae = psi_reduce sp introduced_cfs *)
       (* --> Subdivide the problem into 8 tasks to enjoy multicore computation: *)
       val (introduced_cfs_part1, introduced_cfs_part2, introduced_cfs_part3, introduced_cfs_part4, introduced_cfs_part5, introduced_cfs_part6, introduced_cfs_part7, introduced_cfs_part8) =
@@ -42,7 +42,7 @@ fun exec_step
       val reduce_psi_formulae = reduce_psi_formulae_part1 @ reduce_psi_formulae_part2 @ reduce_psi_formulae_part3 @ reduce_psi_formulae_part4 @ reduce_psi_formulae_part5 @ reduce_psi_formulae_part6 @ reduce_psi_formulae_part7 @ reduce_psi_formulae_part8
       val _ = clear_line ()
       (*  -- 1c. SIMPLIFYING Γ-CONTEXTS -- *)
-      val _ = write "\rSimplifying premodels..."
+      val _ = write "\rSimplifying run contexts..."
       fun reduce_haa l = List.map (fn (G, n, phi, psi) =>
 						    let 
 						   (* val G'   = (lfp reduce) G *)
@@ -75,15 +75,15 @@ fun exec_step
       (* 3. KEEPING HEURISTICS-COMPLIANT RUNS *)
       val cfs_selected_by_heuristic = case !(#heuristics sp) of
 	    [] => cfs_no_deadlock
-	  | _	=> (clear_line () ; write "\rKeeping heuristics-compliant premodels..." ;
+	  | _	=> (clear_line () ; write "\rKeeping heuristics-compliant run contexts..." ;
 		       (heuristic_combine (!(#heuristics sp))) cfs_no_deadlock)
 
       (* END OF SIMULATION *)
       val end_time = Time.now()
       val _ = #current_step sp := !(#current_step sp) + 1
       val _ = clear_line ()
-      val _ = writeln ("\r -> Consistent premodels: " ^ string_of_int (List.length cfs_selected_by_heuristic))
-      val _ = writeln (" -> Step solving time measured: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
+      val _ = writeln ("\r -> Consistent runs: " ^ string_of_int (List.length cfs_selected_by_heuristic))
+      val _ = writeln (" -> Solving time: " ^ Time.toString (Time.- (end_time, start_time)) ^ " s")
       val _ = case cfs_selected_by_heuristic of
 		    [] =>
 		    (writeln (BOLD_COLOR ^ RED_COLOR ^ "### ERROR: No further state found.") ;

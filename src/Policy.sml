@@ -18,7 +18,7 @@
 (* Policy 1. In a universe, the heuristic keeps snapshots with the
    minimal number of floating ticks.  We need to force the occurence
    of events as soon as possible. *)
-fun heuristic_minimize_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_minimize_floating_ticks (cfs : TESL_conf list) : TESL_conf list =
   let
     fun nb_floating (frun: TESL_formula) : int =
       List.length (List.filter (fn Sporadic _ => true | WhenTickingOn _ => true | _ => false) frun)
@@ -31,9 +31,9 @@ fun heuristic_minimize_floating_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf
 
 (* Policy 2. Rejects runs containing empty instants. Something always
    have to happen at any step. *)
-fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
-  let fun has_at_least_one_event (G: system) (step : int) =
-    List.exists (fn Ticks _ => true | _ => false) (haa_constrs_at_step G step)
+fun heuristic_no_empty_instants (cfs : TESL_conf list) : TESL_conf list =
+  let fun has_at_least_one_event (G: context) (step : int) =
+    List.exists (fn Ticks _ => true | _ => false) (haa_primitives_at_step G step)
   in List.filter
     (fn (G, n, _, _) =>
       List.all (fn n => has_at_least_one_event G n) (range n)
@@ -41,10 +41,10 @@ fun heuristic_no_empty_instants (cfs : TESL_ARS_conf list) : TESL_ARS_conf list 
   end
 
 (* Policy 3. Maximize reactiveness of clocks *)
-fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_maximize_reactiveness (cfs : TESL_conf list) : TESL_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
-    fun nb_ticks (G: system) : int =
+    fun nb_ticks (G: context) : int =
       List.length (List.filter (fn Ticks _ => true | _ => false) G)
     val max_ticks : int =
       List.foldl (fn ((G, _, _, _), n) => Int.max(n, nb_ticks G)) MININT cfs
@@ -55,10 +55,10 @@ fun heuristic_maximize_reactiveness (cfs : TESL_ARS_conf list) : TESL_ARS_conf l
 
 (* Policy 4. Minimizes the number of affine constraints containing
    variables. *)
-fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_minimize_unsolved_affine (cfs : TESL_conf list) : TESL_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
-    fun nb_unsolved_affine (G: system) : int =
+    fun nb_unsolved_affine (G: context) : int =
       List.length (List.filter (fn
 					Affine (x1, _, x2, _) =>
 					 (case (x1, x2) of
@@ -79,10 +79,10 @@ fun heuristic_minimize_unsolved_affine (cfs : TESL_ARS_conf list) : TESL_ARS_con
   end
 
 (* Policy 5. Minimizes the number of affine constraints containing variables. *)
-fun heuristic_minimize_ticks (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_minimize_ticks (cfs : TESL_conf list) : TESL_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
-    fun nb_ticks (G: system) : int =
+    fun nb_ticks (G: context) : int =
       List.length (List.filter (fn Ticks _ => true | _ => false) G)
     val min_ticks : int =
       List.foldl (fn ((G, _, _, _), n) => Int.min(n, nb_ticks G)) MAXINT cfs
@@ -99,11 +99,11 @@ fun intlist_lexleq (l1, l2) = case (l1, l2) of
 
 (* Policy 6. Maximize time progress. *)
 (*
-fun heuristic_maximize_time_progress (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_maximize_time_progress (cfs : TESL_conf list) : TESL_conf list =
   let
-    val clock_decl = List.foldl (fn ((G, _, frun, _), l) => uniq (l @ (clocks_of_system G) @ (clocks_of_tesl_formula frun))) [] cfs
+    val clock_decl = List.foldl (fn ((G, _, frun, _), l) => uniq (l @ (clocks_of_context G) @ (clocks_of_tesl_formula frun))) [] cfs
     (* The score of a configuration increases the more time elapse *)
-    fun whattime (G: system): tag option list =
+    fun whattime (G: context): tag option list =
       List.map (fn c => 
 		     case List.find (fn Timestamp (c', step, _) => c = c' andalso List.all (fn Timestamp (c'', step', _) => c' = c'' andalso step >= step' | _ => true) G | _ => false) G of
 			  NONE                         => NONE
@@ -131,9 +131,9 @@ fun heuristic_maximize_time_progress (cfs : TESL_ARS_conf list) : TESL_ARS_conf 
 *)
 
 (* Policy 6. Maximize time progress by triggering events ASAP. *)
-fun heuristic_speedup_event_occ (cfs : TESL_ARS_conf list) =
+fun heuristic_speedup_event_occ (cfs : TESL_conf list) =
   let
-    val clock_decl = List.foldl (fn ((G, _, frun, _), l) => uniq (l @ (clocks_of_system G) @ (clocks_of_tesl_formula frun))) [] cfs
+    val clock_decl = List.foldl (fn ((G, _, frun, _), l) => uniq (l @ (clocks_of_context G) @ (clocks_of_tesl_formula frun))) [] cfs
     fun next_event_time (frun: TESL_formula): tag option list =
       let
 	   val frun = List.map (fn Sporadic (c, tag) => WhenTickingOn (c, tag, c) | f => f) frun
@@ -168,7 +168,7 @@ fun heuristic_speedup_event_occ (cfs : TESL_ARS_conf list) =
 
 
 (* Policy 7. Ticks at the soonest instants give more priority. Lexicographic order *)
-fun heuristic_lexicographic_priority (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_lexicographic_priority (cfs : TESL_conf list) : TESL_conf list =
     case cfs of [] => []
 	      |  _ => let
       fun lex_order_leq (l1: int list) (l2: int list) = case (l1, l2) of
@@ -179,10 +179,10 @@ fun heuristic_lexicographic_priority (cfs : TESL_ARS_conf list) : TESL_ARS_conf 
       | ([], []) => true
       | (_, _)   => raise UnexpectedMatch
 
-      fun tick_primitives_at_indx (G: system) (indx: int) =
+      fun tick_primitives_at_indx (G: context) (indx: int) =
 	   uniq (List.filter (fn Ticks (_, n) => n = indx | _ => false) G)
 
-      fun weight_vector (cf : TESL_ARS_conf) = case cf of (G, n, _, _) =>
+      fun weight_vector (cf : TESL_conf) = case cf of (G, n, _, _) =>
         List.map (fn indx => List.length (tick_primitives_at_indx G indx)) (range n)
 
       fun snd (_, b) = b
@@ -201,10 +201,10 @@ fun heuristic_lexicographic_priority (cfs : TESL_ARS_conf list) : TESL_ARS_conf 
     end
 
 (* Policy 8. Maximize reactiveness of clocks *)
-fun heuristic_maximize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_maximize_absence (cfs : TESL_conf list) : TESL_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
-    fun nb_absence (G: system) : int =
+    fun nb_absence (G: context) : int =
       List.length (List.filter (fn NotTicks _ => true | _ => false) G)
     val max_ticks : int =
       List.foldl (fn ((G, _, _, _), n) => Int.max(n, nb_absence G)) MININT cfs
@@ -214,10 +214,10 @@ fun heuristic_maximize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   end
 
 (* Policy 9. Minimizes the number of affine constraints containing variables. *)
-fun heuristic_minimize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
+fun heuristic_minimize_absence (cfs : TESL_conf list) : TESL_conf list =
   let
     val cfs = List.map (fn (G, n, frun, finst) => (G, n, frun, finst)) cfs
-    fun nb_absence (G: system) : int =
+    fun nb_absence (G: context) : int =
       List.length (List.filter (fn NotTicks _ => true | _ => false) G)
     val min_ticks : int =
       List.foldl (fn ((G, _, _, _), n) => Int.min(n, nb_absence G)) MAXINT cfs
@@ -227,7 +227,7 @@ fun heuristic_minimize_absence (cfs : TESL_ARS_conf list) : TESL_ARS_conf list =
   end
 
 exception Unreferenced_heuristic
-fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf list) =
+fun heuristic_ref_table (f: TESL_atomic) : (TESL_conf list -> TESL_conf list) =
   case f of
     DirHeuristic "asap"                             => 
       (* heuristic_minimize_absence
@@ -250,7 +250,7 @@ fun heuristic_ref_table (f: TESL_atomic) : (TESL_ARS_conf list -> TESL_ARS_conf 
 
 fun heuristic_combine
   (spec: TESL_formula)
-  : (TESL_ARS_conf list -> TESL_ARS_conf list) =
+  : (TESL_conf list -> TESL_conf list) =
   case spec of
      [] => (fn x => x)
    | _  => List.foldl

@@ -4,8 +4,8 @@ exception UnexpectedMatch_Engine_2
 fun exec
   (sp: solver_params)
   (stop_clks: clock list)
-  (cfs : TESL_ARS_conf list)
-  : TESL_ARS_conf list =
+  (cfs : TESL_conf list)
+  : TESL_conf list =
   let
     val writeln = (fn s => if !(#rtprint sp) then () else (writeln s))
     val () = writeln "Solving simulation..."

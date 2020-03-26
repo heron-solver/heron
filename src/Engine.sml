@@ -529,8 +529,8 @@ exception UnexpectedMatch_Engine_4
 
 fun lawyer_e
   (sp: solver_params)
-  ((G, n, _, f_present) : TESL_ARS_conf)
-    : (TESL_atomic * (TESL_ARS_conf -> TESL_atomic -> TESL_ARS_conf)) list =
+  ((G, n, _, f_present) : TESL_conf)
+    : (TESL_atomic * (TESL_conf -> TESL_atomic -> TESL_conf)) list =
     case f_present of
       []        => [(True, fn c => fn _ => c)]
     (* Case where we need to do some paperwork *)
@@ -678,7 +678,7 @@ fun lawyer_e
 				      (case smallest_index_hamlet_primitive_undefined c1 1 n of
 					   SOME indx =>
 					   (* let val _ = if is_hamlet_primitive_defined c1 indx then print "@@> c1 defini\n" else print "@@> c1 non defini\n"
-					     (* val _ = print_system n [Clk "h1", Clk "h2"] G *)
+					     (* val _ = print_context n [Clk "h1", Clk "h2"] G *)
 					 in *) (* (print ("--> decoupage combinatoire: sur c1 en index " ^ (Int.toString indx) ^ "\n"); *) combinatorial_unfolding c1 indx(* ) end *)
 					 | NONE => (case smallest_index_hamlet_primitive_undefined c2 1 n of
 							  SOME indx => (* (print ("--> decoupage combinatoire: sur c2 en index " ^ (Int.toString indx) ^ "\n"); *)combinatorial_unfolding c2 indx (* ) *)
@@ -712,13 +712,13 @@ fun lawyer_e
 
 fun new_instant_init
   (sp: solver_params)
-  (cfs : TESL_ARS_conf list)
-    : TESL_ARS_conf list =
+  (cfs : TESL_conf list)
+    : TESL_conf list =
   List.map (ARS_rule_instant_intro sp) cfs
 
 fun shy_adventurer_step_e 
   (sp: solver_params)
-  (c : TESL_ARS_conf) : TESL_ARS_conf list =
+  (c : TESL_conf) : TESL_conf list =
   let val choices = lawyer_e sp c
   in
       case choices of
@@ -741,7 +741,7 @@ fun shy_adventurer_step_e
 *)
 fun psi_reduce 
   (sp: solver_params)
-  (to_reduce: TESL_ARS_conf list) =
+  (to_reduce: TESL_conf list) =
     let
       val pending = ref to_reduce
       val final_reduced = ref []
@@ -758,14 +758,14 @@ fun psi_reduce
       !final_reduced
     end
 
-exception Maxstep_reached   of TESL_ARS_conf list;
-exception Model_found       of TESL_ARS_conf list;
-exception Stopclock_ticked  of TESL_ARS_conf list;
+exception Maxstep_reached   of TESL_conf list;
+exception Model_found       of TESL_conf list;
+exception Stopclock_ticked  of TESL_conf list;
 exception EmptySnapshots;
 exception Abort;
 
 exception UnexpectedMatch_Engine_1
-fun simplify_whentickings (G: system) (frun: TESL_formula) =
+fun simplify_whentickings (G: context) (frun: TESL_formula) =
   let
     fun simplify_tag t: tag = case t of
       Unit => t
@@ -794,8 +794,8 @@ fun simplify_whentickings (G: system) (frun: TESL_formula) =
    ... except for quantities *)
 fun policy_no_spurious_sporadics
   (sp: solver_params)
-  (cfs : TESL_ARS_conf list)
-    : TESL_ARS_conf list =
+  (cfs : TESL_conf list)
+    : TESL_conf list =
   List.filter
     (fn (G, _, phi, _) =>
       List.all (fn
@@ -809,8 +809,8 @@ fun policy_no_spurious_sporadics
     cfs;
 fun policy_no_spurious_whentickings
   (sp: solver_params)
-  (cfs : TESL_ARS_conf list)
-    : TESL_ARS_conf list =
+  (cfs : TESL_conf list)
+    : TESL_conf list =
   List.filter
     (fn (G, _, phi, _) =>
       List.all (fn
@@ -824,8 +824,8 @@ fun policy_no_spurious_whentickings
 (* Stutters the last instant *)
 fun stutter_step
   (sp: solver_params)
-  (cfs : TESL_ARS_conf list)
-  : TESL_ARS_conf list =
+  (cfs : TESL_conf list)
+  : TESL_conf list =
     let
       (* ABORT SIMULATION IF NO REMAINING CONSISTENT SNAPSHOTS *)
       val () = case cfs of

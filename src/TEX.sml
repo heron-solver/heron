@@ -44,7 +44,7 @@ fun clocks_toString (cnt: int) (step_index: int) (clocks: clock list) (clk_numbe
     end
 
 (* Non-ticking primitives *)
-fun not_primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
+fun not_primitives_toString (clk_pos_assoc: (string * int) list) (G: context) =
   let fun pos_of_clk (cname: string) : int =
     (assoc clk_pos_assoc cname)
   and primitive_toString g = case g of 
@@ -64,7 +64,7 @@ fun not_primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
   end
 
 (* All the rest of primitives *)
-fun primitives_toString (clk_pos_assoc: (string * int) list) (G: system) =
+fun primitives_toString (clk_pos_assoc: (string * int) list) (G: context) =
   let fun pos_of_clk (cname: string) : int =
     (assoc clk_pos_assoc cname)
   and primitive_toString g = case g of 
@@ -92,7 +92,7 @@ fun instants_labels (n: int) (clk_numbers: int) =
 ^ "  }\n"
 
 
-fun TEX_toString (standalone: bool) (RELEASE_VERSION: string) (step_index: int) (clocks: clock list) (G: system, _, _, _) =
+fun TEX_toString (standalone: bool) (RELEASE_VERSION: string) (step_index: int) (clocks: clock list) (G: context, _, _, _) =
     let val max_cname_length = largest (List.map (fn Clk cname => (String.size cname)) clocks)
     in
       "% Exported execution trace\n"

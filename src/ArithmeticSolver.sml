@@ -93,7 +93,7 @@ exception UnexpectedMatch_RunConsistency_68
 exception UnexpectedMatch_RunConsistency_69
 
 (* Returns primitives for a given specific step *)
-fun haa_constrs_at_step (G: system) (step: int) =
+fun haa_primitives_at_step (G: context) (step: int) =
   List.filter (fn
       Timestamp (_, step', _) => step = step'
     | Ticks (_, step')        => step = step'
@@ -106,7 +106,7 @@ fun haa_constrs_at_step (G: system) (step: int) =
 ) G
 
 (* Whenever there's a ticking predicate, there shouln't be a refutation. Same way for non-ticking predicate. *)
-fun check_non_contradictory_ticks (G: system) =
+fun check_non_contradictory_ticks (G: context) =
   let
     val ticks      = (List.filter (fn cstr => case cstr of Ticks _ => true | _ => false) G)
     val notticks   = (List.filter (fn cstr => case cstr of NotTicks _ => true | _ => false) G)
@@ -126,7 +126,7 @@ fun check_non_contradictory_ticks (G: system) =
   end;
 
 (* Whenever there are two timestamp constraints instantaneously at fixed clock, their tags are same *)
-fun check_injectivity_on_timestamps (G: system) =
+fun check_injectivity_on_timestamps (G: context) =
   let
     val timestamps = List.filter (fn cstr => case cstr of
         Timestamp (_, _, Unit) => true
@@ -139,7 +139,7 @@ fun check_injectivity_on_timestamps (G: system) =
   end;
 
 (* Same as above but for variables. Two timestamps [H ⇓_σ V] and [H ⇓_σ V + \<delta>], where [\<delta> ≠ 0] *)
-fun check_injectivity_on_timestamps_varadd (G: system) =
+fun check_injectivity_on_timestamps_varadd (G: context) =
   let
     val timestamps_var = (List.filter (fn cstr => case cstr of Timestamp (_, _, Schematic _) => true | _ => false) G)
     val timestamps_add = (List.filter (fn cstr => case cstr of Timestamp (_, _, Add (Schematic _, tag)) =>
@@ -159,7 +159,7 @@ fun check_injectivity_on_timestamps_varadd (G: system) =
  *  with higher instant index also have higher time tags
  * ... except for clock declared as quantities
  *)
-fun check_ascending_chain_on_timestamps (declared_quantities: clock list) (G: system) =
+fun check_ascending_chain_on_timestamps (declared_quantities: clock list) (G: context) =
   let
     fun not_in e l = List.all (fn e' => e <> e) l
     val timestamps = (List.filter (fn cstr => case cstr of
@@ -173,7 +173,7 @@ fun check_ascending_chain_on_timestamps (declared_quantities: clock list) (G: sy
   end;
 
 (* On a fixed clock, tags have the same type *)
-fun check_type_consistency (G: system) =
+fun check_type_consistency (G: context) =
   let
     val timestamps = (List.filter (fn cstr => case cstr of
         Timestamp (_, _, Unit) => true
@@ -187,7 +187,7 @@ fun check_type_consistency (G: system) =
   end;
 
 (* Eliminate one schematic variable from an affine equation system *)
-fun schematic_elim (G: system) (evar: tag) : system =
+fun schematic_elim (G: context) (evar: tag) : context =
   let
     val affines   = (List.filter (fn cstr => case cstr of Affine _ => true | _ => false) G)
     val left_occ  = (List.filter (fn cstr => case cstr of Affine (var, _, _, _) => var = evar | _ => false) affines)
@@ -210,25 +210,25 @@ fun schematic_elim (G: system) (evar: tag) : system =
   end;
 
 (* Affine variable elimination main step *)
-fun schematic_elim_step (G: system) =
+fun schematic_elim_step (G: context) =
   let
     val affines        = (List.filter (fn cstr => case cstr of Affine _ => true | _ => false) G)
-    val eliminable_constr =
+    val eliminable_primitive =
       List.filter (fn
         Affine (x1 as Schematic _, a, x2, b) => List.exists (fn
           Affine (_, _, x2', _) =>
             x1 = x2' | _ => raise UnexpectedMatch_RunConsistency_18) (affines @- [Affine(x1, a, x2, b)]) | _ => false) affines
-    val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch_RunConsistency_19) eliminable_constr
+    val eliminable_vars = List.map (fn Affine (x, _, _, _) => x | _ => raise UnexpectedMatch_RunConsistency_19) eliminable_primitive
   in
     if is_empty (eliminable_vars)
     then G
     else schematic_elim G (List.nth (eliminable_vars, 0))
   end;
-fun all_schematic_elim (G: system) =
+fun all_schematic_elim (G: context) =
   lfp (schematic_elim_step) G
 
 (* Apply a complete substitution where tag [t_old] is substituted by tag [t_new] in constraint system [G] *)
-fun apply_tag_substition ((t_old, t_new): tag * tag) (G: system) =
+fun apply_tag_substition ((t_old, t_new): tag * tag) (G: context) =
   List.map (fn 
       Timestamp (clk, k, t)     => if t = t_old then Timestamp (clk, k, t_new) else Timestamp (clk, k, t)
     | Affine (ltag, a, rtag, b) =>
@@ -259,7 +259,7 @@ fun apply_tag_substition ((t_old, t_new): tag * tag) (G: system) =
 
 (* Constants propagation is possible whenever there exists: *)
 (* TODO: Deperecated, needs to be updated with latest changes *)
-fun constants_propagation_candidates_int (G: system) =
+fun constants_propagation_candidates_int (G: context) =
   let
     (**  Rearranged similar equation cases **)
     (* - Affine relation [C = X * a + b] --> [C = a * X + b] where [X] is a variable *)
@@ -435,7 +435,7 @@ fun is_interpretable G fname schem_list =
     handle UnknownFunctionSymbolOrIncorrectArity => false
 	  | NotYetConcretizedforFunctionInterpr => false
 
-fun constants_propagation_candidates_rat (G: system) =
+fun constants_propagation_candidates_rat (G: context) =
   let
     (**  Rearranged similar equation cases **)
     (* - Affine relation [C = X * a + b] --> [C = a * X + b] where [X] is a variable *)
@@ -603,7 +603,7 @@ fun constants_propagation_candidates_rat (G: system) =
   end;
 
 (* Reconvert reflexive affines into affines *)
-fun refl_affines_into_affine (G: system) =
+fun refl_affines_into_affine (G: context) =
     List.map (fn
 		 AffineRefl (X, Rat r) => Affine (X, Rat rat_one, Rat r, Rat rat_zero)
 	      | AffineRefl (Rat r, X) => Affine (X, Rat rat_one, Rat r, Rat rat_zero)
@@ -612,26 +612,26 @@ fun refl_affines_into_affine (G: system) =
 	      | g => g) G
 
 (* Constant propagation main step *)
-fun constants_propagation_step_int (G: system) =
+fun constants_propagation_step_int (G: context) =
   List.foldl (fn (subst, h) => apply_tag_substition subst h) G (constants_propagation_candidates_int G);
-fun constants_propagation_step_rat (G: system) =
+fun constants_propagation_step_rat (G: context) =
   List.foldl (fn (subst, h) => apply_tag_substition subst h) G (constants_propagation_candidates_rat G);
-fun constants_propagation (G: system) =
+fun constants_propagation (G: context) =
   lfp (refl_affines_into_affine o constants_propagation_step_rat o constants_propagation_step_int) G
 
 (* Remove trivial schematic timestamp of the kind [H ⇓_n X^H_n]*)
-fun no_trivial_schem_timestamp (G: system) =
+fun no_trivial_schem_timestamp (G: context) =
   List.filter (fn Timestamp (c, n, Schematic (c', n')) => not (c = c' andalso n = n') | _ => true) G
 
 (* Affine equations with (only) constants elimination *)
-fun constant_affine_eqns_elim (G: system) : system =
+fun constant_affine_eqns_elim (G: context) : context =
   List.filter (fn
       Affine (Int t1, Int a, Int t2, Int b) => t1 <> a * t2 + b
     | Affine (Rat t1, Rat a, Rat t2, Rat b) => <>/ (t1, +/ ( */ (a, t2), b))
     | _ => true) G
 
 (* Elimination of equations with functions that are already interpreted *)
-fun constant_funrel_eqns_elim (G: system) : system =
+fun constant_funrel_eqns_elim (G: context) : context =
   List.filter
       (fn
 	   FunRel (Schematic (clk, k), fname, tlist) =>
@@ -645,14 +645,14 @@ fun constant_funrel_eqns_elim (G: system) : system =
    - in ℤ iff [b] is dividable by [(1 - a)]
    - in ℚ iff [(1 - a)] ≠ 0
 *)
-fun check_fixpoint_affeqns (G: system) : bool =
+fun check_fixpoint_affeqns (G: context) : bool =
   List.all (fn
     Affine (X1 as Schematic _, Int a, X2 as Schematic _, Int b) => not (X1 = X2) orelse (b mod (1 - a)) = 0
   | Affine (X1 as Schematic _, Rat a, X2 as Schematic _, Rat b) => not (X1 = X2) orelse <>/ (-/ (rat_one, a), rat_zero)
   | _ => true) G
 
 (* Equation with constants only [C1 = a * C2 + b] *)
-fun check_constants_affeqns (G: system) : bool =
+fun check_constants_affeqns (G: context) : bool =
   List.all (fn
     Affine (Int c1, Int a, Int c2, Int b) => c1 = a * c2 + b
   | Affine (Rat c1, Rat a, Rat c2, Rat b) => =/ (c1, +/ ( */ (a, c2), b))
@@ -662,7 +662,7 @@ fun check_constants_affeqns (G: system) : bool =
    - in Z iff [C - a] is dividable by [b]
    - in ℚ iff [a] ≠ 0
 *)
-fun check_varright_affeqns (G: system) : bool =
+fun check_varright_affeqns (G: context) : bool =
   List.all (fn
     Affine (Int C, Int a, Schematic _, Int b) => (C - b) mod a = 0
   | Affine (Rat C, Rat a, Schematic _, Rat b) => <>/ (a, rat_zero)
@@ -670,7 +670,7 @@ fun check_varright_affeqns (G: system) : bool =
 
 (* For equations of the general kind [X1 = a * X2 + b], all of them are together satisfiable
    when they all share no common variables *)
-fun check_no_shared_var_affeqns (G: system) =
+fun check_no_shared_var_affeqns (G: context) =
   let 
     val affine_var_var = (List.filter (fn cstr => case cstr of Affine (Schematic _, _, Schematic _, _) => true | _ => false) G)
     val vars_in_affine_var_var = List.concat (List.map (fn Affine (v1 as Schematic _, _, v2 as Schematic _, _) => [v1, v2] | _ => []) affine_var_var)
@@ -688,7 +688,7 @@ fun check_no_shared_var_affeqns (G: system) =
    REPEAT UNTIL NORMAL FORM
 
 *)
-fun decide (declared_quantities: clock list) (G: system) : bool =
+fun decide (declared_quantities: clock list) (G: context) : bool =
            check_non_contradictory_ticks G
   andalso check_injectivity_on_timestamps G
   andalso check_injectivity_on_timestamps_varadd G
@@ -701,11 +701,11 @@ fun decide (declared_quantities: clock list) (G: system) : bool =
   andalso check_varright_affeqns G;
 
 (* Applies constant propagation and various simplifications *)
-fun reduce (G: system) =
+fun reduce (G: context) =
   no_trivial_schem_timestamp (constant_funrel_eqns_elim (constant_affine_eqns_elim (all_schematic_elim (constants_propagation (uniq G)))))
 
 (* Decides SAT on context G *)
-fun SAT (declared_quantities: clock list) (G: system) : bool =
+fun SAT (declared_quantities: clock list) (G: context) : bool =
   let val G_prop_and_elim_until_fp = lfp (reduce) G (* Keep reducing *)
   in decide declared_quantities G_prop_and_elim_until_fp                 (* Then decide! *)
   end
@@ -713,7 +713,7 @@ fun SAT (declared_quantities: clock list) (G: system) : bool =
 (* Decides SAT on the context of configuration *)
 fun context_SAT
   (declared_quantities: clock list)
-  ((G, _, _, _) : TESL_ARS_conf) =
+  ((G, _, _, _) : TESL_conf) =
   SAT declared_quantities G
 
 (* Considers that all primitives indexing before [n] are SAT and than
@@ -751,12 +751,12 @@ end
 fun context_SAT_from
   (sp: solver_params)
   (declared_quantities: clock list)
-  ((G, _, _, _) : TESL_ARS_conf) =
+  ((G, _, _, _) : TESL_conf) =
   let 
   in SAT declared_quantities (List.filter (fn prim => ContextSplit.indx_geq (!(#current_step sp)) prim) G)
   end
 
-fun reduce_from (n: int) (G: system) =
+fun reduce_from (n: int) (G: context) =
   let val (G_tosolve, G_solved) = List.partition (ContextSplit.indx_geq n) G
   in G_solved @ (reduce G_tosolve)
   end

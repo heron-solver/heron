@@ -178,23 +178,23 @@ val string_of_tag = (string_of_tag_fancy)
 fun string_of_tags tlist =
     String.concatWith " " (List.map (string_of_tag) tlist)    
 
-fun string_of_timestamp_constr c =
+fun string_of_timestamp_primitive c =
   case c of
       Timestamp (Clk cname, n, tag) => "tvar" ^ subscript_of_int n ^ superscript_of_string cname ^ " = " ^ string_of_tag tag
     | _ => raise UnexpectedMatch
-fun string_of_affine_constr c =
+fun string_of_affine_primitive c =
   case c of
       Affine (t1, ta, t2, tb) => (string_of_tag t1) ^ " = " ^ (string_of_tag ta) ^ " * " ^  (string_of_tag t2) ^ " + " ^ (string_of_tag tb)
     | AffineRefl (t1, t2) => (string_of_tag t1) ^ " = " ^ (string_of_tag t2)
     | FunRel (t, Fun (fname), tlist) => (string_of_tag t) ^ " = " ^ fname ^ " (" ^ (string_of_tags tlist) ^ ")"
     | _ => raise UnexpectedMatch
 
-(* Print HAA-system *)
+(* Print a run context (past) *)
 
 fun print_clocks clocks =
   writeln ("\t\t" ^ List.foldr (fn (Clk c, s) => c ^ "\t\t" ^ s) "" clocks)
       
-fun print_system_step (step_index: int) (clocks: clock list) (G : system) =
+fun print_context_step (step_index: int) (clocks: clock list) (G : context) =
   let
     fun contain_notticksuntil g = List.exists (fn NotTicksUntil _ => true | _ => false) g
     fun contain_notticksfrom g = List.exists (fn NotTicksFrom _ => true | _ => false) g
@@ -204,14 +204,14 @@ fun print_system_step (step_index: int) (clocks: clock list) (G : system) =
     val FORBIDDEN_SYM    = "\226\138\152" (* ⊘ *) (* ⛔ *)
     val DEATH_SYM        = "\226\152\160" (* ☠ *) (* \240\159\146\128 to get 💀 *)
     val NONEXISTENCE_SYM = "\226\136\132" (* ∄ *) (* ⛔ *)
-    fun constrs_of_clk_instindex c n =
+    fun primitives_of_clk_instindex c n =
       List.filter (fn Ticks (c', n') => c = c' andalso n = n'
       		      | NotTicks (c', n') => c = c' andalso n = n'
       		      | NotTicksUntil (c', n') => c = c' andalso n < n'
       		      | NotTicksFrom  (c', n') => c = c' andalso n >= n'
 		      | Timestamp (c', n', _) => c = c' andalso n = n'
 		      | _ => false) G
-    fun string_of_constrs_at_clk_instindex clk n g =
+    fun string_of_primitives_at_clk_instindex clk n g =
       let
         val timestamps = List.filter (fn Timestamp (_, _, tag) => (case tag of Unit => true | Int _ => true | Rat _ => true | _ => false) | _ => false) g
 	 val tick_string =
@@ -236,28 +236,28 @@ fun print_system_step (step_index: int) (clocks: clock list) (G : system) =
     end
     fun print_instant n =
       writeln ("[" ^ string_of_int n ^ "]"
-		 ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_constrs_at_clk_instindex c n (constrs_of_clk_instindex c n)) "" clocks)
+		 ^ List.foldl (fn (c, s) => s ^ "\t\t" ^ string_of_primitives_at_clk_instindex c n (primitives_of_clk_instindex c n)) "" clocks)
   in (print_instant step_index)
 end
 
-fun print_system (step_index: int) (clocks: clock list) (G : system) =
+fun print_context (step_index: int) (clocks: clock list) (G : context) =
   let
     fun print_run k =
       if k > step_index
       then ()
-      else (print_system_step k clocks G ; print_run (k + 1))
+      else (print_context_step k clocks G ; print_run (k + 1))
   in print_clocks clocks; print_run 1
 end
 
-fun print_affine_constrs (G : system) : unit =
+fun print_affine_primitives (G : context) : unit =
   let
-      val affine_constrs =
+      val affine_primitives =
 	   List.filter (fn Affine _ => true | AffineRefl _ => true | FunRel _ => true | _ => false) G
-      val nontriv_timestamps_constrs =
+      val nontriv_timestamps_primitives =
 	   List.filter (fn Timestamp (_, _, Schematic _) => true | Timestamp (_, _, Add _) => true | _ => false) G
-  in (case (affine_constrs, nontriv_timestamps_constrs) of ([], []) => () | _ => writeln "Affine constraints and non-trivial timestamps:" ;
-      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_affine_constr c))) () affine_constrs ;
-      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_timestamp_constr c))) () nontriv_timestamps_constrs)
+  in (case (affine_primitives, nontriv_timestamps_primitives) of ([], []) => () | _ => writeln "Affine constraints and non-trivial timestamps:" ;
+      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_affine_primitive c))) () affine_primitives ;
+      List.foldl (fn (c, _) => writeln ("\t" ^ (string_of_timestamp_primitive c))) () nontriv_timestamps_primitives)
   end
   
 fun print_floating_ticks (clocks: clock list) (f: TESL_formula) : unit =
@@ -281,7 +281,7 @@ fun print_floating_ticks (clocks: clock list) (f: TESL_formula) : unit =
   end
 
 (* Output snapshots *)
-fun print_step_runtime (declared_clocks : clock list) (cfs: TESL_ARS_conf list) (current_step: int) =
+fun print_step_runtime (declared_clocks : clock list) (cfs: TESL_conf list) (current_step: int) =
   let val () = if current_step = 0
                then ((writeln ("## Runtime diagram:")) ; (print_clocks declared_clocks))
 	       else ()
@@ -290,12 +290,12 @@ fun print_step_runtime (declared_clocks : clock list) (cfs: TESL_ARS_conf list) 
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
   | _ => (case List.hd cfs of
         (_, 0, _, _)    => ()
-      | (G, step, phi, _) => (print_system_step current_step declared_clocks G))
+      | (G, step, phi, _) => (print_context_step current_step declared_clocks G))
   end
 
 fun print_dumpres
   (declared_clocks: clock list)
-  (cfs: TESL_ARS_conf list) = case cfs of
+  (cfs: TESL_conf list) = case cfs of
     [] => (writeln (BOLD_COLOR ^ RED_COLOR ^ "### Simulation aborted:") ;
 		      writeln ("### ERROR: No simulation state to solve" ^ RESET_COLOR))
   | _ =>
@@ -309,9 +309,9 @@ fun print_dumpres
     in List.foldl (fn ((G, step, phi, _), _) =>
       let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
       (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result" ^ snap_indx_now_str() ^ ":") ;
-       print_system step declared_clocks G ;
+       print_context step declared_clocks G ;
        print RESET_COLOR ;
-       print_affine_constrs G ;
+       print_affine_primitives G ;
        print_floating_ticks declared_clocks phi ;
        writeln "## End") end) () cfs
   end
