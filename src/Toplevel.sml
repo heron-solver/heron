@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.62.0-alpha+20200326"
+val RELEASE_VERSION = "0.62.1-alpha+20200326"
 val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process
@@ -125,13 +125,19 @@ fun action (stmt: TESL_atomic) =
        else snapshots := [List.nth (!snapshots, n - 1)]
       )
     | Hexadecimal n =>
-      (print ("## Selecting simulation state 0x" ^ (Int.fmt StringCvt.HEX n) ^ "\n");
-	let val picked = List.find (fn cf => (Hash.str_hash_of_TESL_conf cf) = (Int.fmt StringCvt.HEX n)) (!snapshots)
+      let (* val _ = if Hash.find_collision (!snapshots)
+	     then (writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING: An hash collision exists." ^ RESET_COLOR);
+		    writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "             Selecting collided hashes may be inconsistent." ^ RESET_COLOR))
+	     else () *)
+	   val _ = print ("## Selecting simulation state 0x" ^ (Int.fmt StringCvt.HEX n) ^ "\n")
+	   val picked = List.find (fn cf => (Hash.str_hash_of_TESL_conf cf) = (Int.fmt StringCvt.HEX n)) (!snapshots)
 	in case picked of
 	  NONE    => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: State does not exist. Try again.\n" ^ RESET_COLOR)
-	| SOME cf => snapshots := [cf]
+	| SOME cf =>
+	  if Hash.is_forbidden (!snapshots) n
+	  then print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Forbidden hash due to collision.\n" ^ RESET_COLOR)
+	  else snapshots := [cf]
 	end
-      )
   )
   | DirExit               => quit()
   | DirHelp               => print_help()

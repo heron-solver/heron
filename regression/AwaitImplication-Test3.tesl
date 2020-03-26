@@ -5,5 +5,5 @@ tag relation m1 = 1 * m2
 await m1 m2 implies slave
 
 @run
-@select 3
+@select 0x2B08C
 @output tikz select m1 m2 slave

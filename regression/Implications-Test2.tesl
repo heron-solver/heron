@@ -5,5 +5,5 @@ master1 implies slave
 master2 implies slave
  
 @run
-@select 2
+@select 0x3904A
 @output tikz select master1 master2

@@ -306,7 +306,7 @@ fun print_dumpres
       if (List.length cfs) = 1
       then ""
       else " [" ^ string_of_int ((snap_indx := !snap_indx + 1) ; (!snap_indx)) ^ "/" ^ number_of_snaps_str ^ "]"
-    in List.foldl (fn ((G, step, phi, psi), _) =>
+    val _ = List.foldl (fn ((G, step, phi, psi), _) =>
       let val RUN_COLOR = if has_no_floating_ticks phi then GREEN_COLOR else YELLOW_COLOR in
       (writeln (BOLD_COLOR ^ RUN_COLOR ^ "## Simulation result" ^ snap_indx_now_str() ^ " [0x" ^ (Hash.str_hash_of_TESL_conf (G, step, phi, psi)) ^ "]:") ;
        print_context step declared_clocks G ;
@@ -314,6 +314,10 @@ fun print_dumpres
        print_affine_primitives G ;
        print_floating_ticks declared_clocks phi ;
        writeln "## End") end) () cfs
+    val _ = if Hash.find_collision cfs
+	     then writeln (BOLD_COLOR ^ YELLOW_COLOR ^ "### WARNING: An hash collision exists." ^ RESET_COLOR)
+	     else ()
+  in ()
   end
 
 fun string_of_clk_rel symb = case symb of

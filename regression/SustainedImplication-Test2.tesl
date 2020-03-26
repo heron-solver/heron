@@ -8,5 +8,5 @@ tag relation master = 1 * end
 master sustained from begin to end implies slave
 
 @run
-@select 2
+@select 0x3015B
 @output tikz select master begin end slave

@@ -19,5 +19,5 @@ min time delayed by 1.0 on min implies min
 @scenario strict 4 (min -> 3.0) move
 @step
 
-@select 1
+@select 0x46110
 @output tikz select sec min move

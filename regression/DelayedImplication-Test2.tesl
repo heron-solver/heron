@@ -6,5 +6,5 @@ master delayed by 2 on cntin implies slave
  
 @maxstep 10
 @run
-@select 2
+@select 0x3F597
 @output tikz select master cntin slave
