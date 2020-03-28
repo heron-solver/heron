@@ -1,0 +1,6 @@
+tag relation fib = [ 0.0 1.0 ] -> (pre fib) + (pre pre fib)
+tag relation phi = fib / (pre fib)
+
+@minstep 20
+@run
+@print
