@@ -71,6 +71,31 @@ fun op <=/ ((p, q), (p', q')) =
     LargeInt.<= (p, p')
   end
 
+datatype notation =
+    FIX
+  | GEN
+
+fun string_of_rat ((p, q): rat) (notat: notation) (radix: int) : string =
+  let fun radix_size s = if s = "0" then 0 else String.size s
+      fun frac_of_rat ((p, q): rat) (radix: int) (res: string): string =
+	   case notat of
+		FIX =>
+		if radix = 0
+		then res
+		else frac_of_rat ((p mod q) * 10, q) (radix - 1) (res ^ (LargeInt.toString (p div q)))
+	     | GEN =>
+		if (p mod q) = (LargeInt.fromInt 0)
+		then res
+		else
+		  if radix = 0
+		  then res
+		  else frac_of_rat ((p mod q) * 10, q) (radix - 1) (res ^ (LargeInt.toString (p div q)))
+      val whole = LargeInt.toString (p div q)
+      val frac  = frac_of_rat ((p mod q) * 10, q) (radix - (radix_size whole)) ""
+  in whole ^ "." ^ (if frac = "" then "0" else frac)
+  end
+
+(*
 fun string_of_rat ((p, q): rat) : string =
   let
       val as_real = (Real.fromLargeInt p) / (Real.fromLargeInt q)
@@ -81,6 +106,7 @@ fun string_of_rat ((p, q): rat) : string =
       else Real.toString as_real
         (* Real.fmt (StringCvt.GEN (SOME 3)) as_real *)
   end
+*)
 
 (* WARNING: Using Real.fromString is dangerous.
    Gets buggy for 0.111

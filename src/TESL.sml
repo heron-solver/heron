@@ -493,7 +493,7 @@ fun cfl_uniq (cfl : TESL_conf list) : TESL_conf list =
 fun string_of_tag t = case t of
     Unit  => "()"
   | Int n => string_of_int n
-  | Rat x => string_of_rat x
+  | Rat x => string_of_rat x GEN 10
   | _     => "<tag>"
 
 fun string_of_clk c = case c of

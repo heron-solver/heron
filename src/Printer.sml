@@ -161,14 +161,14 @@ fun string_of_tag_ugly (t : tag) =
   case t of
       Unit  => "()"
     | Int n => string_of_int n
-    | Rat x => string_of_rat x
+    | Rat x => string_of_rat x GEN 10
     | Schematic (Clk c_str, n) => "tvar\226\135\167" ^ (string_of_int n) ^ "\226\135\169" ^ c_str
     | Add (t1, t2) => (string_of_tag_ugly t1) ^ " + " ^ (string_of_tag_ugly t2)
 fun string_of_tag_fancy (t : tag) =
   case t of
       Unit  => "()"
     | Int n => string_of_int_exp n
-    | Rat x => string_of_rat x
+    | Rat x => string_of_rat x GEN 10
     | Schematic (Clk c_str, n) => "tvar" ^ subscript_of_int n ^ superscript_of_string c_str
     | Add (t1, t2) => (string_of_tag_fancy t1) ^ " + " ^ (string_of_tag_fancy t2)
 
