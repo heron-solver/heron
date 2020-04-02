@@ -172,6 +172,7 @@ datatype TESL_atomic =
   | DirDrivingClock                of clock list
   | DirEventConcretize             of int option
   | DirOutputVCD
+  | DirOutputCSV                   of clock list * string option
   | DirOutputTEX                   of bool * bool * (clock list)
   | DirPrint                       of clock list (* If empty then all clocks *)
   | DirExit
@@ -432,6 +433,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | DirExit               => []
 	    | DirHelp               => []
 	    | DirOutputVCD          => []
+	    | DirOutputCSV _        => []
 	    | DirOutputTEX _        => []
 	    | fatom => [fatom]
   ) f)

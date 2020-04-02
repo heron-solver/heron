@@ -133,6 +133,7 @@ fun hash_of_TESL_atomic (f: TESL_atomic): int = case f of
   | DirDrivingClock _			              => 0 
   | DirEventConcretize _		                     => 0 
   | DirOutputVCD			                     => 0 
+  | DirOutputCSV _			                     => 0 
   | DirOutputTEX _			                     => 0 
   | DirPrint _				              => 0 
   | DirExit				                     => 0 

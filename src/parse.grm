@@ -28,7 +28,7 @@ fun opposite_tag t = case t of
 %left IMPLIES
 
 %term ID of string | NUM of int | DECNUM of rat | SPORADIC | IMPLIES | TYPEDECL of tag_t * bool
-      | SEMI | EOF | EQ | PLUS | MINUS | TIMES | DIV | SHARP | TAGREL | TIME | ON | DELAYED
+      | SEMI | EOF | EQ | PLUS | MINUS | TIMES | DIV | SHARP | TAGREL | TIME | ON | IN | DELAYED
       | FILTERED | LPAR | RPAR | LBRACK | RBRACK | LDIP | RDIP | COMMA
       | SUSTAINED | IMMEDIATELY | TO | WEAKLY | STRICTLY
       | AWAIT | WEAK | STRONG
@@ -45,7 +45,7 @@ fun opposite_tag t = case t of
       | LET | INT | DECIMAL | RATIONAL | FLOAT
       | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP | DIR_STUTTER
       | UNTIL
-      | DIR_OUTPUT | VCD | SVG | TEX | TIKZ | PDF
+      | DIR_OUTPUT | VCD | SVG | TEX | TIKZ | PDF | CSV
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
       | DIR_SELECT 
       | SELECT 
@@ -193,6 +193,9 @@ fun opposite_tag t = case t of
       | DIR_EXIT                                                               (DirExit)
       | DIR_HELP                                                               (DirHelp)
       | DIR_OUTPUT VCD                                                         (DirOutputVCD)
+      | DIR_OUTPUT CSV                                                         (DirOutputCSV ([],NONE))
+      | DIR_OUTPUT CSV  SELECT CLKS                                            (DirOutputCSV (CLKS,NONE))
+      | DIR_OUTPUT CSV  SELECT CLKS IN ID                                      (DirOutputCSV (CLKS,SOME ID))
       | DIR_OUTPUT TIKZ SELECT CLKS                                            (DirOutputTEX (false, false, CLKS))
       | DIR_OUTPUT TEX  SELECT CLKS                                            (DirOutputTEX (true, false, CLKS))
       | DIR_OUTPUT PDF  SELECT CLKS                                            (DirOutputTEX (true, true, CLKS))

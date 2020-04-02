@@ -142,3 +142,18 @@ fun split_in_8 l =
   end
 
 end
+
+structure StringMore =
+struct
+
+fun concat (l: string list) (sep: string) =
+  let fun aux l res = case l of
+     []      => res
+   | x :: l' =>
+     if res = ""
+     then aux l' x
+     else aux l' (res ^ sep ^ x)
+  in aux l ""
+  end
+
+end

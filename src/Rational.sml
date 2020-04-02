@@ -95,6 +95,9 @@ fun string_of_rat ((p, q): rat) (notat: notation) (radix: int) : string =
   in whole ^ "." ^ (if frac = "" then "0" else frac)
   end
 
+fun tilde_to_minus (s: string) =
+  String.implode (List.map (fn #"~" => #"-" | c => c) (String.explode s))
+
 (*
 fun string_of_rat ((p, q): rat) : string =
   let

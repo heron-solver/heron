@@ -21,6 +21,7 @@ in
  ArithmeticSolver.sml
  Printer.sml
  VCD.sml
+ CSV.sml
  TEX.sml
  Policy.sml
  Engine.sml

@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.62.3-alpha+20200402"
+val RELEASE_VERSION = "0.62.4-alpha+20200402"
 val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process
@@ -92,6 +92,18 @@ fun action (stmt: TESL_atomic) =
 	 (print ("## Writing vcd output to " ^ (OS.FileSys.getDir ()) ^ "/output.vcd\n");
 	  writeFile "output.vcd" (VCD_toString RELEASE_VERSION (!(#current_step sp0) - 1) (!(#declared_clocks sp0)) s))
       | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
+  | DirOutputCSV (sel_clks, filename)      =>
+    let val filename =
+	     case filename of
+		  NONE => "output.csv"
+		| SOME s => s ^ ".csv"
+    in (case !snapshots of
+	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)
+      | [s] => 
+	 (print ("## Writing csv output to " ^ (OS.FileSys.getDir ()) ^ "/" ^ filename ^ "\n");
+	  writeFile filename (CSV_toString (!(#current_step sp0) - 1) (case sel_clks of [] => (!(#declared_clocks sp0)) | _ => sel_clks) s))
+      | _   => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: Too many states. Please do a selection first.\n" ^ RESET_COLOR))
+    end
   | DirOutputTEX (stdal, pdf, sel_clks)    =>
     (case !snapshots of
 	 []  => print (BOLD_COLOR ^ RED_COLOR ^ "## ERROR: No simulation state to write.\n" ^ RESET_COLOR)

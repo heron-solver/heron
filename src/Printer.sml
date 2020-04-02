@@ -86,7 +86,7 @@ print "  \u001B[1m@step\u001B[0m                             run the specificati
 print "  \u001B[1m@stutter\u001B[0m                          stutters the last snapshot instant\n"; 
 print "  \u001B[1m@event-concretize\u001B[0m                 concretize ticks/tags of driving clocks\n"; 
 print "  \u001B[1m@print\u001B[0m                            display the current snapshots\n"; 
-print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m          export to VCD/TikZ/LaTeX/PDF file with clock selection\n"; 
+print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m/\u001B[1mcsv\u001B[0m          export to VCD/TikZ/LaTeX/PDF/CSV file with clock selection\n"; 
 print "  \u001B[1m@help\u001B[0m                             display the list of commands\n";
 print "\n"; 
 print (BOLD_COLOR ^ "Multicore support (only supported when compiled with MPL):\n" ^ RESET_COLOR);
