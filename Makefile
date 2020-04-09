@@ -4,8 +4,7 @@ ARCH=$(shell uname -m)
 OS=$(shell uname | tr A-Z a-z)
 
 all: clean
-	if [ "${OS}" = "linux" ]  ; then make multicore ; fi
-	if [ "${OS}" = "darwin" ] ; then make singlecore ; fi
+	if (which mpl) ; then make multicore ; else if (which mlton) ; then make singlecore ; else echo "Neither MPL or MLton has been found." ; fi ; fi
 
 # To compile with MLton
 singlecore: parser
