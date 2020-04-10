@@ -84,7 +84,7 @@ fun string_of_rat ((p, q): rat) (notat: notation) (radix: int) : string =
 		then res
 		else frac_of_rat ((p mod q) * 10, q) (radix - 1) (res ^ (LargeInt.toString (p div q)))
 	     | GEN =>
-		if (p mod q) = (LargeInt.fromInt 0)
+		if (p mod q) = (LargeInt.fromInt 0) andalso (p div q) = (LargeInt.fromInt 0)
 		then res
 		else
 		  if radix = 0
