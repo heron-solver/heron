@@ -146,7 +146,8 @@ end
 structure StringMore =
 struct
 
-fun concat (l: string list) (sep: string) =
+(* Same as OCaml's String.concat *)
+fun concat (sep: string) (l: string list) =
   let fun aux l res = case l of
      []      => res
    | x :: l' =>

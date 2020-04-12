@@ -17,15 +17,16 @@ fun writeFile filename content =
 
 fun CSV_toString (step_index: int) (clocks: clock list) (G: context, _, _, _) =
   let val clocks_line =
-      (StringMore.concat (List.map (fn Clk cname => cname) clocks) ",")
+      (StringMore.concat "," (List.map (fn Clk cname => cname) clocks))
       fun instant_line (step: int) =
 	   (StringMore.concat
+		 ","
 		(List.map
 		     (fn clk => case (List.find (fn Timestamp (clk', step', _) => clk = clk' andalso step = step' | _ => false) G) of
 				      NONE => ""
 				    | SOME (Timestamp (_, _, t)) => tilde_to_minus (string_of_tag t)
 				    | _ => "")
 		     clocks)
-		",")
-  in clocks_line ^ "\n" ^ (StringMore.concat (List.map (fn n => instant_line n) (range step_index)) "\n") ^ "\n"
+		)
+  in clocks_line ^ "\n" ^ (StringMore.concat "\n" (List.map (fn n => instant_line n) (range step_index))) ^ "\n"
   end

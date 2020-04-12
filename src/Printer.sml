@@ -36,7 +36,8 @@ print "  \u001B[1mtime relation\u001B[0m [CLOCK EXPR] \u001B[1m=\u001B[0m [CLOCK
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG]+\n"; 
 print "  [CLOCK] \u001B[1msporadic\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mperiodic\u001B[0m [TAG] (\u001B[1moffset\u001B[0m [TAG])\n"; 
-print "  [CLOCK] \u001B[1mimplies (not)\u001B[0m [CLOCK]\n"; 
+print "  [CLOCK] (/\\ [CLOCK])+ \u001B[1mimplies\u001B[0m [CLOCK] (\\/ [CLOCK])+\n"; 
+print "  [CLOCK] \u001B[1mimplies not\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mtime delayed by\u001B[0m [TAG] \u001B[1mon\u001B[0m [CLOCK] (\u001B[1mwith reset on\u001B[0m [CLOCK]) \u001B[1mimplies\u001B[0m [CLOCK]\n";
 print "  [CLOCK] \u001B[1mdelayed by\u001B[0m [INT] \u001B[1mon\u001B[0m [CLOCK] \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
 print "  [CLOCK] \u001B[1mfiltered by\u001B[0m [INT], [INT] ([INT], [INT])* \u001B[1mimplies\u001B[0m [CLOCK]\n"; 
@@ -86,7 +87,7 @@ print "  \u001B[1m@step\u001B[0m                             run the specificati
 print "  \u001B[1m@stutter\u001B[0m                          stutters the last snapshot instant\n"; 
 print "  \u001B[1m@event-concretize\u001B[0m                 concretize ticks/tags of driving clocks\n"; 
 print "  \u001B[1m@print\u001B[0m                            display the current snapshots\n"; 
-print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m/\u001B[1mcsv\u001B[0m          export to VCD/TikZ/LaTeX/PDF/CSV file with clock selection\n"; 
+print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m/\u001B[1mcsv\u001B[0m      export to VCD/TikZ/LaTeX/PDF/CSV file with clock selection\n"; 
 print "  \u001B[1m@help\u001B[0m                             display the list of commands\n";
 print "\n"; 
 print (BOLD_COLOR ^ "Multicore support (only supported when compiled with MPL):\n" ^ RESET_COLOR);
@@ -347,6 +348,7 @@ fun string_of_expr e = case e of
 									^ (string_of_clk c)
 									^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
   | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
+  | ImpliesGen (masters, slaves)                            => (StringMore.concat " /\\ " (List.map (string_of_clk) masters)) ^ " implies " ^ (StringMore.concat " \\/ " (List.map (string_of_clk) slaves))
   | ImpliesNot (master, slave)                              => (string_of_clk master) ^ " implies not " ^ (string_of_clk slave)
   | TagRelation (relsymb, cexp1, cexp2)                     => "time relation " ^ (string_of_clk_expr cexp1) ^ " " ^ (string_of_clk_rel relsymb) ^ " " ^ (string_of_clk_expr cexp2)
   | TagRelationAff (c1, a, c2, b)                           => "time relation " ^ (string_of_clk c1) ^ " = " ^ (string_of_tag a) ^ " * " ^ (string_of_clk c2) ^ " + " ^ (string_of_tag b)

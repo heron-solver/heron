@@ -55,8 +55,10 @@ fun opposite_tag t = case t of
       | KILLS
       | PRE 
       | DER
+      | CONJ_CLAUSE
+      | DISJ_CLAUSE
 
-%nonterm CLK of clock | CLKS of clock list | TCLKS of (clock * tag_scenario) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list | CLK_EXPR of clk_expr | CLKEXPRARGS of clk_expr list
+%nonterm CLK of clock | CLKS of clock list | CLKS_CONJ of clock list | CLKS_DISJ of clock list | TCLKS of (clock * tag_scenario) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list | CLK_EXPR of clk_expr | CLKEXPRARGS of clk_expr list
 
 %name Calc
 
@@ -73,6 +75,10 @@ fun opposite_tag t = case t of
 
   START : EXP (SOME EXP)
         | (NONE)
+  CLKS_CONJ : ID CONJ_CLAUSE CLKS_CONJ                                         (Clk (ID) :: CLKS_CONJ)
+       | ID                                                                    ([Clk (ID)])
+  CLKS_DISJ : ID DISJ_CLAUSE CLKS_DISJ                                         (Clk (ID) :: CLKS_DISJ)
+       | ID                                                                    ([Clk (ID)])
   CLK : ID                                                                     (Clk (ID))
   CLKS : ID                                                                    ([Clk (ID)])
        | ID CLKS                                                               (Clk (ID) :: CLKS)
@@ -122,7 +128,8 @@ fun opposite_tag t = case t of
       | TYPEDECL CLK SPORADIC                                                  (case TYPEDECL of
 												(Unit_t, _) => TypeDeclSporadics (Unit_t, CLK, [Unit], true)
 											     | _ => raise UnsupportedParsedTerm)
-      | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2))
+      | CLKS_CONJ IMPLIES CLKS_DISJ                                            (ImpliesGen (CLKS_CONJ, CLKS_DISJ))
+(*      | CLK IMPLIES CLK                                                        (Implies (CLK1, CLK2)) *)
       | CLK IMPLIES NOT CLK						                (ImpliesNot (CLK1, CLK2))
 (*
       | TAGREL CLK EQ TAG TIMES CLK PLUS TAG                                   (TagRelationAff (CLK1, TAG1, CLK2, TAG2))

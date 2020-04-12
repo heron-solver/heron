@@ -121,6 +121,7 @@ fun hash_of_TESL_atomic (f: TESL_atomic): int = case f of
   | Precedes (c1, c2, b)			              => 173	* (hash_of_clock c1) * (hash_of_clock c2) * (hash_of_bool b)
   | Excludes (c1, c2)			              => 179	* (hash_of_clock c1) * (hash_of_clock c2) 
   | Kills (c1, c2)				              => 181	* (hash_of_clock c1) * (hash_of_clock c2)
+  | ImpliesGen (masters, slaves)	                     => 191	* (List.foldl (fn (x, res) => hash_of_clock x * res) 1 masters) * (List.foldl (fn (x, res) => hash_of_clock x * res) 1 slaves)
   | DirMaxstep _		                            => 0 
   | DirMinstep _			                     => 0 
   | DirHeuristic _			                     => 0 

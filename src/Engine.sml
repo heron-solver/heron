@@ -515,6 +515,18 @@ fun ARS_rule_tagrel_refl_implies_elim_2
 	  ], n, frun, finst @- [fsubst])
   | ARS_rule_tagrel_refl_implies_elim_2 _ _ = raise Assert_failure;
 
+(* 72. Implies elimination when one premise is false *)
+fun ARS_rule_impliesgen_1 c_prem
+  (G, n, frun, finst) (fsubst as ImpliesGen (_, _)) =
+    (G @ [NotTicks (c_prem, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_impliesgen_1 _ _ _ = raise Assert_failure;
+
+(* 73. Implies elimination when all premises are true *)
+fun ARS_rule_impliesgen_2 c_conc
+  (G, n, frun, finst) (fsubst as ImpliesGen (c_premises, _)) =
+    (G @ (List.map (fn c => Ticks (c, n)) c_premises) @ [Ticks (c_conc, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_impliesgen_2 _ _ _ = raise Assert_failure;
+
 (* The lawyer introduces the syntactically-allowed non-deterministic choices that the oracle or the adventurer may decide to use.
    We shall insist that the lawyer only gives pure syntactic possibilities. It is clear those may lead to deadlock and inconsistencies.
    In the next part, we introduce an adventurer which is in charge of testing possibilities and derive configuration until reaching
@@ -566,8 +578,11 @@ fun lawyer_e
 			     [(fatom, ARS_rule_tagrel_fun_elim)]
 			 | TagRelationReflImplies _ =>
 			     [(fatom, ARS_rule_tagrel_refl_implies_elim_1), (fatom, ARS_rule_tagrel_refl_implies_elim_2)]
-			 | Implies _ =>
-			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)]
+			 (* | Implies _ =>
+			     [(fatom, ARS_rule_implies_1), (fatom, ARS_rule_implies_2)] *)
+			 | ImpliesGen (premises, conclusions) =>
+			     (List.map (fn c => (fatom, ARS_rule_impliesgen_1 c)) premises)
+			     @ (List.map (fn c => (fatom, ARS_rule_impliesgen_2 c)) conclusions)
 			 | ImpliesNot _ =>
 			     [(fatom, ARS_rule_implies_not_1), (fatom, ARS_rule_implies_not_2)]
 			 | TimeDelayedBy _ =>
