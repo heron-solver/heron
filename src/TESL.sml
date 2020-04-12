@@ -132,7 +132,7 @@ datatype TESL_atomic =
   | TagRelationFun                 of clock * func * clock list
   | TagRelationDer                 of clock * clock
   | TagRelationReflImplies         of clock * clock * clock
-  | Implies                        of clock * clock
+(*| Implies                        of clock * clock *)
   | ImpliesGen                     of clock list * clock list
   | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock
@@ -178,6 +178,7 @@ datatype TESL_atomic =
   | DirPrint                       of clock list (* If empty then all clocks *)
   | DirExit
   | DirHelp
+  | DirUniq
 
 type TESL_formula = TESL_atomic list
 
@@ -189,8 +190,8 @@ type TESL_conf = context * instant_index * TESL_formula * TESL_formula
  * If not, they will be ignored at instant initialization...
  *)
 fun ConstantlySubs f = List.filter (fn f' => case f' of
-    Implies _                => true
-  | ImpliesGen _             => true
+    (* Implies _                => true *)
+    ImpliesGen _             => true
   | ImpliesNot _             => true
   | TagRelationAff _         => true
   | TagRelationRefl _        => true
@@ -437,6 +438,7 @@ fun unsugar (clock_types: (clock * tag_t) list) (f : TESL_formula) =
 	    | DirOutputVCD          => []
 	    | DirOutputCSV _        => []
 	    | DirOutputTEX _        => []
+	    | DirUniq               => []
 	    | fatom => [fatom]
   ) f)
 
@@ -544,7 +546,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | TagRelationFby (c1, _, c2)                => [c1, c2]
   | TagRelationFun (c, _, clist)              => [c] @ clist
   | TagRelationDer (c1, c2)                   => [c1, c2]
-  | Implies (c1, c2)                          => [c1, c2]
+(*| Implies (c1, c2)                          => [c1, c2] *)
   | ImpliesGen (C1, C2)                          => C1 @ C2
   | ImpliesNot (c1, c2)                       => [c1, c2]
   | TimeDelayedBy (c1, _, c2, NONE, c3)       => [c1, c2, c3]

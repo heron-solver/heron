@@ -86,6 +86,7 @@
     "stutter"
     "print"
     "help"
+    "uniq"
     "tagref"
     "output"
     "driving-clock"

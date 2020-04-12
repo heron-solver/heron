@@ -90,7 +90,8 @@ fun hash_of_TESL_atomic (f: TESL_atomic): int = case f of
   | TagRelationFun (c, f, cl)	                     => 41	* (hash_of_clock c) * (hash_of_fun f) * (hash_of_clock_list cl)
   | TagRelationDer (c1, c2)		                     => 43	* (hash_of_clock c1) * (hash_of_clock c2)
   | TagRelationReflImplies (c1, c2, c3)	              => 47	* (hash_of_clock c1) * (hash_of_clock c2) * (hash_of_clock c3)
-  | Implies (c1, c2)			                     => 53	* (hash_of_clock c1) * (hash_of_clock c2)
+(*| Implies (c1, c2)			                     => 53	* (hash_of_clock c1) * (hash_of_clock c2) *)
+  | ImpliesGen (masters, slaves)	                     => 53	* (List.foldl (fn (x, res) => hash_of_clock x * res) 1 masters) * (List.foldl (fn (x, res) => hash_of_clock x * res) 1 slaves)
   | ImpliesNot (c1, c2)		                     => 59	* (hash_of_clock c1) * (hash_of_clock c2)
   | TimeDelayedBy (c1, t, c2, c3, c4)	              => 61	* (hash_of_clock c1)
 								   * (hash_of_tag t)
@@ -121,7 +122,6 @@ fun hash_of_TESL_atomic (f: TESL_atomic): int = case f of
   | Precedes (c1, c2, b)			              => 173	* (hash_of_clock c1) * (hash_of_clock c2) * (hash_of_bool b)
   | Excludes (c1, c2)			              => 179	* (hash_of_clock c1) * (hash_of_clock c2) 
   | Kills (c1, c2)				              => 181	* (hash_of_clock c1) * (hash_of_clock c2)
-  | ImpliesGen (masters, slaves)	                     => 191	* (List.foldl (fn (x, res) => hash_of_clock x * res) 1 masters) * (List.foldl (fn (x, res) => hash_of_clock x * res) 1 slaves)
   | DirMaxstep _		                            => 0 
   | DirMinstep _			                     => 0 
   | DirHeuristic _			                     => 0 
@@ -139,6 +139,7 @@ fun hash_of_TESL_atomic (f: TESL_atomic): int = case f of
   | DirPrint _				              => 0 
   | DirExit				                     => 0 
   | DirHelp				                     => 0 
+  | DirUniq				                     => 0 
 
 
 fun hash_of_TESL_formula (F: TESL_formula): int =

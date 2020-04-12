@@ -47,7 +47,7 @@ fun opposite_tag t = case t of
       | UNTIL
       | DIR_OUTPUT | VCD | SVG | TEX | TIKZ | PDF | CSV
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
-      | DIR_SELECT 
+      | DIR_SELECT | DIR_UNIQ
       | SELECT 
       | ARROW
       | PRECEDES
@@ -216,3 +216,4 @@ fun opposite_tag t = case t of
       | DIR_EVENTCONCRETIZE								  (DirEventConcretize (NONE))
       | DIR_EVENTCONCRETIZE NUM							  (DirEventConcretize (SOME NUM))
       | DIR_STUTTER          							  (DirStutter)
+      | DIR_UNIQ             							  (DirUniq)

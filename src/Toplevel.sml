@@ -10,7 +10,7 @@
 *)
 
 (* Update this value for everytime code changes *)
-val RELEASE_VERSION = "0.63.0-alpha+20200412"
+val RELEASE_VERSION = "0.63.1-alpha+20200412"
 val COMPILER_CMD = "_COMPILER_CMD_"
 
 open OS.Process
@@ -151,6 +151,9 @@ fun action (stmt: TESL_atomic) =
 	  else snapshots := [cf]
 	end
   )
+  | DirUniq               =>
+    (* Set-wise structural equality *)
+    snapshots := cfl_uniq (!snapshots)
   | DirExit               => quit()
   | DirHelp               => print_help()
   | _                     =>

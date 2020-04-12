@@ -85,6 +85,7 @@ print "  \u001B[1m@exit\u001B[0m                             exit Heron\n";
 print "  \u001B[1m@run\u001B[0m (\u001B[1muntil\u001B[0m [CLOCK]+)             run the specification until model found\n"; 
 print "  \u001B[1m@step\u001B[0m                             run the specification for one step\n"; 
 print "  \u001B[1m@stutter\u001B[0m                          stutters the last snapshot instant\n"; 
+print "  \u001B[1m@uniq\u001B[0m                             removes redundant configurations\n"; 
 print "  \u001B[1m@event-concretize\u001B[0m                 concretize ticks/tags of driving clocks\n"; 
 print "  \u001B[1m@print\u001B[0m                            display the current snapshots\n"; 
 print "  \u001B[1m@output\u001B[0m \u001B[1mvcd\u001B[0m/\u001B[1mtikz\u001B[0m/\u001B[1mtex\u001B[0m/\u001B[1mpdf\u001B[0m/\u001B[1mcsv\u001B[0m      export to VCD/TikZ/LaTeX/PDF/CSV file with clock selection\n"; 
@@ -347,7 +348,7 @@ fun string_of_expr e = case e of
 									^ (if mono then "-clock " else "-quantity ")
 									^ (string_of_clk c)
 									^ " sporadic " ^ (List.foldr (fn (t, s) => (string_of_tag t) ^ ", " ^ s) "" tags)
-  | Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave)
+(*| Implies (master, slave)                                 => (string_of_clk master) ^ " implies " ^ (string_of_clk slave) *)
   | ImpliesGen (masters, slaves)                            => (StringMore.concat " /\\ " (List.map (string_of_clk) masters)) ^ " implies " ^ (StringMore.concat " \\/ " (List.map (string_of_clk) slaves))
   | ImpliesNot (master, slave)                              => (string_of_clk master) ^ " implies not " ^ (string_of_clk slave)
   | TagRelation (relsymb, cexp1, cexp2)                     => "time relation " ^ (string_of_clk_expr cexp1) ^ " " ^ (string_of_clk_rel relsymb) ^ " " ^ (string_of_clk_expr cexp2)
@@ -395,4 +396,5 @@ fun string_of_expr e = case e of
   | DirExit							    => "<directive>"
   | DirPrint _  					    => "<directive>"
   | DirHelp							    => "<directive>"
+  | DirUniq							    => "<directive>"
   | _                                                       => "<unknown>"

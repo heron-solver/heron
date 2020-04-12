@@ -119,6 +119,7 @@ ws = [\ \t];
 "@event-concretize"          => (Tokens.DIR_EVENTCONCRETIZE(!pos,!pos));
 "@event-solve"               => (Tokens.DIR_EVENTCONCRETIZE(!pos,!pos));
 "@stutter"                   => (Tokens.DIR_STUTTER(!pos,!pos));
+"@uniq"                      => (Tokens.DIR_UNIQ(!pos,!pos));
 "vcd"				 => (Tokens.VCD(!pos,!pos));
 "tikz"				 => (Tokens.TIKZ(!pos,!pos));
 "tex"				 => (Tokens.TEX(!pos,!pos));

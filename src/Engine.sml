@@ -38,6 +38,7 @@ fun ARS_rule_sporadic_2
     (G, n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_sporadic_2 _ _ = raise Assert_failure;
 
+(*
 (* 3. Implies elimination when premise is false *)
 fun ARS_rule_implies_1
   (G, n, frun, finst) (fsubst as Implies (c1, _)) =
@@ -49,6 +50,7 @@ fun ARS_rule_implies_2
   (G, n, frun, finst) (fsubst as Implies (c1, c2)) =
     (G @ [Ticks (c1, n), Ticks (c2, n)], n, frun, finst @- [fsubst])
   | ARS_rule_implies_2 _ _ = raise Assert_failure;
+*)
 
 (* 5. Tag relation elimination *)
 fun ARS_rule_tagrel_elim

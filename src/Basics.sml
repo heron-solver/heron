@@ -141,6 +141,10 @@ fun split_in_8 l =
   in aux l ([], [], [], [], [], [], [], [])
   end
 
+fun seteq l1 l2 =
+    List.all (fn x1 => List.exists (fn x2 => x1 = x2) l2) l1
+    andalso List.all (fn x2 => List.exists (fn x1 => x1 = x2) l1) l2
+
 end
 
 structure StringMore =
