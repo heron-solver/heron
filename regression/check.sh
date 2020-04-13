@@ -1,5 +1,6 @@
 #! /bin/sh
-# usage: ./check.sh [TESL SPECFICATION FILE]
+
+# usage: ./check.sh [TESL SPECIFICATION FILE]
 # WARNING: an expected output file must exist in the same directory
 #          in TikZ format
 
@@ -26,11 +27,12 @@ does_output_exists () {
 
 # From TESL file, generates output
 generate () {
-    OS_NAME="$(uname -m)"
-    if [ "$OS_NAME" = "linux" ]
-    then /usr/bin/time -f "  -> Time:   %E\n  -> Memory: %M kB" ./heron --use $1  >/dev/null
-    else /usr/bin/time ./heron --use $1  >/dev/null
-    fi
+    # OS_NAME="$(uname -m)"
+    # if [ "$OS_NAME" = "linux" ]
+    # then /usr/bin/time -f "  -> Time:   %E\n  -> Memory: %M kB" ./heron --use $1  >/dev/null
+    # else /usr/bin/time ./heron --use $1  >/dev/null
+    # fi
+    ./heron --use $1  >/dev/null
     mv output.tex $1.out
 }
 
@@ -43,8 +45,8 @@ run_check () {
     INCLUSION_DIFF2=`comm -13 $2.sorted $1.sorted` # $1.sorted ⊆ $2.sorted
     if [ -z "$INCLUSION_DIFF1" ]
     then if [ -z "$INCLUSION_DIFF2" ]
-	  then echo "  -> PASS" ; exit 0 # \e[1m\e[32mPASS\e[0m
-	  else echo "  -> FAIL" ; echo $INCLUSION_DIFF2 ; exit 1 # \e[1m\e[31mFAIL\e[0m
+	  then echo "\r$(tput bold)$(tput setaf 2)[ PASSED ]$(tput sgr0) $1" ; exit 0 # \e[1m\e[32mPASS\e[0m
+	  else echo "\r$(tput bold)$(tput setaf 1)[ FAILED ]$(tput sgr0) $1" ; echo $INCLUSION_DIFF2 ; exit 1 # \e[1m\e[31mFAIL\e[0m
 	  fi
     else echo "  -> FAIL" ; echo $INCLUSION_DIFF1 ; exit 1 # \e[1m\e[31mFAIL\e[0m
     fi
@@ -59,5 +61,5 @@ check () {
 
 # Main entry-point
 does_file_exists $1
-echo "Testing $1..."
+echo -n "[        ] $1"
 check $1

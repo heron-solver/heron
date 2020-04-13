@@ -30,11 +30,13 @@ binary-release: all
 
 # Tests are done with TESL files and expected outputs available in ./regression
 test:
-	rm -f regression/*.out regression/_results.log
-	chmod +x regression/check.sh regression/decide.sh
-	for var in $(shell ls regression/*.tesl) ; do regression/check.sh $${var} ; done | tee regression/_results.log
-	rm -f regression/*.sorted
-	regression/decide.sh
+	@echo Starting test session...
+	@rm -f regression/*.out regression/_results.log
+	@chmod +x regression/sysinfo.sh regression/check.sh regression/decide.sh
+	@regression/sysinfo.sh
+	@for var in $(shell ls regression/*.tesl) ; do regression/check.sh $${var} ; done | tee regression/_results.log
+	@rm -f regression/*.sorted
+	@regression/decide.sh
 
 clean:
 	rm -f regression/*.out regression/_results.log
