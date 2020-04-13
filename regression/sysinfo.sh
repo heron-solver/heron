@@ -1,7 +1,9 @@
 #! /bin/sh
 
-echo -n "System:   " ; uname -sorp
-echo -n "Hostname: " ; hostname
-echo -n "User:     " ; whoami
-echo -n "Date:     " ; LC_TIME=en_US date
-echo -n "Version:  " ; ((./heron --help | head -n 1)  2>/dev/null) | cut -d ' ' -f 2 2>/dev/null
+HERON_VER=$(/bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)
+
+/usr/bin/printf "System:   " ; uname -srp
+/usr/bin/printf "Hostname: " ; hostname
+/usr/bin/printf "User:     " ; whoami
+/usr/bin/printf "Date:     " ; LC_TIME=en_US date
+/usr/bin/printf "Version:  " ; if [ -z "$HERON_VER" ] ; then echo "(unknown)" ; else echo "$HERON_VER" ; fi
