@@ -14,10 +14,10 @@ Getting started
 -------------------
 
 ### Try me with Docker
-The easiest way to start with Heron is to get [Docker](https://www.docker.com) and then simply type
+The easiest way to start with Heron is to get [Docker](https://docs.docker.com/get-docker/) and then simply type
 ```bash
 $ docker run -it emptystackexn/heron
-...# ./heron --use examples/basic/FirstExample.tesl
+# ./heron --use examples/basic/FirstExample.tesl
 ```
 
 ### Binary distribution
