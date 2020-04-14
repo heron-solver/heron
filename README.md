@@ -17,7 +17,7 @@ Getting started
 The easiest way to start with Heron is to get [Docker](https://www.docker.com) and then simply type
 ```bash
 $ docker run -it emptystackexn/heron
-$ ./heron --use examples/basic/FirstExample.tesl
+...# ./heron --use examples/basic/FirstExample.tesl
 ```
 
 ### Binary distribution
@@ -40,7 +40,7 @@ References
 People
 -------------------
 
-The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It uses [MPL](https://github.com/MPLLang/mpl)([MLton](http://mlton.org)) as its Standard ML compiler. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
+The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It uses [MPL](https://github.com/MPLLang/mpl) ([MLton](http://mlton.org)) as its Standard ML compiler. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
 
 License
 -------------------
