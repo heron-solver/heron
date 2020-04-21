@@ -35,7 +35,7 @@ fun exec
             (* Stop condition 1. No pending sporadics *)
             (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) frun) = 0)
             (* Stop condition 2. No pending whenticking *)
-            andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) frun) = 0)
+            andalso (List.length (List.filter (fn fatom => case fatom of SporadicOn _ => true | _ => false) frun) = 0)
             (* Stop condition 3. Minstep has already been overheaded *)
             andalso (!(#minstep sp) < !(#current_step sp))
             ) (!next_cfs) in

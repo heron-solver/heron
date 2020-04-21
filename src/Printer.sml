@@ -265,14 +265,14 @@ fun print_affine_primitives (G : context) : unit =
 fun print_floating_ticks (clocks: clock list) (f: TESL_formula) : unit =
   let
     val sporadics = (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f)
-    val whentickings = (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f)
+    val whentickings = (List.filter (fn fatom => case fatom of SporadicOn _ => true | _ => false) f)
     fun string_of_sporadics c =
       List.foldl (fn (Sporadic (Clk clk, tag), s) =>
 			if clk = c
 			then (string_of_tag tag) ^ ", " ^ s
 			else "" ^ s | _ => raise UnexpectedMatch) "" sporadics
     fun string_of_whentickingon c =
-      List.foldl (fn (WhenTickingOn (Clk clk_meas_name, tag, Clk clk), s) =>
+      List.foldl (fn (SporadicOn (Clk clk_meas_name, tag, Clk clk), s) =>
 			if clk = c
 			then "(" ^ BOLD_COLOR ^ "when" ^ RESET_COLOR ^ " " ^ (string_of_tag tag) ^ " " ^ BOLD_COLOR ^ "on" ^ RESET_COLOR ^ " " ^ clk_meas_name ^ "), " ^ s
 			else "" ^ s | _ => raise UnexpectedMatch) "" whentickings
@@ -343,7 +343,7 @@ fun string_of_expr e = case e of
 									^ (string_of_clk c)
   | Sporadic (c, t)                                         => (string_of_clk c) ^ " sporadic " ^ (string_of_tag t)
   | Sporadics (c, tags)                                     => (string_of_clk c) ^ " sporadic " ^ (String.concatWith ", " (List.map (string_of_tag) tags))
-  | WhenTickingOn (cmeas, t, ctick)                         => (string_of_clk ctick) ^ " sporadic " ^ (string_of_tag t) ^ " on " ^ (string_of_clk cmeas)
+  | SporadicOn (cmeas, t, ctick)                         => (string_of_clk ctick) ^ " sporadic " ^ (string_of_tag t) ^ " on " ^ (string_of_clk cmeas)
   | TypeDeclSporadics (ty, c, tags, mono)                   => (string_of_tag_type ty)
 									^ (if mono then "-clock " else "-quantity ")
 									^ (string_of_clk c)

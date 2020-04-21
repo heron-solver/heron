@@ -67,21 +67,21 @@ fun ARS_rule_timedelayed_elim_1
 (* 7. Time delayed elimination when premise is true (introduces when-ticking) *)
 fun ARS_rule_timedelayed_elim_2
   (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, dt, c2, NONE, c3)) =
-    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [WhenTickingOn (c2, Add (Schematic (c2, n), dt), c3)])
+    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [SporadicOn (c2, Add (Schematic (c2, n), dt), c3)])
  | ARS_rule_timedelayed_elim_2
   (G, n, frun, finst) (fsubst as TimeDelayedBy (c1, dt, c2, SOME rc, c3)) =
-    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [WhenTickingOnWithReset (c2, Add (Schematic (c2, n), dt), c3, rc)])
+    (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [SporadicOnWithReset (c2, Add (Schematic (c2, n), dt), c3, rc)])
   | ARS_rule_timedelayed_elim_2 _ _ = raise Assert_failure;
 
 (* 8. When ticking elimination with merge *)
 fun ARS_rule_whentickingon_1
-  (G, n, frun, finst) (fsubst as WhenTickingOn (c1, tag, c2)) =
+  (G, n, frun, finst) (fsubst as SporadicOn (c1, tag, c2)) =
     (G @ [Timestamp (c1, n, tag), Ticks (c2, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whentickingon_1 _ _ = raise Assert_failure;
 
 (* 8 Bis. When ticking elimination postponed *)
 fun ARS_rule_whentickingon_2
-  (G, n, frun, finst) (fsubst as WhenTickingOn _) =
+  (G, n, frun, finst) (fsubst as SporadicOn _) =
     (G, n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_whentickingon_2 _ _ = raise Assert_failure;
 
@@ -421,19 +421,19 @@ fun ARS_rule_kills_2
  
 (* 59. When ticking elimination when deciding to trigger tick sporadicaly *)
 fun ARS_rule_whentickingon_with_reset_on_1
- (G, n, frun, finst) (fsubst as WhenTickingOnWithReset (c1, tag, c2, rclock)) =
+ (G, n, frun, finst) (fsubst as SporadicOnWithReset (c1, tag, c2, rclock)) =
     (G @ [Ticks (c2, n), Timestamp (c1, n, tag)], n, frun, finst @- [fsubst])
   | ARS_rule_whentickingon_with_reset_on_1 _ _ = raise Assert_failure;
 
 (* 60. When ticking elimination when deciding to postpone it and is not reset *)
 fun ARS_rule_whentickingon_with_reset_on_2
-  (G, n, frun, finst) (fsubst as WhenTickingOnWithReset (c1, tag, c2, rclock)) =
+  (G, n, frun, finst) (fsubst as SporadicOnWithReset (c1, tag, c2, rclock)) =
     (G @ [NotTicks (rclock, n)], n, frun @ [fsubst], finst @- [fsubst])
   | ARS_rule_whentickingon_with_reset_on_2 _ _ = raise Assert_failure;
 
 (* 61. When ticking elimination when the reset clock ticks *)
 fun ARS_rule_whentickingon_with_reset_on_3
-  (G, n, frun, finst) (fsubst as WhenTickingOnWithReset (c1, tag, c2, rclock)) =
+  (G, n, frun, finst) (fsubst as SporadicOnWithReset (c1, tag, c2, rclock)) =
     (G @ [Ticks (rclock, n)], n, frun, finst @- [fsubst])
   | ARS_rule_whentickingon_with_reset_on_3 _ _ = raise Assert_failure;
 
@@ -554,9 +554,9 @@ fun lawyer_e
     | fatom :: _ => (case fatom of
 			   Sporadic _ =>
 			     [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)]
-			 | WhenTickingOn _ =>
+			 | SporadicOn _ =>
 			     [(fatom, ARS_rule_whentickingon_1), (fatom, ARS_rule_whentickingon_2)]
-             | WhenTickingOnWithReset _ =>
+             | SporadicOnWithReset _ =>
                  [(fatom, ARS_rule_whentickingon_with_reset_on_1),
                   (fatom, ARS_rule_whentickingon_with_reset_on_2),
                   (fatom, ARS_rule_whentickingon_with_reset_on_3)]
@@ -799,7 +799,7 @@ fun simplify_whentickings (G: context) (frun: TESL_formula) =
     | Add (Rat x1, Rat x2) => Rat (+/ (x1, x2))
     | Add (t1, t2) => Add (simplify_tag t1, simplify_tag t2)
   in List.map (fn
-         WhenTickingOn (c1, tag, c2) => WhenTickingOn (c1, lfp (simplify_tag) tag, c2)
+         SporadicOn (c1, tag, c2) => SporadicOn (c1, lfp (simplify_tag) tag, c2)
 	| f => f
      ) frun
   end
@@ -831,9 +831,9 @@ fun policy_no_spurious_whentickings
   List.filter
     (fn (G, _, phi, _) =>
       List.all (fn
-        WhenTickingOn (clk, Int n1, _) => (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
+        SporadicOn (clk, Int n1, _) => (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
 						orelse (List.all (fn Timestamp (clk', _, Int n2) => not (clk = clk') orelse (n1 >= n2) | _ => true) G)
-      | WhenTickingOn (clk, Rat x1, _) => (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
+      | SporadicOn (clk, Rat x1, _) => (List.exists (fn qty => clk = qty) (!(#declared_quantities sp)))
 						orelse (List.all (fn Timestamp (clk', _, Rat x2) => not (clk = clk') orelse (<=/ (x2, x1)) | _ => true) G)
       | _ => true) phi)
     cfs;

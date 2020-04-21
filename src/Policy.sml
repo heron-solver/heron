@@ -21,7 +21,7 @@
 fun heuristic_minimize_floating_ticks (cfs : TESL_conf list) : TESL_conf list =
   let
     fun nb_floating (frun: TESL_formula) : int =
-      List.length (List.filter (fn Sporadic _ => true | WhenTickingOn _ => true | _ => false) frun)
+      List.length (List.filter (fn Sporadic _ => true | SporadicOn _ => true | _ => false) frun)
     val min_spor : int =
       List.foldl (fn ((_, _, frun, _), n) => Int.min(n, nb_floating frun)) MAXINT cfs
   in List.filter
@@ -136,15 +136,15 @@ fun heuristic_speedup_event_occ (cfs : TESL_conf list) =
     val clock_decl = List.foldl (fn ((G, _, frun, _), l) => uniq (l @ (clocks_of_context G) @ (clocks_of_tesl_formula frun))) [] cfs
     fun next_event_time (frun: TESL_formula): tag option list =
       let
-	   val frun = List.map (fn Sporadic (c, tag) => WhenTickingOn (c, tag, c) | f => f) frun
+	   val frun = List.map (fn Sporadic (c, tag) => SporadicOn (c, tag, c) | f => f) frun
       in
 	   List.map (fn c0 => 
-			  case List.find (fn WhenTickingOn (c, tag, _) => c0 = c
+			  case List.find (fn SporadicOn (c, tag, _) => c0 = c
 										 andalso is_tag_constant tag
-										 andalso (List.all (fn WhenTickingOn (c', tag', _) => not (c = c' andalso is_tag_constant tag') orelse ::<= (tag, tag') | _ => true) frun)
+										 andalso (List.all (fn SporadicOn (c', tag', _) => not (c = c' andalso is_tag_constant tag') orelse ::<= (tag, tag') | _ => true) frun)
 					   | _ => false) frun of
 			      NONE                          => NONE
-			    | SOME (WhenTickingOn (_, tag, _)) => SOME tag
+			    | SOME (SporadicOn (_, tag, _)) => SOME tag
 			    | _ => raise UnexpectedMatch
 		     ) clock_decl
       end

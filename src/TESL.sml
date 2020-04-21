@@ -121,6 +121,8 @@ datatype TESL_atomic =
   | TypeDecl                       of clock * tag_t * bool
   | Sporadic                       of clock * tag
   | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
+  | SporadicOn                     of clock * tag * clock
+  | SporadicOnWithReset            of clock * tag * clock * clock   (* Intermediate Form *)
   | TypeDeclSporadics              of tag_t * clock * (tag list) * bool   (* Syntactic sugar *)
   | TagRelation                    of clk_rel * clk_expr * clk_expr
   | TagRelationAff                 of clock * tag * clock * tag
@@ -136,8 +138,6 @@ datatype TESL_atomic =
   | ImpliesGen                     of clock list * clock list
   | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock
-  | WhenTickingOn                  of clock * tag * clock
-  | WhenTickingOnWithReset         of clock * tag * clock * clock   (* Intermediate Form *)
   | DelayedBy                      of clock * int * clock * clock
   | TimesImpliesOn                 of clock * int * clock           (* Intermediate Form *)
   | ImmediatelyDelayedBy           of clock * int * clock * clock
@@ -209,7 +209,7 @@ fun ConstantlySubs f = List.filter (fn f' => case f' of
   | _             => false) f
 fun ConsumingSubs f = List.filter (fn f' => case f' of
 (*  Sporadic _       => true *) (* Removed as handled seperately in SporadicSubs *)
-    WhenTickingOn _  => true
+    SporadicOn _  => true
   | TimesImpliesOn _ => true
   | _                => false) f
 
@@ -534,7 +534,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
     TypeDecl (c, _, _)                     => [c]
   | Sporadic (c, _)                           => [c]
   | Sporadics (c, _)                          => [c]
-  | WhenTickingOn (c1, _, c2)                 => [c1, c2]
+  | SporadicOn (c1, _, c2)                 => [c1, c2]
   | TypeDeclSporadics (_, c, _, _)            => [c]
   | TagRelation  (_, cexp1, cexp2)            => uniq ((clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2))
   | TagRelationAff (c1, _, c2, _)             => [c1, c2]
@@ -584,7 +584,7 @@ fun has_no_floating_ticks (f : TESL_formula) =
   (* Stop condition 1. No pending sporadics *)
   (List.length (List.filter (fn fatom => case fatom of Sporadic _ => true | _ => false) f) = 0)
   (* Stop condition 2. No pending whenticking *)
-  andalso (List.length (List.filter (fn fatom => case fatom of WhenTickingOn _ => true | _ => false) f) = 0)
+  andalso (List.length (List.filter (fn fatom => case fatom of SporadicOn _ => true | _ => false) f) = 0)
 
 (* This is a safe over-approximation. In theory, it should be
 necessary to construct a dependency graph and measure the longest
