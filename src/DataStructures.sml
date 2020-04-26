@@ -29,13 +29,15 @@ val GREEN_COLOR     = "\u001B[32m"
 val YELLOW_COLOR    = "\u001B[33m"
 val BLUE_COLOR      = "\u001B[34m"
 val MAGENTA_COLOR   = "\u001B[35m"
+val CYAN_COLOR      = "\u001B[36m"
 val RESET_COLOR     = "\u001B[0m"
 
 fun clear_line () =
   print "\r                                                                               "
 
 (* Ranges integers [1 : n] *)
-fun range n = let fun aux n' l = if n' = 0 then l else aux (n' - 1) (n' :: l) in aux n [] end;
+fun range n  = let fun aux n' l = if n' = 0 then l else aux (n' - 1) (n' :: l) in aux n [] end;
+fun range0 n = let fun aux n' l = if n' < 0 then l else aux (n' - 1) (n' :: l) in aux n [] end;
 
 (* Dummy constants *)
 val MAXINT = valOf (Int.maxInt)
@@ -62,6 +64,9 @@ fun uniq l =
       | aux [] acc             = acc
   in List.rev (aux l [])
   end
+
+fun fst (a, b) = a
+fun snd (a, b) = b
 
 exception Assert_failure
 fun assert b =
@@ -116,37 +121,61 @@ fun largest [] = raise Empty
  
 structure ListMore =
 struct
-
-(* Splits a list into 2 lists (linear time) *)
-fun split_half l =
-  let fun aux l (left, right) = case l of
-   []		    => (left, right)
- | [x]		    => (x :: left, right)
- | x1 :: x2 :: l' => aux l' (x1 :: left, x2 :: right)
-  in aux l ([], [])
-  end
-
-(* Splits a list into 2 lists (linear time) *)
-fun split_in_8 l =
-  let fun aux l (l1, l2, l3, l4, l5, l6, l7, l8) = case l of
-   []		                                        => (l1, l2, l3, l4, l5, l6, l7, l8)
- | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: x8 :: l' => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, x7 :: l7, x8 :: l8)
- | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: l'       => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, x7 :: l7, l8)
- | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: l'             => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, l7, l8)
- | x1 :: x2 :: x3 :: x4 :: x5 :: l'                   => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, l6, l7, l8)
- | x1 :: x2 :: x3 :: x4 :: l'                         => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, l5, l6, l7, l8)
- | x1 :: x2 :: x3 :: l'                               => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, l4, l5, l6, l7, l8)
- | x1 :: x2 :: l'                                     => aux l' (x1 :: l1, x2 :: l2, l3, l4, l5, l6, l7, l8)
- | x1 :: l'                                           => aux l' (x1 :: l1, l2, l3, l4, l5, l6, l7, l8)
-  in aux l ([], [], [], [], [], [], [], [])
-  end
-
-fun seteq l1 l2 =
-    List.all (fn x1 => List.exists (fn x2 => x1 = x2) l2) l1
-    andalso List.all (fn x2 => List.exists (fn x1 => x1 = x2) l1) l2
-
+  (* Set-wise equality *)
+  fun equals l1 l2 =
+      List.all (fn x => List.exists (fn x' => x = x') l2) l1
+      andalso List.all (fn x => List.exists (fn x' => x = x') l1) l2
+   
+  (* Splits a list into 2 lists (linear time) *)
+  fun split_half l =
+    let fun aux l (left, right) = case l of
+     []		    => (left, right)
+   | [x]		    => (x :: left, right)
+   | x1 :: x2 :: l' => aux l' (x1 :: left, x2 :: right)
+    in aux l ([], [])
+    end
+   
+  (* Splits a list into 2 lists (linear time) *)
+  fun split_in_8 l =
+    let fun aux l (l1, l2, l3, l4, l5, l6, l7, l8) = case l of
+     []		                                        => (l1, l2, l3, l4, l5, l6, l7, l8)
+   | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: x8 :: l' => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, x7 :: l7, x8 :: l8)
+   | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: x7 :: l'       => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, x7 :: l7, l8)
+   | x1 :: x2 :: x3 :: x4 :: x5 :: x6 :: l'             => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, x6 :: l6, l7, l8)
+   | x1 :: x2 :: x3 :: x4 :: x5 :: l'                   => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, x5 :: l5, l6, l7, l8)
+   | x1 :: x2 :: x3 :: x4 :: l'                         => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, x4 :: l4, l5, l6, l7, l8)
+   | x1 :: x2 :: x3 :: l'                               => aux l' (x1 :: l1, x2 :: l2, x3 :: l3, l4, l5, l6, l7, l8)
+   | x1 :: x2 :: l'                                     => aux l' (x1 :: l1, x2 :: l2, l3, l4, l5, l6, l7, l8)
+   | x1 :: l'                                           => aux l' (x1 :: l1, l2, l3, l4, l5, l6, l7, l8)
+    in aux l ([], [], [], [], [], [], [], [])
+    end
+   
+  fun seteq l1 l2 =
+      List.all (fn x1 => List.exists (fn x2 => x1 = x2) l2) l1
+      andalso List.all (fn x2 => List.exists (fn x1 => x1 = x2) l1) l2
 end
 
+infix 1 @==
+fun l1 @== l2 = ListMore.equals l1 l2
+
+(* Computes the least fixpoint of a functional [ff] starting at [x] *)
+(*
+fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
+  let val x' = ff x in
+  (if x = x' then x else lfp (ff) x') end
+*)
+fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
+    let val x_ = ref x
+	 val x' = ref (ff x)
+    in (while ((!x_) <> (!x')) do
+	      (x_ := (!x') ;
+	       x' := ff (!x'))) ;
+	!x_
+    end
+
+(**
+  Strings
+*)
 structure StringMore =
 struct
 
@@ -200,6 +229,11 @@ structure AssocTree = struct
      Leaf (n, e)        => [(n, e)] 
    | Node (_, subtrees) => List.concat (List.map (leaves) subtrees)
 
+  (* All the leaves of the tree [t] *)
+  fun nodes (t: 'a t) = case t of
+     Leaf _             => [] 
+   | Node ((n, e), subtrees) => (List.concat (List.map (nodes) subtrees)) @ [(n, e)]
+
   (* Replace a leaf by a node containing subtrees with new identifiers and elements from [l]  *)
   fun grow (t: 'a t) (id: int) (l: 'a list) = case t of
       Leaf (n, x)         => if n <> id
@@ -250,5 +284,16 @@ structure UnionFind = struct
 	   val _ = Array.appi (fn (x, y) => if y = rj then Array.update (u, x, ri) else ()) u
       in ()
       end
+
+  (* Prints until [max] *)
+  val print (* (u: t) (max: int): unit *) =
+   fn u => fn max =>
+   let val rng = range0 max
+   in (List.foldl (fn (n, _) => print ((Int.toString n) ^ " ")) () rng ;
+	print "\n" ;
+	List.foldl (fn (n, _) => print ((Int.toString (Array.sub (u, n))) ^ " ")) () rng ;
+	print "\n")
+   end
+      
 end
 

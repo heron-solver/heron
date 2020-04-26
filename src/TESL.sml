@@ -456,34 +456,12 @@ fun op ::<= (tag, tag') = case (tag, tag') of
   | (Rat x1, Rat x2) => <=/ (x1, x2)
   | _                => raise Assert_failure
 
-(* Decides if two lists are set-interpreted equivalent *)
-fun op @== (l1, l2) =
-           List.all (fn e1 => List.exists (fn e2 => e1 = e2) l2) l1
-  andalso List.all (fn e2 => List.exists (fn e1 => e1 = e2) l1) l2
-fun op @-- (l1, l2) = List.filter (fn e1 => List.all (fn e2 => not (@== (e1, e2))) l2) l1;
-
-
 (* Decides if two configurations are structurally equivalent *)
 fun cfs_eq ((G1, s1, phi1, psi1) : TESL_conf) ((G2, s2, phi2, psi2) : TESL_conf) : bool =
-           @== (G1, G2)
+           G1 @== G2
   andalso s1 = s2
-  andalso @== (phi1, phi2)
-  andalso @== (psi1, psi2)
-
-(* Computes the least fixpoint of a functional [ff] starting at [x] *)
-(*
-fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
-  let val x' = ff x in
-  (if x = x' then x else lfp (ff) x') end
-*)
-fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
-    let val x_ = ref x
-	 val x' = ref (ff x)
-    in (while ((!x_) <> (!x')) do
-	      (x_ := (!x') ;
-	       x' := ff (!x'))) ;
-	!x_
-    end
+  andalso phi1 @== phi2
+  andalso psi1 @== psi2
 
 (* Removes redundants configurations *)
 fun cfl_uniq (cfl : TESL_conf list) : TESL_conf list =
@@ -531,10 +509,10 @@ fun clocks_of_clk_expr e = case e of
 
 fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   uniq (List.concat (List.map (fn
-    TypeDecl (c, _, _)                     => [c]
+    TypeDecl (c, _, _)                        => [c]
   | Sporadic (c, _)                           => [c]
   | Sporadics (c, _)                          => [c]
-  | SporadicOn (c1, _, c2)                 => [c1, c2]
+  | SporadicOn (c1, _, c2)                    => [c1, c2]
   | TypeDeclSporadics (_, c, _, _)            => [c]
   | TagRelation  (_, cexp1, cexp2)            => uniq ((clocks_of_clk_expr cexp1) @ (clocks_of_clk_expr cexp2))
   | TagRelationAff (c1, _, c2, _)             => [c1, c2]
@@ -547,7 +525,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | TagRelationFun (c, _, clist)              => [c] @ clist
   | TagRelationDer (c1, c2)                   => [c1, c2]
 (*| Implies (c1, c2)                          => [c1, c2] *)
-  | ImpliesGen (C1, C2)                          => C1 @ C2
+  | ImpliesGen (C1, C2)                       => C1 @ C2
   | ImpliesNot (c1, c2)                       => [c1, c2]
   | TimeDelayedBy (c1, _, c2, NONE, c3)       => [c1, c2, c3]
   | TimeDelayedBy (c1, _, c2, SOME (rc), c3)  => [c1, c2, rc, c3]
@@ -556,7 +534,7 @@ fun clocks_of_tesl_formula (f : TESL_formula) : clock list =
   | FilteredBy (c1, _, _, _, _, c2)           => [c1, c2]
   | SustainedFrom (c1, c2, c3, c4)            => [c1, c2, c3, c4]
   | SustainedFromImmediately (c1, c2, c3, c4) => [c1, c2, c3, c4]
-  | SustainedFromWeakly (c1, c2, c3, c4)            => [c1, c2, c3, c4]
+  | SustainedFromWeakly (c1, c2, c3, c4)      => [c1, c2, c3, c4]
   | SustainedFromImmediatelyWeakly (c1, c2, c3, c4) => [c1, c2, c3, c4]
   | Await (clks, _, _, c)                     => clks @ [c]
   | WhenClock (c1, c2, c3)                    => [c1, c2, c3]

@@ -30,17 +30,18 @@ You can also fetch the [latest binary release](https://github.com/EmptyStackExn/
 
 For more information, please refer to the [Heron Reference Manual](doc/README.md).
 
-References
+Research
 -------------------
 
- 1. [Formalizing Time and Causality in Polychronous Polytimed Models](https://tel.archives-ouvertes.fr/tel-01892649/document) (Doctoral Thesis), Hai Nguyen Van, 2018
- 2. [A Symbolic Operational Semantics for TESL with an Application to Heterogeneous System Testing](https://hal-centralesupelec.archives-ouvertes.fr/hal-01583815v1), Formal Modeling and Analysis of Timed Systems (FORMATS), 14th International Conference, Berlin, Germany, Sept 5-7, 2017
- 3. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://tel.archives-ouvertes.fr/SUP_E3S/hal-01100179v1), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123
+ 1. [Formalizing Time and Causality in Polychronous Polytimed Models](https://tel.archives-ouvertes.fr/tel-01892649/document) (Doctoral Thesis), Hai Nguyen Van, 2018.
+ 2. [A Symbolic Operational Semantics for TESL with an Application to Heterogeneous System Testing](https://hal-centralesupelec.archives-ouvertes.fr/hal-01583815v1), Formal Modeling and Analysis of Timed Systems (FORMATS), 14th International Conference, Berlin, Germany, Sept 5-7, 2017.
+ 3. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://tel.archives-ouvertes.fr/SUP_E3S/hal-01100179v1), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123.
+ 4. [Timed Discrete-Event Simulation of Aviation Scenarios](), Simulation Notes Europe (2020), Volume 30, Number 2.
 
 People
 -------------------
 
-The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It uses [MPL](https://github.com/MPLLang/mpl) ([MLton](http://mlton.org)) as its Standard ML compiler. Made with love by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
+The project is named after [Heron of Alexandria](http://www-history.mcs.st-andrews.ac.uk/Biographies/Heron.html), the first-century Greek mathematician and engineer. It uses [MPL](https://github.com/MPLLang/mpl) ([MLton](http://mlton.org)) as its Standard ML compiler. Contributions by Hai Nguyen Van, Thibaut Balabonski, Frédéric Boulanger, Chantal Keller, Benoît Valiron, Burkhart Wolff.
 
 License
 -------------------
