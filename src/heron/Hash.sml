@@ -144,6 +144,7 @@ fun hash_of_TESL_atomic (f: TESL_atomic): int = case f of
   | DirExit				                     => 0 
   | DirHelp				                     => 0 
   | DirUniq				                     => 0 
+  | DirCTLFormula	_		                     => 0 
 
 
 fun hash_of_TESL_formula (F: TESL_formula): int =

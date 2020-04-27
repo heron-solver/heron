@@ -99,6 +99,7 @@
     "svg"
     "select"
     "in"
+    "ctl"
     )                     ;; some keywords
   '(;;("=" . 'font-lock-operator)     ;; '=' is an operator
     ;;("/" . 'font-lock-builtin))     ;; ';' is a built-in 

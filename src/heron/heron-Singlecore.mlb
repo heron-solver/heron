@@ -12,6 +12,8 @@ local
 in
  DataStructures.sml
  Rational.sml
+ Clock.sml
+ ../hmc/CTL.sml
  TESL.sml
  Hash.sml
  TypeChecker.sml

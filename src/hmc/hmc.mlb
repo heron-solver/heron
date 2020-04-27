@@ -1,0 +1,30 @@
+local
+ $(SML_LIB)/basis/basis.mlb
+ $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
+ local $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb in
+   signature RAND
+   structure Rand
+ end
+ local $(SML_LIB)/basis/mlton.mlb in
+   signature MLTON_RANDOM
+   structure MLton
+ end
+in
+ ../heron/DataStructures.sml
+ ../heron/Rational.sml
+ ../heron/Clock.sml
+ CTL.sml
+ ../heron/TESL.sml
+ ../heron/Hash.sml
+ ../heron/TypeChecker.sml
+ ../heron/TESL-parse.grm.sig
+ ../heron/TESL-parse.grm.sml
+ ../heron/TESL-parse.lex.sml
+ ../heron/ArithmeticSolver.sml
+ ../heron/Printer.sml
+ ../heron/Engine.sml
+
+ AssocTree.sml
+ UnionFind.sml
+ _ModelChecker.sml
+end

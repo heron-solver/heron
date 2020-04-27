@@ -43,7 +43,7 @@ fun opposite_tag t = case t of
       | BY
       | FROM
       | LET | INT | DECIMAL | RATIONAL | FLOAT
-      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP | DIR_STUTTER
+      | DIR_MAXSTEP | DIR_MINSTEP | DIR_HEURISTIC | DIR_DUMPRES | DIR_SCENARIO | STRICT | DIR_RUN | DIR_RUNSTEP | DIR_PRINT | DIR_EXIT | DIR_HELP | DIR_STUTTER | DIR_CTL_FORMULA
       | UNTIL
       | DIR_OUTPUT | VCD | SVG | TEX | TIKZ | PDF | CSV
       | DIR_DRIVINGDECL | DIR_EVENTCONCRETIZE
@@ -57,8 +57,20 @@ fun opposite_tag t = case t of
       | DER
       | CONJ_CLAUSE
       | DISJ_CLAUSE
+      | CTL_NOT
+      | CTL_IMPLIES
+      | CTL_IFF
+      | CTL_AX
+      | CTL_EX
+      | CTL_AF
+      | CTL_EF
+      | CTL_AG
+      | CTL_EG
+      | CTL_A_LBRACK
+      | CTL_E_LBRACK
+      | CTL_U
 
-%nonterm CLK of clock | CLKS of clock list | CLKS_CONJ of clock list | CLKS_DISJ of clock list | TCLKS of (clock * tag_scenario) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list | CLK_EXPR of clk_expr | CLKEXPRARGS of clk_expr list
+%nonterm CLK of clock | CLKS of clock list | CLKS_CONJ of clock list | CLKS_DISJ of clock list | TCLKS of (clock * tag_scenario) list | EXP of TESL_atomic | START of TESL_atomic option | TAG of tag | TAGS of tag list | CLKARGS of clock list | CLK_EXPR of clk_expr | CLKEXPRARGS of clk_expr list | CTL_EXP of clock CTL.t
 
 %name Calc
 
@@ -113,6 +125,22 @@ fun opposite_tag t = case t of
   CLKEXPRARGS : RPAR                                                           ([])
           | CLK_EXPR RPAR                                                      ([CLK_EXPR])
           | CLK_EXPR COMMA CLKEXPRARGS                                         (CLK_EXPR :: CLKEXPRARGS)
+
+  CTL_EXP : LPAR CTL_EXP RPAR                                                  (CTL_EXP)
+          | CLK                                                                (CTL.Atom (CLK))
+          | CTL_NOT CTL_EXP                                                    (CTL.Not (CTL_EXP))
+          | CTL_EXP CONJ_CLAUSE CTL_EXP                                        (CTL.And (CTL_EXP1, CTL_EXP2))
+          | CTL_EXP DISJ_CLAUSE CTL_EXP                                        (CTL.Or (CTL_EXP1, CTL_EXP2))
+          | CTL_EXP CTL_IMPLIES CTL_EXP                                        (CTL.Implies (CTL_EXP1, CTL_EXP2))
+          | CTL_EXP CTL_IFF CTL_EXP                                            (CTL.Iff (CTL_EXP1, CTL_EXP2))
+          | CTL_AX CTL_EXP                                                     (CTL.AX CTL_EXP)
+          | CTL_EX CTL_EXP                                                     (CTL.EX CTL_EXP)
+          | CTL_AF CTL_EXP                                                     (CTL.AF CTL_EXP)
+          | CTL_EF CTL_EXP                                                     (CTL.EF CTL_EXP)
+          | CTL_AG CTL_EXP                                                     (CTL.AG CTL_EXP)
+          | CTL_EG CTL_EXP                                                     (CTL.EG CTL_EXP)
+          | CTL_A_LBRACK CTL_EXP CTL_U CTL_EXP RBRACK                          (CTL.AU (CTL_EXP1, CTL_EXP2))
+          | CTL_E_LBRACK CTL_EXP CTL_U CTL_EXP RBRACK                          (CTL.EU (CTL_EXP1, CTL_EXP2))
 
   EXP : 
 	 TYPEDECL CLK                                                           (case TYPEDECL of (tt, mb) => TypeDecl (CLK, tt, mb))
@@ -217,3 +245,4 @@ fun opposite_tag t = case t of
       | DIR_EVENTCONCRETIZE NUM							  (DirEventConcretize (SOME NUM))
       | DIR_STUTTER          							  (DirStutter)
       | DIR_UNIQ             							  (DirUniq)
+      | DIR_CTL_FORMULA CTL_EXP                                                (DirCTLFormula CTL_EXP)

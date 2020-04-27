@@ -400,4 +400,5 @@ fun string_of_expr e = case e of
   | DirPrint _  					    => "<directive>"
   | DirHelp							    => "<directive>"
   | DirUniq							    => "<directive>"
+  | DirCTLFormula	_					    => "<directive>"
   | _                                                       => "<unknown>"

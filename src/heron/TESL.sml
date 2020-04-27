@@ -14,7 +14,7 @@
    | _ => raise UnexpectedMatch
 *)
 exception UnexpectedMatch
-datatype clock = Clk of string
+(* datatype clock = Clk of string *)
 type instant_index = int
 datatype func = Fun of string
 
@@ -181,6 +181,7 @@ datatype TESL_atomic =
   | DirExit
   | DirHelp
   | DirUniq
+  | DirCTLFormula                  of clock CTL.t
 
 type TESL_formula = TESL_atomic list
 
