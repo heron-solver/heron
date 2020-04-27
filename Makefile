@@ -1,29 +1,33 @@
-CC=mlton
-CC_multi=mpl
+MLTON=mlton
+MPL=mpl
 ARCH=$(shell uname -m)
 OS=$(shell uname | tr A-Z a-z)
-HERON_VERSION=$(shell cat src/VERSION)
+HERON_VERSION=$(shell cat VERSION)
 
-all: clean
-	if (which mpl) ; then make multicore ; else if (which mlton) ; then make singlecore ; else echo "Neither MPL or MLton has been found." ; fi ; fi
+heron: clean
+	if (which mpl) ; then make with-mpl ; else if (which mlton) ; then make with-mlton ; else echo "Neither MPL or MLton has been found." ; fi ; fi
 
 # To compile with MLton
-singlecore: parser
-	sed 's/_COMPILER_CMD_/${CC}/g' src/Toplevel.sml > src/_Toplevel.sml
-	sed 's/_VERSION_/${HERON_VERSION}/g' src/_Toplevel.sml > src/__Toplevel.sml
-	cp src/heron-Singlecore.mlb src/heron.mlb
-	${CC} -verbose 1 -output heron src/heron.mlb
+with-mlton: TESL-parser
+	sed 's/_COMPILER_CMD_/${MLTON}/g' src/heron/Toplevel.sml > src/heron/_Toplevel.sml
+	sed 's/_VERSION_/${HERON_VERSION}/g' src/heron/_Toplevel.sml > src/heron/__Toplevel.sml
+	cp src/heron/heron-Singlecore.mlb src/heron/heron.mlb
+	${MLTON} -verbose 1 -output heron src/heron/heron.mlb
 
 # To compile with MPL
-multicore: parser
-	sed 's/_COMPILER_CMD_/${CC_multi}/g' src/Toplevel.sml > src/_Toplevel.sml
-	sed 's/_VERSION_/${HERON_VERSION}/g' src/_Toplevel.sml > src/__Toplevel.sml
-	cp src/heron-Multicore.mlb src/heron.mlb
-	${CC_multi} -verbose 1 -output heron src/heron.mlb
+with-mpl: TESL-parser
+	sed 's/_COMPILER_CMD_/${MPL}/g' src/heron/Toplevel.sml > src/heron/_Toplevel.sml
+	sed 's/_VERSION_/${HERON_VERSION}/g' src/heron/_Toplevel.sml > src/heron/__Toplevel.sml
+	cp src/heron/heron-Multicore.mlb src/heron/heron.mlb
+	${MPL} -verbose 1 -output heron src/heron/heron.mlb
 
-parser:
-	cd src && mllex parse.lex
-	cd src && mlyacc parse.grm
+TESL-parser:
+	cd src/heron && mllex TESL-parse.lex
+	cd src/heron && mlyacc TESL-parse.grm
+
+# Model-checker
+hmc: parser src/hmc/*
+	${MLTON} -verbose 1 -output hmc src/hmc/hmc.mlb
 
 binary-release: all
 	tar czvf heron-$(shell /bin/echo | ./heron | grep Heron | cut -d ' ' -f 2)-${ARCH}-${OS}.tar.gz \
@@ -43,7 +47,7 @@ test:
 
 clean:
 	rm -f regression/*.out regression/_results.log
-	rm -f ./heron src/parse.grm.desc src/parse.grm.sig src/parse.grm.sml src/parse.lex.sml src/_Toplevel.sml src/__Toplevel.sml src/heron.mlb
+	rm -f ./heron src/heron/parse.grm.desc src/heron/parse.grm.sig src/heron/TESL-parse.grm.sml src/heron/TESL-parse.lex.sml src/heron/_Toplevel.sml src/heron/__Toplevel.sml src/heron/heron.mlb
 
 # with_polyml:
 #  	cd src && mllex parse.lex

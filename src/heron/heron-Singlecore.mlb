@@ -1,6 +1,5 @@
 local
  $(SML_LIB)/basis/basis.mlb
- $(SML_LIB)/basis/fork-join.mlb
  $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
  local $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb in
    signature RAND
@@ -16,9 +15,9 @@ in
  TESL.sml
  Hash.sml
  TypeChecker.sml
- parse.grm.sig
- parse.grm.sml
- parse.lex.sml
+ TESL-parse.grm.sig
+ TESL-parse.grm.sml
+ TESL-parse.lex.sml
  ArithmeticSolver.sml
  Printer.sml
  VCD.sml
@@ -26,7 +25,7 @@ in
  TEX.sml
  Policy.sml
  Engine.sml
- ExecStep-Multicore.sml
+ ExecStep-Singlecore.sml
  Exec.sml
  Testing.sml
  __Toplevel.sml
