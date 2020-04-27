@@ -306,7 +306,7 @@ let
 		| n => (print ("## Abstract model: " ^ BOLD_COLOR ^ YELLOW_COLOR ^ (Int.toString n) ^ " branches to refold.\n" ^ RESET_COLOR);
 			 if !(#debug mcp0)
 			 then List.foldl 
-			   (fn ((_,(G,n,phi,psi)), _) => ((List.app (fn f => print (BOLD_COLOR ^ YELLOW_COLOR ^ (string_of_expr f) ^ " ; " ^ RESET_COLOR)) phi) ; print "\n")) 
+			   (fn ((_,(G,n,phi,psi)), _) => (print "\206\166 = { " ; (List.app (fn f => print (BOLD_COLOR ^ YELLOW_COLOR ^ (string_of_expr f) ^ " ; " ^ RESET_COLOR)) phi) ; print " }\n")) 
 			   ()
 			   leaves_to_refold
 			   else () ;
@@ -415,7 +415,8 @@ val _ = (
 				 print ("[         ] " ^ (CTL.toString f)) ;
 				 if SAT_CTL 0 f
 				 then print ("\r" ^ BOLD_COLOR ^ GREEN_COLOR ^ "[  VALID  ] " ^ RESET_COLOR ^ (CTL.toString f) ^ "\n")
-				 else print ("\r" ^ BOLD_COLOR ^ RED_COLOR   ^ "[ UNKNOWN ] " ^ RESET_COLOR ^ (CTL.toString f) ^ "\n")
+				 else print ("\r" ^ BOLD_COLOR ^ RED_COLOR   ^ "[ UNKNOWN ] " ^ RESET_COLOR ^ (CTL.toString f) ^ "\n") ;
+				 (print_debug "            \226\138\163 [" ; List.app (fn n => print_debug ((Int.toString n) ^ " ")) (semantics_CTL f) ; print_debug "]\n")
 			     )) (!(#CTL_formulae mcp0))
 	in ()
 	end
