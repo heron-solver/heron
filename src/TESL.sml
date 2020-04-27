@@ -122,6 +122,7 @@ datatype TESL_atomic =
   | Sporadic                       of clock * tag
   | Sporadics                      of clock * (tag list)            (* Syntactic sugar *)
   | SporadicOn                     of clock * tag * clock
+  | SporadicOn_Abs                 of clock * clock
   | SporadicOnWithReset            of clock * tag * clock * clock   (* Intermediate Form *)
   | TypeDeclSporadics              of tag_t * clock * (tag list) * bool   (* Syntactic sugar *)
   | TagRelation                    of clk_rel * clk_expr * clk_expr
@@ -138,6 +139,7 @@ datatype TESL_atomic =
   | ImpliesGen                     of clock list * clock list
   | ImpliesNot                     of clock * clock
   | TimeDelayedBy                  of clock * tag * clock * (clock option) * clock
+  | TimeDelayedBy_Abs              of clock * clock * (clock option) * clock
   | DelayedBy                      of clock * int * clock * clock
   | TimesImpliesOn                 of clock * int * clock           (* Intermediate Form *)
   | ImmediatelyDelayedBy           of clock * int * clock * clock
@@ -210,6 +212,7 @@ fun ConstantlySubs f = List.filter (fn f' => case f' of
 fun ConsumingSubs f = List.filter (fn f' => case f' of
 (*  Sporadic _       => true *) (* Removed as handled seperately in SporadicSubs *)
     SporadicOn _  => true
+  | SporadicOn_Abs _  => true
   | TimesImpliesOn _ => true
   | _                => false) f
 
@@ -256,6 +259,7 @@ fun ReproductiveSubs f = List.filter (fn f' => case f' of
     DelayedBy _            => true
   | ImmediatelyDelayedBy _ => true
   | TimeDelayedBy _        => true
+  | TimeDelayedBy_Abs _    => true
   | _                      => false) f
 fun SelfModifyingSubs f = List.filter (fn f' => case f' of
     FilteredBy _                      => true

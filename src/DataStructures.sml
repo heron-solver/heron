@@ -50,7 +50,18 @@ fun rl <>>> rl' = rl := (!rl) @ rl'
 
 (* Returns the sublist of [l1] without occurences of elements of [l2] *)
 infix 1 @-
-fun l1 @- l2 = List.filter (fn e1 => List.all (fn e2 => e1 <> e2) l2) l1;
+fun l1 @- l2 = List.filter (fn e1 => List.all (fn e2 => e1 <> e2) l2) l1
+
+(* Intersection *)
+infix 1 @/\
+fun l1 @/\ l2 = List.filter (fn x1 => List.exists (fn x2 => x1 = x2) l2) l1
+
+(* Union *)
+infix 1 @\/
+fun l1 @\/ l2 = List.foldl (fn (x2, res) => if List.exists (fn x => x = x2) res
+						  then res
+						  else x2 :: res) l1 l2
+
 fun is_empty l = case l of [] => true | _ => false
 fun contains x l = List.exists (fn x' => x = x') l
 
@@ -173,6 +184,15 @@ fun lfp (ff: ''a -> ''a) (x: ''a) : ''a =
 	!x_
     end
 
+fun lfp_set ff x =
+    let val x_ = ref x
+	 val x' = ref (ff x)
+    in (while not ((!x_) @== (!x')) do
+	      (x_ := (!x') ;
+	       x' := ff (!x'))) ;
+	!x_
+    end
+
 (**
   Strings
 *)
@@ -191,109 +211,3 @@ fun concat (sep: string) (l: string list) =
   end
 
 end
-
-(**
-  Association Trees
-*)
-structure AssocTree = struct
-  datatype 'a t =
-      Leaf of int * 'a
-    | Node of (int * 'a) * (('a t) list)
-
-  exception NotFoundinTree
-
-  (* In order to associate with unique identifiers *)
-  val id = ref 0
-  fun fresh_id () =
-    let val _ = id := (!id) + 1
-    in (!id)
-    end
-
-  (* Returns 'a elements as a 'a list *)
-  fun list_of_t t = case t of
-      Leaf (n, x) => [(n, x)]
-    | Node ((n, x), subtrees) => (n, x) :: List.concat (List.map (list_of_t) subtrees)
-
-  (* Associate value with the key [n] *)
-  fun assoc (n: int) (t: 'a t): 'a =
-    let fun find_in_list l = case l of
-        [] => raise NotFoundinTree
-      | (n', x) :: l' => if n = n'
-			    then x
-			    else find_in_list l'
-    in find_in_list (list_of_t t)
-    end
-
-  (* All the leaves of the tree [t] *)
-  fun leaves (t: 'a t) = case t of
-     Leaf (n, e)        => [(n, e)] 
-   | Node (_, subtrees) => List.concat (List.map (leaves) subtrees)
-
-  (* All the leaves of the tree [t] *)
-  fun nodes (t: 'a t) = case t of
-     Leaf _             => [] 
-   | Node ((n, e), subtrees) => (List.concat (List.map (nodes) subtrees)) @ [(n, e)]
-
-  (* Replace a leaf by a node containing subtrees with new identifiers and elements from [l]  *)
-  fun grow (t: 'a t) (id: int) (l: 'a list) = case t of
-      Leaf (n, x)         => if n <> id
-				 then Leaf (n, x)
-				 else Node ((n, x), List.foldl (fn (cf, res) => res @ [Leaf (fresh_id(), cf)]) [] l)
-    | Node ((n, x), subt) => Node ((n, x), List.map (fn t' => grow t' id l) subt)
-
-  fun count_node (t: 'a t) = case t of
-      Leaf _         => 0
-    | Node (_, subt) => 1 + List.foldl (fn (x, res) => res + x) 0 (List.map (fn t => count_node t) subt)
-
-  fun count_leaf (t: 'a t) = case t of
-      Leaf _         => 1
-    | Node (_, subt) => List.foldl (fn (x, res) => res + x) 0 (List.map (fn t => count_leaf t) subt)
-
-  fun info (t: 'a t) = let
-    val _ = print ("[AssocTree] Leaves: " ^ (Int.toString (count_leaf t)) ^ "\n")
-    val _ = print ("[AssocTree] Nodes:  " ^ (Int.toString (count_node t)) ^ "\n")
-  in ()
-  end
-end
-
-(**
-  Union-find
-*)
-structure UnionFind = struct
-  type t = int array
-  val UF_MAX_SIZE: int = 10000
-
-  (* Generate a union-find of size [UF_MAX_SIZE] *)
-  fun make (): t =
-      let val uf0 = Array.array (UF_MAX_SIZE, 0)
-	   fun set_identity (i: int) =
-		if i = UF_MAX_SIZE
-		then ()
-		else (Array.update (uf0, i, i) ; set_identity (i + 1))
-      in (set_identity 0) ; uf0
-      end
-
-  (* Returns the class representative *)
-  fun find (u: t) (i: int): int =
-      Array.sub (u, i)
-
-  (* Sets a common class representative *)
-  fun union (u: t) (i: int) (j: int) =
-      let val ri = find u i
-	   val rj = find u j
-	   val _ = Array.appi (fn (x, y) => if y = rj then Array.update (u, x, ri) else ()) u
-      in ()
-      end
-
-  (* Prints until [max] *)
-  val print (* (u: t) (max: int): unit *) =
-   fn u => fn max =>
-   let val rng = range0 max
-   in (List.foldl (fn (n, _) => print ((Int.toString n) ^ " ")) () rng ;
-	print "\n" ;
-	List.foldl (fn (n, _) => print ((Int.toString (Array.sub (u, n))) ^ " ")) () rng ;
-	print "\n")
-   end
-      
-end
-

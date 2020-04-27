@@ -73,17 +73,45 @@ fun ARS_rule_timedelayed_elim_2
     (G @ [Ticks (c1, n), Timestamp (c2, n, Schematic (c2, n))], n, frun, (finst @- [fsubst]) @ [SporadicOnWithReset (c2, Add (Schematic (c2, n), dt), c3, rc)])
   | ARS_rule_timedelayed_elim_2 _ _ = raise Assert_failure;
 
+(* 6bis. Time delayed elimination when premise is false *)
+fun ARS_rule_timedelayed_abs_elim_1
+  (G, n, frun, finst) (fsubst as TimeDelayedBy_Abs (c1, _, _, _)) =
+    (G @ [NotTicks (c1, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_timedelayed_abs_elim_1 _ _ = raise Assert_failure;
+
+exception ElimRuleNotDefined
+(* 7bis. Time delayed elimination when premise is true (introduces when-ticking) *)
+fun ARS_rule_timedelayed_abs_elim_2
+  (G, n, frun, finst) (fsubst as TimeDelayedBy_Abs (c1, c2, NONE, c3)) =
+    (G @ [Ticks (c1, n)], n, frun, (finst @- [fsubst]) @ [SporadicOn_Abs (c2, c3)])
+ | ARS_rule_timedelayed_abs_elim_2
+  (G, n, frun, finst) (fsubst as TimeDelayedBy_Abs (c1, c2, SOME rc, c3)) = 
+   raise ElimRuleNotDefined
+  | ARS_rule_timedelayed_abs_elim_2 _ _ = raise Assert_failure;
+
 (* 8. When ticking elimination with merge *)
-fun ARS_rule_whentickingon_1
+fun ARS_rule_sporadicon_1
   (G, n, frun, finst) (fsubst as SporadicOn (c1, tag, c2)) =
     (G @ [Timestamp (c1, n, tag), Ticks (c2, n)], n, frun, finst @- [fsubst])
-  | ARS_rule_whentickingon_1 _ _ = raise Assert_failure;
+  | ARS_rule_sporadicon_1 _ _ = raise Assert_failure;
 
 (* 8 Bis. When ticking elimination postponed *)
-fun ARS_rule_whentickingon_2
+fun ARS_rule_sporadicon_2
   (G, n, frun, finst) (fsubst as SporadicOn _) =
     (G, n, frun @ [fsubst], finst @- [fsubst])
-  | ARS_rule_whentickingon_2 _ _ = raise Assert_failure;
+  | ARS_rule_sporadicon_2 _ _ = raise Assert_failure;
+
+(* 8 ter. When ticking elimination with merge *)
+fun ARS_rule_sporadicon_abs_1
+  (G, n, frun, finst) (fsubst as SporadicOn_Abs (c1, c2)) =
+    (G @ [Ticks (c2, n)], n, frun, finst @- [fsubst])
+  | ARS_rule_sporadicon_abs_1 _ _ = raise Assert_failure;
+
+(* 8 quat. When ticking elimination postponed *)
+fun ARS_rule_sporadicon_abs_2
+  (G, n, frun, finst) (fsubst as SporadicOn_Abs _) =
+    (G, n, frun @ [fsubst], finst @- [fsubst])
+  | ARS_rule_sporadicon_abs_2 _ _ = raise Assert_failure;
 
 (* 9. Filtered update when false premise *)
 fun ARS_rule_filtered_false
@@ -420,22 +448,22 @@ fun ARS_rule_kills_2
   | ARS_rule_kills_2 _ _ = raise Assert_failure;
  
 (* 59. When ticking elimination when deciding to trigger tick sporadicaly *)
-fun ARS_rule_whentickingon_with_reset_on_1
+fun ARS_rule_sporadicon_with_reset_on_1
  (G, n, frun, finst) (fsubst as SporadicOnWithReset (c1, tag, c2, rclock)) =
     (G @ [Ticks (c2, n), Timestamp (c1, n, tag)], n, frun, finst @- [fsubst])
-  | ARS_rule_whentickingon_with_reset_on_1 _ _ = raise Assert_failure;
+  | ARS_rule_sporadicon_with_reset_on_1 _ _ = raise Assert_failure;
 
 (* 60. When ticking elimination when deciding to postpone it and is not reset *)
-fun ARS_rule_whentickingon_with_reset_on_2
+fun ARS_rule_sporadicon_with_reset_on_2
   (G, n, frun, finst) (fsubst as SporadicOnWithReset (c1, tag, c2, rclock)) =
     (G @ [NotTicks (rclock, n)], n, frun @ [fsubst], finst @- [fsubst])
-  | ARS_rule_whentickingon_with_reset_on_2 _ _ = raise Assert_failure;
+  | ARS_rule_sporadicon_with_reset_on_2 _ _ = raise Assert_failure;
 
 (* 61. When ticking elimination when the reset clock ticks *)
-fun ARS_rule_whentickingon_with_reset_on_3
+fun ARS_rule_sporadicon_with_reset_on_3
   (G, n, frun, finst) (fsubst as SporadicOnWithReset (c1, tag, c2, rclock)) =
     (G @ [Ticks (rclock, n)], n, frun, finst @- [fsubst])
-  | ARS_rule_whentickingon_with_reset_on_3 _ _ = raise Assert_failure;
+  | ARS_rule_sporadicon_with_reset_on_3 _ _ = raise Assert_failure;
 
 (* 62. Tag relation for constants elimination *)
 fun ARS_rule_tagrel_cst_elim
@@ -555,11 +583,13 @@ fun lawyer_e
 			   Sporadic _ =>
 			     [(fatom, ARS_rule_sporadic_1), (fatom, ARS_rule_sporadic_2)]
 			 | SporadicOn _ =>
-			     [(fatom, ARS_rule_whentickingon_1), (fatom, ARS_rule_whentickingon_2)]
-             | SporadicOnWithReset _ =>
-                 [(fatom, ARS_rule_whentickingon_with_reset_on_1),
-                  (fatom, ARS_rule_whentickingon_with_reset_on_2),
-                  (fatom, ARS_rule_whentickingon_with_reset_on_3)]
+			     [(fatom, ARS_rule_sporadicon_1), (fatom, ARS_rule_sporadicon_2)]
+			 | SporadicOn_Abs _ =>
+			     [(fatom, ARS_rule_sporadicon_abs_1), (fatom, ARS_rule_sporadicon_abs_2)]
+                      | SporadicOnWithReset _ =>
+                          [(fatom, ARS_rule_sporadicon_with_reset_on_1),
+                           (fatom, ARS_rule_sporadicon_with_reset_on_2),
+                           (fatom, ARS_rule_sporadicon_with_reset_on_3)]
 			 | TagRelationAff _ =>
 			     [(fatom, ARS_rule_tagrel_elim)]
 			 | TagRelationCst _ =>
@@ -589,6 +619,8 @@ fun lawyer_e
 			     [(fatom, ARS_rule_implies_not_1), (fatom, ARS_rule_implies_not_2)]
 			 | TimeDelayedBy _ =>
 			     [(fatom, ARS_rule_timedelayed_elim_1), (fatom, ARS_rule_timedelayed_elim_2)]
+			 | TimeDelayedBy_Abs _ =>
+			     [(fatom, ARS_rule_timedelayed_abs_elim_1), (fatom, ARS_rule_timedelayed_abs_elim_2)]
 			 | FilteredBy (_, s, k, _, _, _) =>
 			     if s > 0 andalso k >= 1
 			     then [(fatom, ARS_rule_filtered_false), (fatom, ARS_rule_filtered_update_1)]
