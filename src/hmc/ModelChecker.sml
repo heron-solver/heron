@@ -54,7 +54,8 @@ type mc_params = {
   tesl_file: string ref,
   model: (TESL_conf AssocTree.t) ref, (* Identifier × Configuration *)
   lasso: UnionFind.t,
-  CTL_formulae: (clock CTL.t) list ref
+  CTL_formulae: (clock CTL.t) list ref,
+  declared_clocks_CTL: clock list ref
 }
 
 (* Parameters for the model-checker *)
@@ -63,7 +64,8 @@ val mcp0: mc_params = {
   tesl_file               = ref "",
   model                   = ref (AssocTree.Leaf (0, ([], 0, [], []))),
   lasso                   = UnionFind.make (),
-  CTL_formulae            = ref []
+  CTL_formulae            = ref [],
+  declared_clocks_CTL     = ref []
 }
 
 fun print_debug s =
@@ -127,7 +129,7 @@ fun exec_step_immut
 
 (* BETA: Only considers Ticks and NotTicks. *)
 fun concretize_contexts
-  (sp: solver_params)
+  (mcp: mc_params)
   (cfs : TESL_conf list)
   : TESL_conf list =
   let fun concretize_context_wrt_clock ((G,n,phi,psi): TESL_conf) (c: clock): TESL_conf list =
@@ -139,7 +141,7 @@ fun concretize_contexts
     case clks of
       []         => cfs
     | c :: clks' => concretize_contexts_wrt_clocks (List.concat (List.map (fn cf => concretize_context_wrt_clock cf c) cfs)) clks'
-      val res = concretize_contexts_wrt_clocks cfs (!(#declared_clocks sp))
+      val res = concretize_contexts_wrt_clocks cfs (!(#declared_clocks_CTL mcp))
       val _   = print_debug ("          as " ^ (Int.toString (List.length res)) ^ " concrete contexts\n")
   in res
   end
@@ -154,6 +156,9 @@ fun tesl_action (stmt: TESL_atomic) =
     exception Toplevel_Action_Cannot_Happen
     val _ = #declared_clocks sp0 := uniq (!(#declared_clocks sp0) @ (clocks_of_tesl_formula [stmt]))
     val _ = #declared_quantities sp0 := uniq (!(#declared_quantities sp0) @ (quantities_of_tesl_formula [stmt]))
+    val _ = case stmt of
+      DirCTLFormula f => (#declared_clocks_CTL mcp0) := ((!(#declared_clocks_CTL mcp0)) @\/ (CTL.clocks_of_CTL f))
+      | _             => ()
     val _ = clk_type_declare sp0 stmt
     val _ = type_check sp0
   in
@@ -269,7 +274,7 @@ let
 				     List.map (fn (G, n, phi, psi) =>
 						    let val G_current = fst (List.partition (ContextSplit.indx_geq n) G)
 						    in (G_current, n, phi, psi)
-						    end) (concretize_contexts sp0 (exec_step_immut sp0 [cf])))) leaves_to_grow
+						    end) (concretize_contexts mcp0 (exec_step_immut sp0 [cf])))) leaves_to_grow
     (* Replace leaves by nodes in computation tree *)
     val _ = List.foldl
      		(fn ((n, cfs), _) => (#model mcp0) := AssocTree.grow (!(#model mcp0)) n cfs)
@@ -399,10 +404,12 @@ val _ = (
 	    
      else
 	let
-	  val _ = print ("## Opening " ^ (!(#tesl_file mcp0)))
+	  val _ = print ("## Opening " ^ (!(#tesl_file mcp0)) ^ "\n")
 	  val _ = tesl_from_file (!(#tesl_file mcp0))
-	  val _ = print "## Declared clocks and flows: "
+	  val _ = print "## Declared clocks and flows in TESL: "
 	  val _ = (List.app (fn Clk cname => print (cname ^ ", ")) (!(#declared_clocks sp0)); print "\n")
+	  val _ = print "## Declared clocks and flows in CTL: "
+	  val _ = (List.app (fn Clk cname => print (cname ^ ", ")) (!(#declared_clocks_CTL mcp0)); print "\n")
 	  val _ = model_maker ()
 	  (* DEBUG: To print successors states *)
 	  (*

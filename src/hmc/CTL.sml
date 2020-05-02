@@ -35,4 +35,22 @@ structure CTL = struct
   | AU (f1, f2)      => "A [" ^ (toString f1) ^ " U " ^ (toString f2) ^ "]"
   | EU (f1, f2)      => "E [" ^ (toString f1) ^ " U " ^ (toString f2) ^ "]"
 
+  fun clocks_of_CTL (f: clock t): clock list = case f of
+    True             => []
+  | False            => []
+  | Atom c           => [c]
+  | Not f'           => clocks_of_CTL f'
+  | And (f1, f2)     => (clocks_of_CTL f1) @\/ (clocks_of_CTL f2)
+  | Or (f1, f2)      => (clocks_of_CTL f1) @\/ (clocks_of_CTL f2)
+  | Implies (f1, f2) => (clocks_of_CTL f1) @\/ (clocks_of_CTL f2)
+  | Iff (f1, f2)     => (clocks_of_CTL f1) @\/ (clocks_of_CTL f2)
+  | AX f'            => clocks_of_CTL f'
+  | EX f'            => clocks_of_CTL f'
+  | AF f'            => clocks_of_CTL f'
+  | EF f'            => clocks_of_CTL f'
+  | AG f'            => clocks_of_CTL f'
+  | EG f'            => clocks_of_CTL f'
+  | AU (f1, f2)      => (clocks_of_CTL f1) @\/ (clocks_of_CTL f2)
+  | EU (f1, f2)      => (clocks_of_CTL f1) @\/ (clocks_of_CTL f2)
+
 end

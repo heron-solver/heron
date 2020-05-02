@@ -36,7 +36,7 @@ Research
  1. [Formalizing Time and Causality in Polychronous Polytimed Models](https://tel.archives-ouvertes.fr/tel-01892649/document) (Doctoral Thesis), Hai Nguyen Van, 2018.
  2. [A Symbolic Operational Semantics for TESL with an Application to Heterogeneous System Testing](https://hal-centralesupelec.archives-ouvertes.fr/hal-01583815v1), Formal Modeling and Analysis of Timed Systems (FORMATS), 14th International Conference, Berlin, Germany, Sept 5-7, 2017.
  3. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://tel.archives-ouvertes.fr/SUP_E3S/hal-01100179v1), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123.
- 4. Timed Discrete-Event Simulation of Aviation Scenarios, Simulation Notes Europe (2020), Volume 30, Number 2.
+ 4. Timed Discrete-Event Simulation of Aviation Scenarios, Simulation Notes Europe, Volume 30(2), June 2020.
 
 People
 -------------------
