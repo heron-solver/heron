@@ -3,7 +3,7 @@ Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=maste
 
 ![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
 
-**Heron** [1, 2, 3] is a solver for the [Tagged Events Specification Language (TESL)](http://wdi.supelec.fr/software/TESL/) [4], a declarative language for specifying synchronization of discrete events for simulation. This prototype provides:
+**Heron** [1, 2, 3, 6] is a solver for the [Tagged Events Specification Language (TESL)](http://wdi.supelec.fr/software/TESL/) [4], a declarative language for specifying synchronization of discrete events for simulation. This prototype provides:
 
  1. Definition of TESL specifications for causality and time scale between events.
  2. Simulation by [sound and complete](https://github.com/heron-solver/hygge) generation of execution traces.
@@ -38,6 +38,7 @@ Research
  3. [A Symbolic Operational Semantics for TESL with an Application to Heterogeneous System Testing](https://hal-centralesupelec.archives-ouvertes.fr/hal-01583815v1), Formal Modeling and Analysis of Timed Systems (FORMATS), 14th International Conference, Berlin, Germany, Sept 5-7, 2017.
  4. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://tel.archives-ouvertes.fr/SUP_E3S/hal-01100179v1), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123.
  5. [Timed Discrete-Event Simulation of Aviation Scenarios](https://www.sne-journal.org/fileadmin/user_upload_sne/SNE_Issues_OA/SNE_30_2/articles/sne.30.2.10512.tn.OA.pdf), Simulation Notes Europe, Volume 30(2), June 2020.
+ 6. [TESL: a Model with Metric Time for Modeling and Simulation](.), Temporal Representation and Reasoning, 27th International Symposium, Bozen-Bolzano, Italy, Sept 23-25, 2020.
 
 People
 -------------------
