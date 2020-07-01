@@ -1,0 +1,71 @@
+// Set of states: {init, verif, alarm}
+unit-clock state_init_enter
+unit-clock state_init_leave
+unit-clock state_verif_enter 
+unit-clock state_verif_leave
+unit-clock state_alarm_enter
+unit-clock state_alarm_leave
+
+// TA: Entering a state precedes leaving it
+state_init_enter weakly precedes state_init_leave
+state_verif_enter weakly precedes state_verif_leave
+state_alarm_enter weakly precedes state_alarm_leave
+
+// TA: Only one state can be activated at a time
+state_init_enter excludes state_verif_enter
+state_verif_enter excludes state_alarm_enter
+state_alarm_enter excludes state_init_enter
+
+// TA: Only one transition can be triggered at a time
+trigger_t1 excludes trigger_t2
+trigger_t2 excludes trigger_t3
+trigger_t3 excludes trigger_t1
+
+// Set of clocks: {c}
+unit-clock c_reset
+rational-clock c sporadic 0.0
+
+// Set of actions: {msg}
+unit-clock read_msg
+
+// Transition t1 = init -> verif: msg, c:= 0
+state_init_leave when read_msg implies trigger_t1
+trigger_t1 implies state_verif_enter
+trigger_t1 implies c_reset
+
+// Transition t2 = verif -> verif: c>=5, msg, c:= 0
+c_reset time delayed by 5.0 on c with reset on trigger_t3 implies trigger_t2_min
+trigger_t2_min weakly precedes trigger_t2
+state_verif_leave /\ read_msg implies trigger_t2 \/ trigger_t3
+trigger_t2 implies state_verif_enter
+trigger_t2 implies c_reset
+
+// Transition t3 = verif -> alarm: c<5, msg
+c_reset time delayed by 5.0 on c with reset on trigger_t2 implies trigger_t3_max
+trigger_t3 strictly precedes trigger_t3_max
+state_verif_leave /\ read_msg implies trigger_t2 \/ trigger_t3
+trigger_t3 implies state_alarm_enter
+
+// Start transition
+state_init_enter sporadic 0.0 on c
+
+@policy asap
+@scenario strict 1 (c -> 0.0) state_init_enter
+@scenario strict 2 (c -> 5.0)
+@scenario strict 3 (c -> 10.0) state_init_leave state_verif_enter c_reset read_msg trigger_t1
+@scenario strict 4 (c -> 15.0) trigger_t2_min
+@scenario strict 5 (c -> 17.0) state_verif_leave read_msg state_verif_enter  c_reset trigger_t2
+@scenario strict 6 (c -> 20.0) state_verif_leave state_alarm_enter read_msg trigger_t3
+@scenario strict 7 (c -> 22.0) trigger_t3_max
+@step
+@step
+@step
+@step
+@step
+@step
+@step
+@uniq
+
+@select #1
+@print 
+@output pdf select c c_reset state_init_enter state_init_leave state_verif_enter state_verif_leave state_alarm_enter state_alarm_leave read_msg trigger_t1 trigger_t2_min trigger_t2 trigger_t3 trigger_t3_max

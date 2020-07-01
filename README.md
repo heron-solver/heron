@@ -27,6 +27,8 @@ You can also fetch the [latest binary release](https://github.com/EmptyStackExn/
  - [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md) [5]
  - [Airbus A320 Autobrake](doc/examples/A320-Autobrake.md) [5]
  - [Airbus A320 Accelerate-Stop](doc/examples/A320-AccelerateStop.md) [5]
+ - [Proportional–integral–derivative Controller](examples/PID.tesl) [6]
+ - [Timed Automaton](examples/TimedAutomatonMsgAlarm.tesl) [6]
 
 For more information, please refer to the [Heron Reference Manual](doc/README.md).
 
