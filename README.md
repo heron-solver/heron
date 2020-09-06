@@ -16,7 +16,7 @@ Getting started
 ### Try me with Docker
 The easiest way to start with Heron is to get [Docker](https://docs.docker.com/get-docker/) and then simply type
 ```
-$ docker run -it emptystackexn/heron
+$ docker run -it nguyenvanhai/heron
 # ./heron --use examples/basic/FirstExample.tesl
 ```
 
@@ -36,11 +36,11 @@ Research
 -------------------
 
  1. [Formalizing Time and Causality in Polychronous Polytimed Models](https://tel.archives-ouvertes.fr/tel-01892649/document) (Doctoral Thesis), Hai Nguyen Van, 2018.
- 2. [On the Semantics of Polychronous Polytimed Specifications](.), Formal Modeling and Analysis of Timed Systems (FORMATS), 18th International Conference, Vienna, Austria, Sept 1-3, 2020.
+ 2. [On the Semantics of Polychronous Polytimed Specifications](https://link.springer.com/chapter/10.1007/978-3-030-57628-8_2), Formal Modeling and Analysis of Timed Systems (FORMATS), 18th International Conference, Vienna, Austria, Sept 1-3, 2020.
  3. [A Symbolic Operational Semantics for TESL with an Application to Heterogeneous System Testing](https://hal-centralesupelec.archives-ouvertes.fr/hal-01583815v1), Formal Modeling and Analysis of Timed Systems (FORMATS), 14th International Conference, Berlin, Germany, Sept 5-7, 2017.
  4. [TESL: a Language for Reconciling Heterogeneous Execution Traces](https://tel.archives-ouvertes.fr/SUP_E3S/hal-01100179v1), Formal Methods and Models for Codesign (MEMOCODE), 2014 Twelfth ACM/IEEE International Conference on, Lausanne, Switzerland, Oct, 2014, 114-123.
  5. [Timed Discrete-Event Simulation of Aviation Scenarios](https://www.sne-journal.org/fileadmin/user_upload_sne/SNE_Issues_OA/SNE_30_2/articles/sne.30.2.10512.tn.OA.pdf), Simulation Notes Europe, Volume 30(2), June 2020.
- 6. [TESL: a Model with Metric Time for Modeling and Simulation](.), Temporal Representation and Reasoning, 27th International Symposium, Bozen-Bolzano, Italy, Sept 23-25, 2020.
+ 6. [TESL: a Model with Metric Time for Modeling and Simulation](.), Temporal Representation and Reasoning (TIME), 27th International Symposium, Bozen-Bolzano, Italy, Sept 23-25, 2020.
 
 People
 -------------------
