@@ -71,7 +71,7 @@ Or, just simply use in your specification
 @output pdf
 ```
 
-#### Hide non-ticking primitives explicitly dsiplayed
+#### Hide non-ticking primitives explicitly displayed
  Just change in `lib/TESL.sty` the color gradient of `nontickcolor` as
 ```
 \definecolor{nontickcolor}{gray}{1.0}
@@ -80,7 +80,7 @@ Then, recompile your output.
 
 ### Runtime 
 
-Run generation may take some time depending on size and defined settings. To output the run diagram incrementally, you can set the argument `--runtime-print`. For instance
+Trace generation may take some time depending on size and defined settings. To output the run diagram incrementally, you can set the argument `--runtime-print`. For instance
 
 ```bash
 ./heron  --use examples/reference-gallery/ConcurrentComputations.tesl --runtime-print
