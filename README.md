@@ -1,7 +1,7 @@
 Heron [![Build Status](https://travis-ci.org/heron-solver/heron.svg?branch=master)](https://travis-ci.org/heron-solver/heron) [![GitHub Version](https://img.shields.io/github/release/heron-solver/heron.svg?maxAge=2592000&colorB=46a4b8)](https://github.com/EmptyStackExn/heron/releases/latest) [![Try with Docker](https://img.shields.io/badge/docker-emptystackexn/heron-blueviolet)](https://hub.docker.com/repository/docker/emptystackexn/heron)
 ===================
 
-![Running on FirstExample.tesl](doc/FirstExample.png "Running on FirstExample.tesl")
+![Running on Radiotherapy.tesl](doc/RadiotherapyExample.png "Running on Radiotherapy.tesl")
 
 **Heron** [1, 2, 5] is a solver for the [Tagged Events Specification Language (TESL)](http://wdi.supelec.fr/software/TESL/) [3], a declarative language for specifying synchronization of discrete events for simulation. This prototype provides:
 
@@ -27,9 +27,9 @@ You can also fetch the [latest binary release](https://github.com/EmptyStackExn/
 
 | [4] SNE, Jun 2020 | [5] TIME 2020 |
 | ----------------- | ------------- |
-| [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md)        | [Proportional–integral–derivative Controller](examples/PID.tesl)  |
-| [Airbus A320 Autobrake](doc/examples/A320-Autobrake.md)   | [Timed Automaton](examples/TimedAutomatonMsgAlarm.tesl)           |
-| [Airbus A320 Accelerate-Stop](doc/examples/A320-AccelerateStop.md)     | |
+| [Cessna 172 Takeoff](doc/examples/C172-Takeoff.md)                 | [Radiotherapy machine](examples/Radiotherapy.tesl)  |
+| [Airbus A320 Autobrake](doc/examples/A320-Autobrake.md)            | [Proportional–integral–derivative Controller](examples/PID.tesl) |
+| [Airbus A320 Accelerate-Stop](doc/examples/A320-AccelerateStop.md) | [Timed Automaton](examples/TimedAutomatonMsgAlarm.tesl) |
 
 For more information, please refer to the [Heron Reference Manual](doc/README.md).
 

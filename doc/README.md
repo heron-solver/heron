@@ -86,3 +86,18 @@ Trace generation may take some time depending on size and defined settings. To o
 ./heron  --use examples/reference-gallery/ConcurrentComputations.tesl --runtime-print
 ```
 
+Model-checking against CTL (experimental)
+-------------------
+This work-in-progress explores the idea that generated TESL run traces seem to follow some recurrence pattern (provided some timestamps are abstracted). This allows to abstract a run tree (i.e., an infinite-state machine) into a finite-state machine. Each vertex of the machine contains a run instant. Hence, at each run tree unfolding (i.e., each step generation), the leaves are compared to previously-generated ones to find an exact match (and hence create an ε-transition). Whenever all leaves are refolded, the model is created.
+
+In the theoretical-side, this refolding principle is only possible if we abstract timestamps from `time delayed` expressions. Indeed, timestamps in such expressions are expected to be infinitely-different at each run step generation (as time needs to flow and increase). The consequence of this apparatus is losing completeness: the model-checker may only answer "Yes, this TESL specification models this CTL formula" or "I don't know".
+
+To build the model-checker, type
+```bash
+make hmc
+```
+
+The model-checker can be invoked on a small example with
+```bash
+./hmc --use ModelChecking.tesl
+```
